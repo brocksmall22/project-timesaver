@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'basic_widgets.dart';
-import 'payroll.dart';
+import 'package:project_time_saver/basic_widgets.dart';
+import 'package:project_time_saver/file.dart';
+import 'package:project_time_saver/payroll.dart';
 
 void main() {
   runApp(const MyApp());
@@ -37,6 +38,7 @@ class MainPage extends StatelessWidget {
         child: BasicWidgets.vertical(
           [
             _payrollButton(context),
+            _gotToFileUpload(context),
             _nifrsButton(context),
             _statsButton(context),
             _settingsButton(context)
@@ -49,6 +51,11 @@ class MainPage extends StatelessWidget {
   Widget _payrollButton(BuildContext context) {
     return BasicWidgets.mainNavigationButton(
         context, "Generate Payroll", const PayrollUI());
+  }
+
+  Widget _gotToFileUpload(BuildContext context) {
+    return BasicWidgets.mainNavigationButton(
+        context, "Upload reports", const FileUploader());
   }
 
   Widget _nifrsButton(BuildContext context) {

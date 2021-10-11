@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'basic_actions.dart';
+import 'package:project_time_saver/basic_actions.dart';
 
 class BasicWidgets {
   //This widget is a wrapper for a Padding with 5 on all sides
@@ -46,5 +46,15 @@ class BasicWidgets {
     return pad(mainBox(ElevatedButton(
         onPressed: () => BasicActions.nextPage(context, page),
         child: Text(text))));
+  }
+
+  static void snack(BuildContext context, String text,
+      [Color? color = Colors.black54, action]) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(text),
+      backgroundColor: color,
+      action: action,
+    ));
   }
 }
