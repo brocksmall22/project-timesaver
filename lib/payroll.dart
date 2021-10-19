@@ -55,8 +55,6 @@ class _PayrollUIState extends State<PayrollUI> {
       label: Text(_getDateRange()),
       onPressed: () async {
         _pickDates();
-        _checkDates();
-        setState(() {});
       },
     ));
   }
@@ -120,6 +118,8 @@ class _PayrollUIState extends State<PayrollUI> {
             end: DateTime.now()),
         firstDate: DateTime(DateTime.now().year - 1),
         lastDate: DateTime(DateTime.now().year + 1)))!;
+    _checkDates();
+    setState(() {});
   }
 
   void _checkDates() {
