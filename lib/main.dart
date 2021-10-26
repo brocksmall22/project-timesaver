@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:project_time_saver/basic_widgets.dart';
 import 'package:project_time_saver/file.dart';
 import 'package:project_time_saver/payroll.dart';
+import 'dart:io';
 
 void main() {
+  Process.run("python", ["api.py"]);
   runApp(const MyApp());
 }
 

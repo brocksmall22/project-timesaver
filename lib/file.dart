@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:project_time_saver/basic_widgets.dart';
+import 'package:http/http.dart';
 
 class FileUploader extends StatefulWidget {
   const FileUploader({Key? key}) : super(key: key);
@@ -22,7 +24,8 @@ class _FileUploaderState extends State<FileUploader> {
       body: Center(
           child: BasicWidgets.pad(
         BasicWidgets.horizontal([
-          BasicWidgets.vertical([_getFile(context), _processButton(context)]),
+          BasicWidgets.vertical(
+              [_getFile(context), _processButton(context), _testButton()]),
           BasicWidgets.vertical(
               [const Text("Selected Files"), _listOfFiles(context)])
         ]),
@@ -113,5 +116,20 @@ class _FileUploaderState extends State<FileUploader> {
       BasicWidgets.snack(context, "Error processing reports!", Colors.red);
     }
     return _worked;
+  }
+
+  Future<String> getData(url) async {
+    Response response = await get(url);
+    return response.body;
+  }
+
+  Widget _testButton() {
+    return ElevatedButton(
+        onPressed: () async {
+          var decoded =
+              jsonDecode(await getData(Uri.parse('http://127.0.0.1:5000/')));
+          print(decoded["query"]);
+        },
+        child: const Text("Test"));
   }
 }
