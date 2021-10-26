@@ -26,15 +26,41 @@ def loadWorkBooks(fileList):
 
 
 def readWorkBook(wb):
+    
+    getEmpNum(wb)
+    getPayRate(wb)
+    getRunInfo(wb)
+    
+
+def getEmpNum(wb):
     sheet = wb.active
     for i1 in sheet["A21:F55"]:
         
         if i1[5].value == 1:
             
             returnSting = wb["Pay"][i1[0].value.split("!")[1]].value
-            print(returnSting)
-            
+            print("Emp Num: "+str(returnSting))
 
+def getPayRate(wb):
+    sheet = wb.active
+    for i1 in sheet["F21:H55"]:
+        
+        if i1[0].value == 1:
+            
+            returnSting = wb["Pay"][i1[2].value.split("!")[1]].value
+            print("PayRate: "+str(returnSting))
+
+def getRunInfo(wb):
+    sheet = wb.active
+    date =  sheet["D3"].value
+    num =   sheet["B3"].value
+    runTime = sheet["B8"].value
+    startTime =sheet["B5"].value
+    endTime = sheet["L5"].value
+    returnString = "RunNumber: {0} \nDate: {1} \nRunTime: {2} \nStartTime: {3} \nEndtime: {4}"
+    print(returnString.format(num,date,runTime,startTime,endTime))
+    
+    
 # this main is purely for testing and will be removed later
 
 
