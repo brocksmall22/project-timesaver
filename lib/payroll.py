@@ -1,4 +1,4 @@
-import openpyxl
+from openpyxl import load_workbook
 
 # having trouble with import on PC
 
@@ -17,19 +17,23 @@ def getfilelist(fileString):
 
 def loadWorkBooks(fileList):
     for file in fileList:
-        print(file.value)
-        wb = loadWorkBooks(file.value)
+        print(file)
+        wb = load_workbook(file)
         readWorkBook(wb)
 
-# reads an indiual work book then prints the resulting values from in the range of cells A20->H55
+# reads an indiual work book then prints the resulting values from in the range of cells A21->F55
 # this still needs works with openpyxl as it  has trouble starting i do not know which values it returns yet
 
 
 def readWorkBook(wb):
     sheet = wb.active
-    cells = sheet['A20', 'H55']
-    for i1, i2, i3, i4 in cells:
-        print("{0} {1} {2} {3}".format(i1.value, i2.value, i3.value, i4.value))
+    for i1 in sheet["A21:F55"]:
+        
+        if i1[5].value == 1:
+            
+            returnSting = wb["Pay"][i1[0].value.split("!")[1]].value
+            print(returnSting)
+            
 
 # this main is purely for testing and will be removed later
 
