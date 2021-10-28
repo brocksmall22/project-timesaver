@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from datetime import datetime
 import json
 
 from flask.wrappers import Request
@@ -31,10 +32,11 @@ def submit_reports():
 @app.route('/generate_report', methods=["GET", "POST"])
 def generate_reports():
     dates = request.json
-    print(dates)
+    startDate = datetime.strptime(dates["startDate"].split(" ")[0], "%Y-%m-%d")
+    endDate = datetime.strptime(dates["endDate"].split(" ")[0], "%Y-%m-%d")
 
     #TODO: Interface with generating method
-    #lst: results = BlakesClass.nameOfGenerationMethod(dates)
+    #lst: results = BlakesClass.nameOfGenerationMethod(startDate, endDate)
 
     """
     Remove this line when the above work is implementd.
