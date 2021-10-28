@@ -5,7 +5,20 @@ import 'package:project_time_saver/payroll.dart';
 import 'dart:io';
 
 void main() {
-  Process.run("python", ["api.py"]);
+  bool debug = true;
+
+  !debug
+      ? Process.run("waitress-serve", [
+          "--host=127.0.0.1",
+          "--port=8080",
+          "lib.api:app"
+        ]).then((ProcessResult pr) {
+          print(pr.exitCode);
+          print(pr.stdout);
+          print(pr.stderr);
+        })
+      : null;
+
   runApp(const MyApp());
 }
 

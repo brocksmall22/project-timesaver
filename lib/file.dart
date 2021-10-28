@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:project_time_saver/basic_widgets.dart';
-import 'package:http/http.dart';
+import 'package:project_time_saver/ui_api.dart';
 
 class FileUploader extends StatefulWidget {
   const FileUploader({Key? key}) : super(key: key);
@@ -24,8 +24,7 @@ class _FileUploaderState extends State<FileUploader> {
       body: Center(
           child: BasicWidgets.pad(
         BasicWidgets.horizontal([
-          BasicWidgets.vertical(
-              [_getFile(context), _processButton(context), _testButton()]),
+          BasicWidgets.vertical([_getFile(context), _processButton(context)]),
           BasicWidgets.vertical(
               [const Text("Selected Files"), _listOfFiles(context)])
         ]),
@@ -108,28 +107,33 @@ class _FileUploaderState extends State<FileUploader> {
     BasicWidgets.snack(context, "Processing, please wait...");
     //This Future.delayed represents the action of contacting the API. Currently
     //returns a bool signifiying if it worked. Does not need to do this.
-    await Future.delayed(const Duration(seconds: 1));
-    bool _worked = true;
-    if (_worked) {
+    var _response = await API.submitFilesToDatabase(files);
+    if (_response[0] == "True") {
       BasicWidgets.snack(context, "Reports have been processed!", Colors.green);
+      return true;
     } else {
       BasicWidgets.snack(context, "Error processing reports!", Colors.red);
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Some reports could not be processed!"),
+              content: SizedBox(
+                width: 100,
+                height: 75,
+                child: ListView(
+                  children:
+                      _response.map((e) => Text(e.split("\\").last)).toList(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text("Okay"))
+              ],
+            );
+          });
+      return false;
     }
-    return _worked;
-  }
-
-  Future<String> getData(url) async {
-    Response response = await get(url);
-    return response.body;
-  }
-
-  Widget _testButton() {
-    return ElevatedButton(
-        onPressed: () async {
-          var decoded =
-              jsonDecode(await getData(Uri.parse('http://127.0.0.1:5000/')));
-          print(decoded["query"]);
-        },
-        child: const Text("Test"));
   }
 }
