@@ -6,6 +6,8 @@ database = r"C://sqlite/RunReportDB"
 fileList = []
 returnArray = []
 
+
+
 # returns the file list as an array using " "as a seperator between file names
 # most likley will be deprecated in the future mainly used for testing
 
@@ -31,22 +33,23 @@ def loadWorkBooks(fileList):
 
 def readWorkBook(wb):
 
-    getRunInfo(wb)
+    date,rNum = getRunInfo(wb)
 
-    getEmpinfo(wb)
+    getEmpinfo(wb,date,rNum)
 
 
 # this gets and returns the pay rate and employee number for those on run
-def getEmpinfo(wb):
+def getEmpinfo(wb,date,rNum):
     sheet = wb.active
     for i1 in sheet["A21:h55"]:
 
         if i1[5].value == 1:
 
-            returnSting = wb["Pay"][i1[0].value.split("!")[1]].value
-            print("Emp Num: " + str(returnSting))
-            returnSting = wb["Pay"][i1[7].value.split("!")[1]].value
-            print("PayRate: " + str(returnSting))
+            empNumber = wb["Pay"][i1[0].value.split("!")[1]].value
+            print("Emp Num: " + str(empNumber))
+            payRate = wb["Pay"][i1[7].value.split("!")[1]].value
+            print("PayRate: " + str(payRate))
+            create_responded(0,empNumber,payRate,date,rNum)
 
 
 # this is no longer needed only here for reference at this time
@@ -72,6 +75,8 @@ def getRunInfo(wb):
         "RunNumber: {0} \nDate: {1} \nRunTime: {2} \nStartTime: {3} \nEndtime: {4}"
     )
     print(returnString.format(num, date, runTime, startTime, endTime))
+    create_run(0,num,date,startTime,endTime,runTime)
+    return date, num 
 
 
 #database connection
@@ -92,23 +97,27 @@ def create_employee(conn, employee):
     conn.commit()
     return cur.lastrowid
 
-def create_run(conn, run):
+def create_run(conn,num,date,sTime,eTime,rTime):
     sql = ''' INSERT INTO Run(number, date, startTime, stopTime, runTime)
-              VALUES(?,?,?,?,?) '''
-    cur = conn.cursor()
-    cur.execute(sql, run)
-    conn.commit()
-    return cur.lastrowid
+              VALUES({0},{1},{2},{3},{4}) '''
+    #cur = conn.cursor()
+    sql = sql.format(num,date,sTime,eTime,rTime)
+    print(sql)
+    #cur.execute(sql)
+    #conn.commit()
+    #return cur.lastrowid
 
-def create_responded(conn, responded):
+def create_responded(conn,empNumber,payRate,date,num):
     sql = ''' INSERT INTO Responded(empNumber, runNumber, date, payRate)
-              VALUES(?,?,?,?) '''
-    cur = conn.cursor()
-    cur.execute(sql, responded)
-    conn.commit()
-    return cur.lastrowid
+              VALUES({0},{1},{2},{3}) '''
+    #cur = conn.cursor()
+    sql = sql.format(empNumber,num,date,payRate)
+    print(sql)
+    #cur.execute())
+    #conn.commit()
+    #return cur.lastrowid
 
-
+#----------------------------------------------------------
 # this main is purely for testing and will be removed later
 def main():
     loadWorkBooks(getfilelist(input()))
@@ -116,3 +125,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+#----------------------------------------------------------
