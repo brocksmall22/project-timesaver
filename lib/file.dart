@@ -113,27 +113,31 @@ class _FileUploaderState extends State<FileUploader> {
       return true;
     } else {
       BasicWidgets.snack(context, "Error processing reports!", Colors.red);
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("Some reports could not be processed!"),
-              content: SizedBox(
-                width: 100,
-                height: 75,
-                child: ListView(
-                  children:
-                      _response.map((e) => Text(e.split("\\").last)).toList(),
-                ),
-              ),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text("Okay"))
-              ],
-            );
-          });
+      _failedSubmissionsAlert(context, _response);
       return false;
     }
+  }
+
+  void _failedSubmissionsAlert(BuildContext context, List response) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Some reports could not be processed!"),
+            content: SizedBox(
+              width: 100,
+              height: 75,
+              child: ListView(
+                children:
+                    response.map((e) => Text(e.split("\\").last)).toList(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text("Okay"))
+            ],
+          );
+        });
   }
 }
