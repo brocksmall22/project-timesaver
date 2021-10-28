@@ -1,6 +1,8 @@
 from openpyxl import load_workbook
+import sqlite3
+from sqlite3 import Error
 
-
+database = r"C://sqlite/RunReportDB"
 fileList = []
 returnArray = []
 
@@ -34,7 +36,7 @@ def readWorkBook(wb):
     getEmpinfo(wb)
 
 
-# this gets and returns the pay rate and employe number for those on run
+# this gets and returns the pay rate and employee number for those on run
 def getEmpinfo(wb):
     sheet = wb.active
     for i1 in sheet["A21:h55"]:
@@ -47,7 +49,7 @@ def getEmpinfo(wb):
             print("PayRate: " + str(returnSting))
 
 
-# this is no longer needed only here for refernce at this time
+# this is no longer needed only here for reference at this time
 def getPayRate(wb):
     sheet = wb.active
     for i1 in sheet["F21:H55"]:
@@ -58,7 +60,7 @@ def getPayRate(wb):
             print("PayRate: " + str(returnSting))
 
 
-# gets all run info from the spcifc cells
+# gets all run info from the specific cells
 def getRunInfo(wb):
     sheet = wb.active
     date = sheet["D3"].value
@@ -72,9 +74,42 @@ def getRunInfo(wb):
     print(returnString.format(num, date, runTime, startTime, endTime))
 
 
+#database connection
+def create_connection():
+    conn = None
+    try:
+        conn = sqlite3.connect(database)
+    except Error as e:
+        print(e)
+    return conn
+
+#inserting rows to different tables
+def create_employee(conn, employee):
+    sql = ''' INSERT INTO Employee(name,number)
+              VALUES(?,?) '''
+    cur = conn.cursor()
+    cur.execute(sql, employee)
+    conn.commit()
+    return cur.lastrowid
+
+def create_run(conn, run):
+    sql = ''' INSERT INTO Run(number, date, startTime, stopTime, runTime)
+              VALUES(?,?,?,?,?) '''
+    cur = conn.cursor()
+    cur.execute(sql, run)
+    conn.commit()
+    return cur.lastrowid
+
+def create_responded(conn, responded):
+    sql = ''' INSERT INTO Responded(empNumber, runNumber, date, payRate)
+              VALUES(?,?,?,?) '''
+    cur = conn.cursor()
+    cur.execute(sql, responded)
+    conn.commit()
+    return cur.lastrowid
+
+
 # this main is purely for testing and will be removed later
-
-
 def main():
     loadWorkBooks(getfilelist(input()))
 
