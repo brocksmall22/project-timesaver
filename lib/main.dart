@@ -2,8 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:project_time_saver/basic_widgets.dart';
 import 'package:project_time_saver/file.dart';
 import 'package:project_time_saver/payroll.dart';
+import 'dart:io';
 
 void main() {
+  bool debug = true;
+
+  !debug
+      ? Process.run("waitress-serve", [
+          "--host=127.0.0.1",
+          "--port=8080",
+          "lib.api:app"
+        ]).then((ProcessResult pr) {
+          print(pr.exitCode);
+          print(pr.stdout);
+          print(pr.stderr);
+        })
+      : null;
+
   runApp(const MyApp());
 }
 

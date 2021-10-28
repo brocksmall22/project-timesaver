@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:project_time_saver/basic_widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:project_time_saver/file.dart';
+import 'package:project_time_saver/ui_api.dart';
 
 class PayrollUI extends StatefulWidget {
   const PayrollUI({Key? key}) : super(key: key);
@@ -136,24 +137,68 @@ class _PayrollUIState extends State<PayrollUI> {
     BasicWidgets.snack(context, "Generating, please wait...");
     //This Future.delayed represents the action of contacting the API. Currently
     //returns a bool signifiying if it worked. Does not need to do this.
-    await Future.delayed(const Duration(seconds: 1));
-    bool _worked = true;
-    if (_worked) {
-      BasicWidgets.snack(
-          context, "Payroll generated!", Colors.green, _openPayroll());
+    var _response = await API
+        .generatePayrollFiles([_dates.start.toString(), _dates.end.toString()]);
+    print(_response);
+    if (_response[0] == true) {
+      BasicWidgets.snack(context, "Payroll generated!", Colors.green);
+      _passedGenerationAlert(
+          context, _response.getRange(1, _response.length).toList());
+      return true;
     } else {
       BasicWidgets.snack(context, "Error generating payroll!", Colors.red);
+      _failedGenerationAlert(context, _response);
+      return false;
     }
-    return _worked;
   }
 
-  SnackBarAction _openPayroll() {
-    return SnackBarAction(
-      label: "Open file",
-      onPressed: () => {
-        //TODO: Code for opening the generated file
-      },
-      textColor: Colors.white,
-    );
+  void _passedGenerationAlert(BuildContext context, List response) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Reports were sucessfully generated!"),
+            content: SizedBox(
+              width: 100,
+              height: 75,
+              child: ListView(
+                children: response.map((e) => Text(e)).toList(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    //TODO: Add the ability to open the files
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Open files")),
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text("Close"))
+            ],
+          );
+        });
+  }
+
+  void _failedGenerationAlert(BuildContext context, List response) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Reports could not be generated!"),
+            content: SizedBox(
+              width: 100,
+              height: 75,
+              child: ListView(
+                children: response.map((e) => Text(e)).toList(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text("Close"))
+            ],
+          );
+        });
   }
 }
