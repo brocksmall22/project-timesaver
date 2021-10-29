@@ -1,7 +1,7 @@
 import sqlite3
 from sqlite3 import Error
 
-database = r"C://sqlite/RunReportDB"
+database = r"file name"
 
 
 def create_connection(db_file):
@@ -28,7 +28,7 @@ def main():
     sql_create_run_table = """CREATE TABLE IF NOT EXISTS Run (number TINYINT PRIMARY KEY, date DATE, 
                                 startTime SMALLINT, stopTime SMALLINT, runTime TINYINT); """
 
-    sql_create_report_table = """Responded (empNumber STRING REFERENCES Employee (number), 
+    sql_create_report_table = """CREATE TABLE IF NOT EXISTS Responded (empNumber STRING REFERENCES Employee (number), 
                                 runNumber TINYINT REFERENCES Run (number), date DATE REFERENCES Run (date), 
                                 payRate FLOAT);"""
 
@@ -39,9 +39,10 @@ def main():
         create_table(conn, sql_create_employee_table)
         create_table(conn, sql_create_run_table)
         create_table(conn, sql_create_report_table)
+        print("Success!")
     else:
         print("Error! cannot create the database connection.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
