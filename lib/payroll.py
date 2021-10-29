@@ -119,7 +119,7 @@ def create_responded(conn, empNumber, payRate, date, num):
     cur = conn.cursor()
     sql = sql.format(empNumber, num, date, payRate)
     print(sql)
-    cur.execute()
+    cur.execute(sql)
     conn.commit()
     return cur.lastrowid
 
