@@ -12,8 +12,6 @@ class PayrollUI extends StatefulWidget {
 }
 
 class _PayrollUIState extends State<PayrollUI> {
-  //TODO: Add code for error messages. Cannot be properly implemented until the
-  //REST API is complete
   //TODO: Remove the redamentary file picking info and button when we have
   //OneDrive integration
   //TODO: Resolve remaining function specific tasks
@@ -27,11 +25,14 @@ class _PayrollUIState extends State<PayrollUI> {
         ),
         body: BasicWidgets.vertical(
           [
-            //TODO: Remove the next two widgets when OneDrive functionality is
+            //TODO: Remove the next three widgets when OneDrive functionality is
             //added
             const Text(
                 "Don't forget to ensure all run reports have been processed!"),
             _gotToFileUpload(context),
+            const SizedBox(
+              height: 50,
+            ),
             _getDate(context),
             _confirmationButtons(context),
           ],
@@ -132,22 +133,17 @@ class _PayrollUIState extends State<PayrollUI> {
   }
 
   Future<bool> _submitToPython() async {
-    //TODO: add the code to connect python and flutter.
-    //Cannot be properly implemented until the REST API is complete.
     BasicWidgets.snack(context, "Generating, please wait...");
-    //This Future.delayed represents the action of contacting the API. Currently
-    //returns a bool signifiying if it worked. Does not need to do this.
-    var _response = await API
+    var response = await API
         .generatePayrollFiles([_dates.start.toString(), _dates.end.toString()]);
-    print(_response);
-    if (_response[0] == true) {
+    if (response[0] == true) {
       BasicWidgets.snack(context, "Payroll generated!", Colors.green);
       _passedGenerationAlert(
-          context, _response.getRange(1, _response.length).toList());
+          context, response.getRange(1, response.length).toList());
       return true;
     } else {
       BasicWidgets.snack(context, "Error generating payroll!", Colors.red);
-      _failedGenerationAlert(context, _response);
+      _failedGenerationAlert(context, response);
       return false;
     }
   }
