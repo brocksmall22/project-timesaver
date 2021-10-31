@@ -10,9 +10,10 @@ This method runs the UI. If you set `debug` to false, it check to see if an
 instance of the server is running. If so, it will continue as normal, if not, it
 will start the server.
 
-A small bug prevents the server from being closed with the UI. There is no way
-to capture when the UI is closing and close the server with it. In the next
-iteration, with some tuning, that is to be expected behavior.
+Bugs..
+  medium: A small bug prevents the server from being closed with the UI. There
+    is no way to capture when the UI is closing and close the server with it.
+    In the next iteration, with some tuning, that is to be expected behavior.
 */
 void main() async {
   bool debug = false;
