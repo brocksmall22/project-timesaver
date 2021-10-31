@@ -1,3 +1,4 @@
+from os import error
 from openpyxl import load_workbook
 import sqlite3
 from sqlite3 import Error
@@ -5,39 +6,41 @@ from sqlite3 import Error
 database = r"C://sqlite/RunReportDB"
 returnArray = []
 
-
 # loops Through the fileList array and runs the readWorkBook on each file
+
+
+def getfilelist(fileString):
+    fileList = fileString.split(" ")
+    return fileList
 
 
 def loadWorkBooks(fileList):
     for file in fileList:
         print(file)
         wb = load_workbook(file)
-        try:
-            readWorkBook(wb)
-        except (e):
-            print(e)
-            returnArray.append(file)
-        
+
+        readWorkBook(wb, file)
+
     if len(returnArray) == 0:
         return [True]
     else:
         return returnArray
 
 
-
-
 # reads an indiual work book then prints the resulting values from in the range of cells A21->F55
 # issues with
 
 
-def readWorkBook(wb):
+def readWorkBook(wb, filename):
     print("ENTER DATABASE PATH:")
     conn = create_connection(input())
+    try:
 
-    date, rNum = getRunInfo(conn, wb)
+        date, rNum = getRunInfo(conn, wb)
 
-    getEmpinfo(conn, wb, date, rNum)
+        getEmpinfo(conn, wb, date, rNum)
+    except Exception as e:
+        returnArray.appened(filename)
 
 
 # this gets and returns the pay rate and employee number for those on run
