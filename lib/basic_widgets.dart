@@ -2,40 +2,62 @@ import 'package:flutter/material.dart';
 import 'package:project_time_saver/basic_actions.dart';
 
 class BasicWidgets {
-  //This widget is a wrapper for a Padding with 5 on all sides
-  static Widget pad(Widget toPad) {
-    return Padding(
-      padding: const EdgeInsets.all(5),
-      child: toPad,
-    );
-  }
+  /*
+  This widget is a wrapper for a Padding with 5 on all sides
 
-  //This widget is a wrapper for a SizeBox with a width of 150
-  static Widget mainBox(Widget toBox) {
-    return SizedBox(
-      width: 150,
-      child: toBox,
-    );
-  }
+  inputs..
+    toPad: the widget you wish to pad
+  */
+  static Widget pad(Widget toPad) => Padding(
+        padding: const EdgeInsets.all(5),
+        child: toPad,
+      );
 
-  //This is a wrapper for a the Column widget with center aligned elements
-  static Widget vertical(List<Widget> widgets) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: widgets,
-    );
-  }
+  /*
+  This widget is a wrapper for a SizeBox with a width of 150
 
-  //This is a wrapper for a the Row widget with center aligned elements
-  static Widget horizontal(List<Widget> widgets) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: widgets,
-    );
-  }
+  inputs..
+    toBox: the widget you wish to box
+  */
+  static Widget mainBox(Widget toBox) => SizedBox(
+        width: 150,
+        child: toBox,
+      );
 
-  //This is a wrapper for all of the nav buttons on the main page. The "page"
-  //variable is a class variable, such as "payrollUI()"
+  /*
+  This is a wrapper for a the Column widget with center aligned elements
+
+  inputs..
+    widgets: a list of widgets you wish to put in a Column
+  */
+  static Widget vertical(List<Widget> widgets) => Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: widgets,
+      );
+
+  /*
+  This is a wrapper for a the Row widget with center aligned elements
+
+  inputs..
+    widgets: a list of widgets you wish to put in a Row
+  */
+  static Widget horizontal(List<Widget> widgets) => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: widgets,
+      );
+
+  /*
+  This is a wrapper for all of the nav buttons on the main page.
+
+  inputs..
+    page: a class that contains a new page
+    text: The text you wish to display on the button
+
+  returns..
+    case 1: If page is null, it will return a button that is disabled
+    case 2: If page is not null, it will return a button that will navigate to
+      the new page
+  */
   static Widget mainNavigationButton(BuildContext context, String text, page) {
     //This if, and everything in it, can be removed when all main UI buttons
     //have a page they link to
@@ -48,6 +70,17 @@ class BasicWidgets {
         child: Text(text))));
   }
 
+  /*
+  This function will draw a snakbar on the bottom of the page.
+
+  inputs..
+    text: the text you wish to display on the snackbar
+    color (optional): the color of the snackabar
+        default: a dark grey color
+    action (optional): a SnackAction object to provide a button the user can
+      press on the snackbar.
+        default: null
+  */
   static void snack(BuildContext context, String text,
       [Color? color = Colors.black54, action]) {
     ScaffoldMessenger.of(context).clearSnackBars();
