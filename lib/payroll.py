@@ -3,17 +3,7 @@ import sqlite3
 from sqlite3 import Error
 
 database = r"C://sqlite/RunReportDB"
-fileList = []
 returnArray = []
-
-
-# returns the file list as an array using " "as a seperator between file names
-# most likley will be deprecated in the future mainly used for testing
-
-
-def getfilelist(fileString):
-    fileList = fileString.split(" ")
-    return fileList
 
 
 # loops Through the fileList array and runs the readWorkBook on each file
@@ -23,7 +13,18 @@ def loadWorkBooks(fileList):
     for file in fileList:
         print(file)
         wb = load_workbook(file)
-        readWorkBook(wb)
+        try:
+            readWorkBook(wb)
+        except (e):
+            print(e)
+            returnArray.append(file)
+        
+    if len(returnArray) == 0:
+        return [True]
+    else:
+        return returnArray
+
+
 
 
 # reads an indiual work book then prints the resulting values from in the range of cells A21->F55
