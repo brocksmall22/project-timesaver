@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from datetime import datetime
 import json
+import payroll
 
 from flask.wrappers import Request
 
@@ -46,8 +47,7 @@ returns..
 def submit_reports():
     files = request.json
 
-    #TODO: Interface with adding method
-    # lst: results = DylansClass.nameOfIngestionMethod(files)
+    lst: results = payroll.loadWorkbooks(files)
 
     """
     Remove this line when the above work is implementd.
