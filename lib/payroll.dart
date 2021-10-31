@@ -16,88 +16,97 @@ class _PayrollUIState extends State<PayrollUI> {
   //OneDrive integration
   //TODO: Resolve remaining function specific tasks
 
-  // Layout of the page //
+  //Layout of the page
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text("Payroll Generator"),
-        ),
-        body: BasicWidgets.vertical(
-          [
-            //TODO: Remove the next three widgets when OneDrive functionality is
-            //added
-            const Text(
-                "Don't forget to ensure all run reports have been processed!"),
-            _gotToFileUpload(context),
-            const SizedBox(
-              height: 50,
-            ),
-            _getDate(context),
-            _confirmationButtons(context),
-          ],
-        ));
-  }
+  Widget build(BuildContext context) => Scaffold(
+      appBar: AppBar(
+        title: const Text("Payroll Generator"),
+      ),
+      body: BasicWidgets.vertical(
+        [
+          //TODO: Remove the next three widgets when OneDrive functionality is
+          //added
+          const Text(
+              "Don't forget to ensure all run reports have been processed!"),
+          _gotToFileUpload(context),
+          const SizedBox(
+            height: 50,
+          ),
+          _getDate(context),
+          _confirmationButtons(context),
+        ],
+      ));
 
-  // Variables //
+  //Variables:
+
   DateTimeRange _dates =
       DateTimeRange(start: DateTime.now(), end: DateTime.now());
   bool _hasDates = false;
 
-  // Widgets //
-  //TODO: Remove this widget when OneDrive is integrated
-  Widget _gotToFileUpload(BuildContext context) {
-    return BasicWidgets.mainNavigationButton(
-        context, "Upload reports", const FileUploader());
-  }
+  //Widgets:
 
-  Widget _getDate(BuildContext context) {
-    return BasicWidgets.pad(ElevatedButton.icon(
-      icon: const Icon(Icons.calendar_today),
-      label: Text(_getDateRange()),
-      onPressed: () async {
-        _pickDates();
-      },
-    ));
-  }
+  /*
+  TODO: Remove this widget when OneDrive is integrated
 
-  Widget _confirmationButtons(BuildContext context) {
-    return BasicWidgets.horizontal(
-      [
-        BasicWidgets.pad(_generatePayroll(context)),
-        BasicWidgets.pad(_cancel(context))
-      ],
-    );
-  }
+  This widget is a button that will take you to the file submission page.
+  */
+  Widget _gotToFileUpload(BuildContext context) =>
+      BasicWidgets.mainNavigationButton(
+          context, "Upload reports", const FileUploader());
 
-  Widget _generatePayroll(BuildContext context) {
-    return ElevatedButton(
-        onPressed: _hasDates ? () async => _submitToPython() : null,
-        child: const Text("Generate"));
-  }
+  //This button opens a DateRangePicker dialog to pick the start and end dates.
+  Widget _getDate(BuildContext context) => BasicWidgets.pad(ElevatedButton.icon(
+        icon: const Icon(Icons.calendar_today),
+        label: Text(_getDateRange()),
+        onPressed: () async {
+          _pickDates();
+        },
+      ));
 
-  Widget _cancel(BuildContext context) {
-    return ElevatedButton(
-        onPressed: () => Navigator.pop(context), child: const Text("Cancel"));
-  }
-
-  Widget _boxedBuilder(Widget? child) {
-    return Center(
-      child: ListView(
-        shrinkWrap: true,
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400, maxHeight: 630),
-              child: child,
-            ),
-          )
+  //This widget contains the cancel and the generate buttons.
+  Widget _confirmationButtons(BuildContext context) => BasicWidgets.horizontal(
+        [
+          BasicWidgets.pad(_generatePayroll(context)),
+          BasicWidgets.pad(_cancel(context))
         ],
-      ),
-    );
-  }
+      );
+
+  //This widget is the button that will request the API to generate the reports.
+  Widget _generatePayroll(BuildContext context) => ElevatedButton(
+      onPressed: _hasDates ? () async => _submitToPython() : null,
+      child: const Text("Generate"));
+
+  //This button will take you to the home page.
+  Widget _cancel(BuildContext context) => ElevatedButton(
+      onPressed: () => Navigator.pop(context), child: const Text("Cancel"));
+
+  /*
+  The showDateRangePicker built in function opens the DateRangePicker widget
+  full screen which looks really sloppy on desktop. This widget overrides the
+  default builder to open the DateRangePicker widget as a popup.
+
+  Bugs..
+    minor: You cannot close the dialouge by clicking out of it unless you click
+      above or below it. Ideally it would close if you click anywhere outside.
+  */
+  Widget _boxedBuilder(Widget? child) => Center(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 400, maxHeight: 630),
+                child: child,
+              ),
+            )
+          ],
+        ),
+      );
 
   // Helper Functions //
+
+  //This returns the text in the _getDate button.
   String _getDateRange() {
     if (_dates.duration.inDays == 0) {
       return "Press to set pay period";
@@ -109,6 +118,7 @@ class _PayrollUIState extends State<PayrollUI> {
     }
   }
 
+  //This calls the DateRangePicker and then updates the state.
   void _pickDates() async {
     _dates = (await showDateRangePicker(
         context: context,
@@ -124,6 +134,7 @@ class _PayrollUIState extends State<PayrollUI> {
     setState(() {});
   }
 
+  //This determines if valid dates were chosen (more than one day).
   void _checkDates() {
     if (_dates.duration.inDays == 0) {
       _hasDates = false;
@@ -132,6 +143,14 @@ class _PayrollUIState extends State<PayrollUI> {
     }
   }
 
+  /*
+  This method is responseible for interfacing with the API and handling the
+  server response. It will draw a dialog for both failed and successful cases.
+
+  returns..
+    case 1: True if the server could generate the files
+    case 2: False if the files could not be generated
+  */
   Future<bool> _submitToPython() async {
     BasicWidgets.snack(context, "Generating, please wait...");
     var response = await API
@@ -148,53 +167,68 @@ class _PayrollUIState extends State<PayrollUI> {
     }
   }
 
-  void _passedGenerationAlert(BuildContext context, List response) {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text("Reports were sucessfully generated!"),
-            content: SizedBox(
-              width: 100,
-              height: 75,
-              child: ListView(
-                children: response.map((e) => Text(e)).toList(),
-              ),
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    //TODO: Add the ability to open the files
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text("Open files")),
-              TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text("Close"))
-            ],
-          );
-        });
-  }
+  /*
+  TODO: Add the folder opening functionality.
 
-  void _failedGenerationAlert(BuildContext context, List response) {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text("Reports could not be generated!"),
-            content: SizedBox(
-              width: 100,
-              height: 75,
-              child: ListView(
-                children: response.map((e) => Text(e)).toList(),
+  Draws an alert with information about the files as well as a way to open the
+  generated files.
+
+  inputs..
+    response: A list containing true followed by strings with information about
+      the reports.
+  */
+  void _passedGenerationAlert(BuildContext context, List response) =>
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Reports were sucessfully generated!"),
+              content: SizedBox(
+                width: 100,
+                height: 75,
+                child: ListView(
+                  children: response.map((e) => Text(e)).toList(),
+                ),
               ),
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text("Close"))
-            ],
-          );
-        });
-  }
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      //TODO: Add the ability to open the files
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text("Open files")),
+                TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text("Close"))
+              ],
+            );
+          });
+
+  /*
+  Draws an alert that informs the user about a failed attempt to make the
+  reports.
+
+  inputs..
+    response: A list containing error messages strings
+  */
+  void _failedGenerationAlert(BuildContext context, List response) =>
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Reports could not be generated!"),
+              content: SizedBox(
+                width: 100,
+                height: 75,
+                child: ListView(
+                  children: response.map((e) => Text(e)).toList(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text("Close"))
+              ],
+            );
+          });
 }
