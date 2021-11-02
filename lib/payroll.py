@@ -73,6 +73,12 @@ class payroll:
                 print("Emp Num: " + str(empNumber))
                 payRate = wb["Pay"][i1[7].value.split("!")[1]].value
                 print("PayRate: " + str(payRate))
+                Name = sheet[1].value
+                print("Name: "+Name)
+                if payroll.empNeedsUpdated(conn, empNumber):
+                   
+                else:
+                     payroll.create_employee(conn, Name, empNumber)
                 if payroll.respondedNeedsUpdated(conn, empNumber, date, rNum):
                     payroll.updateResponded(conn, empNumber, payRate, date, rNum)
                 else:
@@ -155,9 +161,9 @@ class payroll:
 
 
     # inserting rows to different tables
-    def create_employee(conn, employee):
-        sql = """ INSERT INTO Employee(name,number)
-                VALUES(?,?) """
+    def create_employee(conn, name, empNumber):
+        sql = f""" INSERT INTO Employee(name,number)
+                VALUES({name},{empNumber}) """
         cur = conn.cursor()
         cur.execute(sql)
         conn.commit()
@@ -185,7 +191,20 @@ class payroll:
         conn.commit()
         return cur.lastrowid
 
-    
+    def empNeedsUpdated(conn, empNumber):
+        statement = f"""SELECT * FROM Employee WHERE number = {empNumber};"""
+        cur = conn.cursor()
+        cur.execute(statement)
+        values = cur.fetchall()
+
+        return False if len(values) == 0 else True
+
+    def updateEmp(conn, name ,empNumber):
+        statement = f"""UPDATE Employee SET name = {name} WHERE empNumber = {empNumber};"""
+        cur = conn.cursor()
+        cur.execute(statement)
+        conn.commit()
+        return cur.lastrowid
 
     # ----------------------------------------------------------
     # this main is purely for testing and will be removed later
