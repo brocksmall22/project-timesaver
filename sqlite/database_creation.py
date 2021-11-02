@@ -4,7 +4,7 @@ from sqlite3 import Error
 class creator:
     @staticmethod
     def create_db(db_file):
-        sql_create_employee_table = """ CREATE TABLE IF NOT EXISTS Employee (name STRING, number SMALLINT PRIMARY KEY); """
+        sql_create_employee_table = """ CREATE TABLE IF NOT EXISTS Employee (name STRING, number SMALLINT PRIMARY KEY, city_numer SMALLINT NULL); """
 
         sql_create_run_table = """CREATE TABLE IF NOT EXISTS Run (number TINYINT, date DATE, 
                                     startTime SMALLINT, stopTime SMALLINT, runTime TINYINT, PRIMARY KEY(number, date)); """
