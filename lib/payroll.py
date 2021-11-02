@@ -73,10 +73,10 @@ class payroll:
                 print("Emp Num: " + str(empNumber))
                 payRate = wb["Pay"][i1[7].value.split("!")[1]].value
                 print("PayRate: " + str(payRate))
-                Name = sheet[1].value
+                Name = wb["Pay"][i1[1].value.split("!")[1]].value
                 print("Name: "+Name)
                 if payroll.empNeedsUpdated(conn, empNumber):
-                   
+                    payroll.updateEmp(conn, Name, empNumber)
                 else:
                      payroll.create_employee(conn, Name, empNumber)
                 if payroll.respondedNeedsUpdated(conn, empNumber, date, rNum):
@@ -163,7 +163,7 @@ class payroll:
     # inserting rows to different tables
     def create_employee(conn, name, empNumber):
         sql = f""" INSERT INTO Employee(name,number)
-                VALUES({name},{empNumber}) """
+                VALUES(\'{name}\',{empNumber}) """
         cur = conn.cursor()
         cur.execute(sql)
         conn.commit()
@@ -200,7 +200,7 @@ class payroll:
         return False if len(values) == 0 else True
 
     def updateEmp(conn, name ,empNumber):
-        statement = f"""UPDATE Employee SET name = {name} WHERE empNumber = {empNumber};"""
+        statement = f"""UPDATE Employee SET name = \'{name}\' WHERE number = {empNumber};"""
         cur = conn.cursor()
         cur.execute(statement)
         conn.commit()
