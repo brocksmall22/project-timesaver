@@ -16,7 +16,7 @@ Bugs..
     In the next iteration, with some tuning, that is to be expected behavior.
 */
 void main() async {
-  bool debug = true;
+  bool debug = false;
   bool awake = await API.checkIfServerIsAlive();
 
   !debug & !awake
