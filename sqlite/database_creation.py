@@ -16,7 +16,7 @@ class creator:
         conn = creator.create_connection(db_file)
 
         # create tables
-        if conn is not None:
+        if conn is not None:    
             creator.create_table(conn, sql_create_employee_table)
             creator.create_table(conn, sql_create_run_table)
             creator.create_table(conn, sql_create_report_table)

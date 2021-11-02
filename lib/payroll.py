@@ -10,13 +10,6 @@ class payroll:
     returnArray = []
     endRange = 0
 
-    
-    # This is here for testing purposes
-    def getfilelist(fileString):
-        fileList = fileString.split(" ")
-        return fileList
-
-
     # loops Through the fileList array and runs the readWorkBook on each file
     def loadWorkBooks(fileList):
         for file in fileList:
@@ -34,7 +27,7 @@ class payroll:
     # reads an indiual work book then prints the resulting values from in the range of cells A21->F55
     # issues with
     def readWorkBook(wb, filename):
-        conn = payroll.create_connection(os.getenv('APPDATA') + "\\project-time-saver\\database.db")
+        conn = payroll.createConnection(os.getenv('APPDATA') + "\\project-time-saver\\database.db")
         try:
 
             payroll.getRange(wb)
@@ -78,39 +71,11 @@ class payroll:
                 if payroll.empNeedsUpdated(conn, empNumber):
                     payroll.updateEmp(conn, Name, empNumber)
                 else:
-                     payroll.create_employee(conn, Name, empNumber)
+                     payroll.createEmployee(conn, Name, empNumber)
                 if payroll.respondedNeedsUpdated(conn, empNumber, date, rNum):
                     payroll.updateResponded(conn, empNumber, payRate, date, rNum)
                 else:
-                    payroll.create_responded(conn, empNumber, payRate, date, rNum)
-
-
-    def respondedNeedsUpdated(conn, empNumber, date, rNum):
-        statement = f"""SELECT * FROM Responded WHERE Date = \'{date}\' AND empNumber = {empNumber} AND runNumber = {rNum};"""
-        cur = conn.cursor()
-        cur.execute(statement)
-        values = cur.fetchall()
-
-        return False if len(values) == 0 else True
-
-
-    def updateResponded(conn, empNumber, payRate, date, rNum):
-        statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum};"""
-        cur = conn.cursor()
-        cur.execute(statement)
-        conn.commit()
-        return cur.lastrowid
-
-
-    # this is no longer needed only here for reference at this time
-    def getPayRate(wb):
-        sheet = wb.active
-        for i1 in sheet[f"F21:H{payroll.endRange}"]:
-
-            if i1[0].value == 1:
-
-                returnSting = wb["Pay"][i1[2].value.split("!")[1]].value
-                print("PayRate: " + str(returnSting))
+                    payroll.createResponded(conn, empNumber, payRate, date, rNum)
 
 
     # gets all run info from the specific cells
@@ -127,30 +92,17 @@ class payroll:
         if payroll.runNeedsUpdated(conn, num, date):
             payroll.updateRun(conn, num, date, startTime, endTime, runTime)
         else:
-            payroll.create_run(conn, num, date, startTime, endTime, runTime)
+            payroll.createRun(conn, num, date, startTime, endTime, runTime)
             print(returnString.format(num, date, runTime, startTime, endTime))
         return date, num
 
-
-    def runNeedsUpdated(conn, num, date):
-        statement = f"""SELECT * FROM Run WHERE Date = \'{date}\' AND number = {num};"""
-        cur = conn.cursor()
-        cur.execute(statement)
-        values = cur.fetchall()
-
-        return False if len(values) == 0 else True
-
-
-    def updateRun(conn, num, date, startTime, endTime, runTime):
-        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime} WHERE number = {num} AND date = \'{date}\';"""
-        cur = conn.cursor()
-        cur.execute(statement)
-        conn.commit()
-        return cur.lastrowid
-
-
-    # database connection
-    def create_connection(db_file):
+#-----------------------------------------------------------------------------------------------------------------------
+    """
+    createConnection(db_file)
+    this creates the connection to the SQL database
+    it requires the path to the Database
+    """
+    def createConnection(db_file):
         conn = None
         try:
             conn = sqlite3.connect(db_file)
@@ -160,17 +112,22 @@ class payroll:
         return conn
 
 
-    # inserting rows to different tables
-    def create_employee(conn, name, empNumber):
-        sql = f""" INSERT INTO Employee(name,number)
-                VALUES(\'{name}\',{empNumber}) """
-        cur = conn.cursor()
-        cur.execute(sql)
-        conn.commit()
-        return cur.lastrowid
-
-
-    def create_run(conn, num, date, sTime, eTime, rTime):
+    """
+    This contains all of the SQL functions related to Runs
+    -------------------------------------------------------------------------------------------------------
+    createRun 
+    this is the general insertion of runs into the data base.
+    it requires the runNumber, Date, StartTime, EndTime, Runtime, and the connextion to the sql database
+    -------------------------------------------------------------------------------------------------------
+    updateRun(conn, num, date, startTime, endTime, runTime)
+    this updates the run given that it has alredy been insterted into the database and has differing information then therun alredy has
+    it requires the runNumber, Date, StartTime, EndTime, Runtime, and the connextion to the sql database
+    -------------------------------------------------------------------------------------------------------
+    runNeedsUpdated(conn, num, date)
+    this checks the runs alredy in the database against the given information to see if the run needs to be updatded
+    it requires the Run number, date, and connection to the sql database
+    """
+    def createRun(conn, num, date, sTime, eTime, rTime):
         sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime)
                 VALUES({0},\'{1}\',{2},{3},{4}) """
         cur = conn.cursor()
@@ -180,13 +137,80 @@ class payroll:
         conn.commit()
         return cur.lastrowid
 
+    def updateRun(conn, num, date, startTime, endTime, runTime):
+        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime} WHERE number = {num} AND date = \'{date}\';"""
+        cur = conn.cursor()
+        cur.execute(statement)
+        conn.commit()
+        return cur.lastrowid
 
-    def create_responded(conn, empNumber, payRate, date, num):
+    def runNeedsUpdated(conn, num, date):
+        statement = f"""SELECT * FROM Run WHERE Date = \'{date}\' AND number = {num};"""
+        cur = conn.cursor()
+        cur.execute(statement)
+        values = cur.fetchall()
+
+        return False if len(values) == 0 else True
+
+    """
+    This Contains all of the SQL functions related to the Responded tabel
+    -------------------------------------------------------------------------------------------------------
+    createResponded(conn, empNumber, payRate, date, num)
+    this is the general insertion for the Responded Table
+    it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
+    -------------------------------------------------------------------------------------------------------
+    respondedNeedsUpdated(conn, empNumber, date, rNum)
+    this is to check the responded table against the given information to see if the responded table needs to be updated 
+    it requires the SQL Connection as well as Employee number, date of the run, and the run number
+    -------------------------------------------------------------------------------------------------------
+    updateResponded(conn, empNumber, payRate, date, rNum)
+    this is to update the responded table
+    it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
+    """        
+    def createResponded(conn, empNumber, payRate, date, num):
         sql = """ INSERT INTO Responded(empNumber, runNumber, date, payRate)
                 VALUES({0},{1},\'{2}\',{3}) """
         cur = conn.cursor()
         sql = sql.format(empNumber, num, date, payRate)
         print(sql)
+        cur.execute(sql)
+        conn.commit()
+        return cur.lastrowid
+
+    def respondedNeedsUpdated(conn, empNumber, date, rNum):
+        statement = f"""SELECT * FROM Responded WHERE Date = \'{date}\' AND empNumber = {empNumber} AND runNumber = {rNum};"""
+        cur = conn.cursor()
+        cur.execute(statement)
+        values = cur.fetchall()
+
+        return False if len(values) == 0 else True
+
+
+    def updateResponded(conn, empNumber, payRate, date, rNum):
+        statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum};"""
+        cur = conn.cursor()
+        cur.execute(statement)
+        conn.commit()
+        return cur.lastrowid
+    """
+    This Contains all of the SQL functions related to the Employee tabel
+    -------------------------------------------------------------------------------------------------------
+    createEmployee(conn, name, empNumber)
+    This is the insertion for the Employee table
+    It requires the SQL connection as well as the name, and employee number
+    -------------------------------------------------------------------------------------------------------
+    empNeedsUpdated(conn, empNumber)
+    this checks the Employee table against the given information to see if it needs to be updated
+    it rquires the SQL connection as well as the Employee number
+    -------------------------------------------------------------------------------------------------------
+    updateEmp(conn, name ,empNumber)
+    this updates the employee table given the new information
+    it requires the SQL connection as well as the Employee Name and Number
+    """
+    def createEmployee(conn, name, empNumber):
+        sql = f""" INSERT INTO Employee(name,number)
+                VALUES(\'{name}\',{empNumber}) """
+        cur = conn.cursor()
         cur.execute(sql)
         conn.commit()
         return cur.lastrowid
@@ -206,13 +230,3 @@ class payroll:
         conn.commit()
         return cur.lastrowid
 
-    # ----------------------------------------------------------
-    # this main is purely for testing and will be removed later
-    def main():
-        print("ENTER .XLSX FILE PATH:")
-        payroll.loadWorkBooks(payroll.getfilelist(input()))
-
-
-    if __name__ == "__main__":
-        main()
-    # ----------------------------------------------------------
