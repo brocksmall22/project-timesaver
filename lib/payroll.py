@@ -185,6 +185,7 @@ class payroll:
         conn.commit()
         return cur.lastrowid
 
+    
 
     # ----------------------------------------------------------
     # this main is purely for testing and will be removed later
