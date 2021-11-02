@@ -6,6 +6,7 @@ Employee
 -------------------
 Name - String
 Number - SmallINT - key
+cityNumber -SmallINT
 -------------------
 
 Run
