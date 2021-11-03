@@ -4,13 +4,19 @@ from openpyxl import load_workbook
 import sqlite3
 from sqlite3 import Error
 
+
 class payroll:
 
     database = r"C://sqlite/RunReportDB"
     returnArray = []
     endRange = 0
 
-    # loops Through the fileList array and runs the readWorkBook on each file
+    """
+    loadWorkBooks(fileList)
+    loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
+    This requires the whole file list
+    It returns the retun array of the failed files or true if no files have failed
+    """
     def loadWorkBooks(fileList):
         for file in fileList:
             print(file)
@@ -23,26 +29,32 @@ class payroll:
         else:
             return payroll.returnArray
 
-
-    # reads an indiual work book then prints the resulting values from in the range of cells A21->F55
-    # issues with
+    """
+    readWorkBook(wb, filename)
+    reads an indiual work book then prints the resulting values from in the range of cells A21->F55
+    It requires the Workbook and the Filename
+    """
     def readWorkBook(wb, filename):
-        conn = payroll.createConnection(os.getenv('APPDATA') + "\\project-time-saver\\database.db")
+        conn = payroll.createConnection(
+            os.getenv('APPDATA') + "\\project-time-saver\\database.db")
         try:
 
             payroll.getRange(wb)
 
-            date, rNum = payroll.getRunInfo(conn, wb)
+            date, runNumber = payroll.getRunInfo(conn, wb)
 
-            payroll.getEmpinfo(conn, wb, date, rNum)
+            payroll.getEmpinfo(conn, wb, date, runNumber)
         except Exception as e:
             print(e)
             payroll.returnArray.append(filename)
 
         conn.close
 
-
-    # Gets the final A cell with an employee number
+    """
+    getRange(wb)
+    this function loops through the work book file
+    it requires the work book file
+    """
     def getRange(wb):
         end = False
         sheet = wb.active
@@ -54,9 +66,12 @@ class payroll:
                 else:
                     end = True
 
-
-    # this gets and returns the pay rate and employee number for those on run
-    def getEmpinfo(conn, wb, date, rNum):
+    """
+    getEmpinfo(conn, wb, date, rNum)
+    This gets the Employee information from the wb file then it runs the employee and Responded SQL insertions
+    It requires the SQL connection workbookFile and the Date and RunNumber from the getRunInfo
+    """
+    def getEmpinfo(conn, wb, date, runNumber):
         sheet = wb.active
         for i1 in sheet[f"A21:h{payroll.endRange}"]:
 
@@ -71,46 +86,61 @@ class payroll:
                 if payroll.empNeedsUpdated(conn, empNumber):
                     payroll.updateEmp(conn, Name, empNumber)
                 else:
-                     payroll.createEmployee(conn, Name, empNumber)
-                if payroll.respondedNeedsUpdated(conn, empNumber, date, rNum):
-                    payroll.updateResponded(conn, empNumber, payRate, date, rNum)
+                    payroll.createEmployee(conn, Name, empNumber)
+                if payroll.respondedNeedsUpdated(conn, empNumber, date, runNumber):
+                    payroll.updateResponded(
+                        conn, empNumber, payRate, date, runNumber)
                 else:
-                    payroll.createResponded(conn, empNumber, payRate, date, rNum)
+                    payroll.createResponded(
+                        conn, empNumber, payRate, date, runNumber)
 
-
-    # gets all run info from the specific cells
+    """
+    getRunInfo(conn, wb)
+    This gets the Run info from the sheet and runs the SQL import statements
+    it requires the SQL connection and the workbook file
+    It retuns the Run Date and Number
+    """
     def getRunInfo(conn, wb):
         sheet = wb.active
         date = str(sheet["D3"].value).split(" ")[0]
-        num = sheet["B3"].value
+        runNumber = sheet["B3"].value
         runTime = sheet["B8"].value
         startTime = sheet["B5"].value
         endTime = sheet["L5"].value
+        if(sheet["F6"].value == 1):
+            stationCovered = 1
+        else:
+            stationCovered = 0
+        if(sheet == wb["MED RUN"]):
+            medrun = 1
+        else:
+            medrun = 0
         returnString = (
             "RunNumber: {0} \nDate: \'{1}\' \nRunTime: {2} \nStartTime: {3} \nEndtime: {4}"
         )
-        if payroll.runNeedsUpdated(conn, num, date):
-            payroll.updateRun(conn, num, date, startTime, endTime, runTime)
+        if payroll.runNeedsUpdated(conn, runNumber, date):
+            payroll.updateRun(conn, runNumber, date, startTime,
+                              endTime, runTime, stationCovered, medrun)
         else:
-            payroll.createRun(conn, num, date, startTime, endTime, runTime)
-            print(returnString.format(num, date, runTime, startTime, endTime))
-        return date, num
+            payroll.createRun(conn, runNumber, date, startTime,
+                              endTime, runTime, stationCovered, medrun)
+            print(returnString.format(runNumber, date, runTime, startTime, endTime))
+        return date, runNumber
 
-#-----------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------
     """
     createConnection(db_file)
     this creates the connection to the SQL database
     it requires the path to the Database
     """
-    def createConnection(db_file):
+    def createConnection(dbFile):
         conn = None
         try:
-            conn = sqlite3.connect(db_file)
+            conn = sqlite3.connect(dbFile)
             return conn
         except Error as e:
             print(e)
         return conn
-
 
     """
     This contains all of the SQL functions related to Runs
@@ -127,25 +157,26 @@ class payroll:
     this checks the runs alredy in the database against the given information to see if the run needs to be updatded
     it requires the Run number, date, and connection to the sql database
     """
-    def createRun(conn, num, date, sTime, eTime, rTime):
-        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime)
-                VALUES({0},\'{1}\',{2},{3},{4}) """
+    def createRun(conn, runNumber, date, stopTime, endTime, runTime, Covered, Medrun):
+        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun)
+                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}) """
         cur = conn.cursor()
-        sql = sql.format(num, date, sTime, eTime, rTime)
+        sql = sql.format(runNumber, date, stopTime,
+                         endTime, runTime, Covered, Medrun)
         print(sql)
         cur.execute(sql)
         conn.commit()
         return cur.lastrowid
 
-    def updateRun(conn, num, date, startTime, endTime, runTime):
-        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime} WHERE number = {num} AND date = \'{date}\';"""
+    def updateRun(conn, runNumber, date, startTime, endTime, runTime, Covered, Medrun):
+        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, Covered = {Covered}, Medrun = {Medrun} WHERE number = {runNumber} AND date = \'{date}\';"""
         cur = conn.cursor()
         cur.execute(statement)
         conn.commit()
         return cur.lastrowid
 
-    def runNeedsUpdated(conn, num, date):
-        statement = f"""SELECT * FROM Run WHERE Date = \'{date}\' AND number = {num};"""
+    def runNeedsUpdated(conn, runNumber, date):
+        statement = f"""SELECT * FROM Run WHERE Date = \'{date}\' AND number = {runNumber};"""
         cur = conn.cursor()
         cur.execute(statement)
         values = cur.fetchall()
@@ -166,7 +197,7 @@ class payroll:
     updateResponded(conn, empNumber, payRate, date, rNum)
     this is to update the responded table
     it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
-    """        
+    """
     def createResponded(conn, empNumber, payRate, date, num):
         sql = """ INSERT INTO Responded(empNumber, runNumber, date, payRate)
                 VALUES({0},{1},\'{2}\',{3}) """
@@ -184,7 +215,6 @@ class payroll:
         values = cur.fetchall()
 
         return False if len(values) == 0 else True
-
 
     def updateResponded(conn, empNumber, payRate, date, rNum):
         statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum};"""
@@ -223,10 +253,9 @@ class payroll:
 
         return False if len(values) == 0 else True
 
-    def updateEmp(conn, name ,empNumber):
+    def updateEmp(conn, name, empNumber):
         statement = f"""UPDATE Employee SET name = \'{name}\' WHERE number = {empNumber};"""
         cur = conn.cursor()
         cur.execute(statement)
         conn.commit()
         return cur.lastrowid
-

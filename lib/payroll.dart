@@ -227,7 +227,7 @@ class _PayrollUIState extends State<PayrollUI> {
                 width: 100,
                 height: 75,
                 child: ListView(
-                  children: response.map((e) => Text(e)).toList(),
+                  children: response.map((e) => Text(e.toString())).toList(),
                 ),
               ),
               actions: [
