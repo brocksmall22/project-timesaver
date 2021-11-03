@@ -1,6 +1,7 @@
 import sqlite3
 from sqlite3 import Error
 
+
 class creator:
     @staticmethod
     def create_db(db_file):
@@ -11,19 +12,19 @@ class creator:
 
         sql_create_report_table = """CREATE TABLE IF NOT EXISTS Responded (empNumber STRING REFERENCES Employee (number), 
                                     runNumber TINYINT REFERENCES Run (number), date DATE REFERENCES Run (date), 
-                                    payRate FLOAT, PRIMARY KEY(date, empNumber, runNumber));"""
+                                    payRate FLOAT,Covered BIT,Medrun BIT, PRIMARY KEY(date, empNumber, runNumber));"""
 
         conn = creator.create_connection(db_file)
 
         # create tables
-        if conn is not None:    
+        if conn is not None:
             creator.create_table(conn, sql_create_employee_table)
             creator.create_table(conn, sql_create_run_table)
             creator.create_table(conn, sql_create_report_table)
             print("Success!")
         else:
             print("Error! cannot create the database connection.")
-    
+
     @staticmethod
     def create_connection(db_file):
         conn = None
