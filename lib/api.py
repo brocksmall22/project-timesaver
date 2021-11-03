@@ -1,6 +1,8 @@
 from flask import Flask, jsonify, request
 from datetime import datetime
 import json
+
+import sqlite.generate_report
 from .payroll import payroll
 import sqlite.check_database as cdb
 
@@ -76,21 +78,9 @@ returns..
 @app.route('/generate_report', methods=["GET", "POST"])
 def generate_reports():
     dates = request.json
-    startDate = datetime.strptime(dates["startDate"].split(" ")[0], "%Y-%m-%d")
-    endDate = datetime.strptime(dates["endDate"].split(" ")[0], "%Y-%m-%d")
+    startDate = dates["startDate"].split(" ")[0]
+    endDate = dates["endDate"].split(" ")[0]
 
-    #TODO: Interface with generating method
-    #results = BlakesClass.nameOfGenerationMethod(startDate, endDate)
-
-    """
-    Remove this line when the above work is implementd.
-    You can test the flutter by changing what is in this list.
-    True is the case when it works, a list of strings (specifically)
-    File locations for when it fails. Just comment the one you don't
-    want then restart the server.
-    """
-    results = [True, "There were 86 total runs this period.", "This report includes runs 367 to 453.",
-        "This report ranges from startDate to endDate", "directory of the files"]
-    #results = ["Some error message!"]
+    results = sqlite.generate_report.generate_report.generate_report(startDate, endDate)
 
     return jsonify(results)
