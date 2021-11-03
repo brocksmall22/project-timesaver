@@ -107,6 +107,7 @@ class payroll:
         runTime = sheet["B8"].value
         startTime = sheet["B5"].value
         endTime = sheet["L5"].value
+        shift = sheet["F3"].value
         if(sheet["F6"].value == 1):
             stationCovered = 1
         else:
@@ -115,16 +116,12 @@ class payroll:
             medrun = 1
         else:
             medrun = 0
-        returnString = (
-            "RunNumber: {0} \nDate: \'{1}\' \nRunTime: {2} \nStartTime: {3} \nEndtime: {4}"
-        )
         if payroll.runNeedsUpdated(conn, runNumber, date):
             payroll.updateRun(conn, runNumber, date, startTime,
-                              endTime, runTime, stationCovered, medrun)
+                              endTime, runTime, stationCovered, medrun, shift)
         else:
             payroll.createRun(conn, runNumber, date, startTime,
-                              endTime, runTime, stationCovered, medrun)
-            print(returnString.format(runNumber, date, runTime, startTime, endTime))
+                              endTime, runTime, stationCovered, medrun, shift)
         return date, runNumber
 
 # -----------------------------------------------------------------------------------------------------------------------
@@ -157,19 +154,19 @@ class payroll:
     this checks the runs alredy in the database against the given information to see if the run needs to be updatded
     it requires the Run number, date, and connection to the sql database
     """
-    def createRun(conn, runNumber, date, stopTime, endTime, runTime, Covered, Medrun):
-        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun)
-                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}) """
+    def createRun(conn, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift):
+        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift)
+                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\') """
         cur = conn.cursor()
         sql = sql.format(runNumber, date, stopTime,
-                         endTime, runTime, Covered, Medrun)
+                         endTime, runTime, Covered, Medrun, shift)
         print(sql)
         cur.execute(sql)
         conn.commit()
         return cur.lastrowid
 
-    def updateRun(conn, runNumber, date, startTime, endTime, runTime, Covered, Medrun):
-        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, Covered = {Covered}, Medrun = {Medrun} WHERE number = {runNumber} AND date = \'{date}\';"""
+    def updateRun(conn, runNumber, date, startTime, endTime, runTime, Covered, Medrun, shift):
+        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\' WHERE number = {runNumber} AND date = \'{date}\';"""
         cur = conn.cursor()
         cur.execute(statement)
         conn.commit()
