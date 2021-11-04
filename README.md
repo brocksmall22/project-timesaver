@@ -16,6 +16,7 @@ will start the server.
 This class contains all of the logic to construct the application
 
 > **Widget build(BuildContext context)**
+> 
 > This is an ovveride of the default method and is responsible for actually rendering the UI.
 
 **class MainPage extends StatelessWidget**
@@ -24,22 +25,28 @@ buttons to navigate to the several different features of the program. It serves
 no other purpose.
 
 > **Widget build(BuildContext context)**
+> 
 > This is the main layout of the opening page. Each element in the Column
 > object are the buttons on the main page
 
 > **Widget _payrollButton(BuildContext context)**
+> 
 > This widget is the button that will navigate to the payroll page.
 
 > **Widget _gotToFileUpload(BuildContext context)**
+> 
 > This widget is the button that will navigate to the file submission page.
 
 > **Widget _nifrsButton(BuildContext context)**
+> 
 > This widget is the button that will navigate to the NIFRS reporting page.
 
 > **Widget _statsButton(BuildContext context)**
+> 
 > This widget is the button that will navigate to the statistics generating page.
 
 > **Widget _settingsButton(BuildContext context)**
+> 
 > This widget is the button that will navigate to the settings page.
 
 ## Documentation for the payroll.dart file:
@@ -48,67 +55,81 @@ no other purpose.
 This class is responsible for creating the payroll page.
 
 **class _PayrollUIState extends State<PayrollUI>**
+ 
 This class contains all of the UI elements and front-end logic for the payroll page.
 
 > **Widget build(BuildContext context)**
+>
 > This is an ovveride method that is responsible for actually generating the page.
 
 > **Widget _gotToFileUpload(BuildContext context)**
+>
 > This widget will take you to the file submission page. It is slated to be removed in
 > the next iteration.
 
 > **Widget _getDate(BuildContext context)**
+>
 > This button opens a DateRangePicker dialog to pick the start and end dates.
 
 > **Widget _confirmationButtons(BuildContext context)**
+>
 > This widget contains the cancel and the generate buttons.
 
 > **Widget _generatePayroll(BuildContext context)**
+>
 > This widget is the button that will request the API to generate the reports.
 
 > **Widget _cancel(BuildContext context)**
+>
 > This button will take you to the home page.
 
 > **Widget _boxedBuilder(Widget? child)**
+>
 > The showDateRangePicker built in function opens the DateRangePicker widget
 > full screen which looks really sloppy on desktop. This widget overrides the
 > default builder to open the DateRangePicker widget as a popup.
 >
 > **Bugs..**
->   *minor:* You cannot close the dialouge by clicking out of it unless you click
->     above or below it. Ideally it would close if you click anywhere outside.
+>>   *minor:* You cannot close the dialouge by clicking out of it unless you click
+>>     above or below it. Ideally it would close if you click anywhere outside.
 
 > **String _getDateRange()**
+>
 > This returns the text in the _getDate button.
 
 > **void _pickDates() async**
+>
 > This calls the DateRangePicker and then updates the state.
 
 > **void _checkDates()**
+>
 > This determines if valid dates were chosen (more than one day).
 
 > **Future<bool> _submitToPython() async**
+>
 > This method is responseible for interfacing with the API and handling the
 > server response. It will draw a dialog for both failed and successful cases.
 >
 > **returns..**
->   *case 1:* True if the server could generate the files
->   *case 2:* False if the files could not be generated
+>>  *case 1:* True if the server could generate the files
+>>
+>>   *case 2:* False if the files could not be generated
 
 > **void _passedGenerationAlert(BuildContext context, List response)**
+>
 >  Draws an alert with information about the files as well as a way to open the
 >  generated files.
 >
 >  **inputs..**
->    *response:* A list containing true followed by strings with information about
->      the reports.
+>>    *response:* A list containing true followed by strings with information about
+>>      the reports.
 
 > **void _failedGenerationAlert(BuildContext context, List response)**
 >  Draws an alert that informs the user about a failed attempt to make the
 >  reports.
 >
 >  **inputs..**
->    *response:* A list containing error messages strings
+>>    *response:* A list containing error messages strings
 
 ## Documentation from the  payroll.py file for the backend
 
