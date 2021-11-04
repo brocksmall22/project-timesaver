@@ -1,11 +1,9 @@
 from flask import Flask, jsonify, request
 from datetime import datetime
 import json
-
-import sqlite.generate_report
+from .generate_report import generate_report as grp
 from .payroll import payroll
 import sqlite.check_database as cdb
-
 from flask.wrappers import Request
 
 app = Flask(__name__)
@@ -81,6 +79,6 @@ def generate_reports():
     startDate = dates["startDate"].split(" ")[0]
     endDate = dates["endDate"].split(" ")[0]
 
-    results = sqlite.generate_report.generate_report.generate_report(startDate, endDate)
+    results = grp.generate_report(startDate, endDate)
 
     return jsonify(results)
