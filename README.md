@@ -407,3 +407,171 @@ updateEmp(conn, name ,empNumber)
 this updates the employee table given the new information
 it requires the SQL connection as well as the Employee Name and Number
 ```
+ The documentation for all .py files is provided below.
+
+1. api.py
+2. generate_report.py
+
+## api.py
+This function is for the UI to determine if the server is running. If the server
+sees any call to this address, it will return a signal signifying the sercer is alive.
+If the UI recieves a socket error, that means the server is not running and needs
+to be started.
+
+inputs..
+    (request) Any request on this address
+returns.. 
+    case 1: A Json object signifying the server is alive
+
+def verify_awake():
+
+
+This is the function responsible for accepting a request from the UI that
+contains a list of file paths and forwarding that to the backend to insert
+the information into the database.
+
+inputs..
+    (request): A post request containing a Json array of strings
+returns..
+    case 1: A Json array containing true (in the case of sucessful inserts)
+    case 2: A list of files that failed to be insterted
+
+def submit_reports():
+
+
+This is the function responsible for accepting a request from the UI
+to tell the backend the user wishes to generate the pay reports.
+
+inputs..
+    (request): A Json object containing two key value pairs
+        startDate and endDate that express the start and end of the
+        pay period as strings
+returns.. 
+    case 1: A Json array that either contains a True value
+        and several strings
+    case 2: A Json array that contains one or more strings in
+        the event that the files could not be generated
+
+def generate_reports():
+
+
+## generate_report.py
+This function is responsible for being called from the API, running all the
+    generation steps, and returning a confirmation or fail message.
+    inputs..
+        start_date: the first date as a string
+        end_date: the last date as a string
+    returns..
+        case 1: a list containing True in the first position followed be some
+            strings with basic details about the report
+        case 2: an error message to be displayed to the user
+
+def generate_report(start_date, end_date):
+
+
+This method gets the number of runs for a given period.
+    inputs..
+        conn: the connection to the SQL
+        start_date: the first date as a string
+        end_date: the last date as a string
+    returns..
+        case 1: the number of runs
+
+def get_number_of_runs(conn, start_date, end_date):
+
+
+This method gets the lowest run number for a given period.
+    inputs..
+        conn: the connection to the SQL
+        start_date: the first date as a string
+        end_date: the last date as a string
+    returns..
+        case 1: the first run
+
+def get_first_run_number(conn, start_date, end_date):
+
+
+This method gets the highest run number for a given period.
+    inputs..
+        conn: the connection to the SQL
+        start_date: the first date as a string
+        end_date: the last date as a string
+    returns..
+        case 1: the last run
+
+def get_last_run_number(conn, start_date, end_date):
+
+
+ This method actually fills and saves a copy of the master copy of the tally sheet.
+    inputs..
+        conn: the connection to the SQL
+        wb: the xlsx workbook we are working with
+        start_date: the first date as a string
+        end_date: the last date as a string
+
+def fill_sheet(conn, wb, start_date, end_date):
+
+
+This method gets the number of runs a specific person
+    responded to in a given period.
+    inputs..
+        conn: the connection to the SQL
+        city_number: the city assigned employee ID
+        start_date: the first date as a string
+        end_date: the last date as a string
+    returns..
+        case 1: the number of runs in a given period
+
+def get_count(conn, city_number, start_date, end_date):
+
+
+This method gets the number of hours a specific person
+    worked on runs in a given period.
+    inputs..
+        conn: the connection to the SQL
+        city_number: the city assigned employee ID
+        start_date: the first date as a string
+        end_date: the last date as a string
+    returns..
+        case 1: the number of hours a given employee worked
+
+def get_hours(conn, city_number, start_date, end_date):
+
+
+This method updates the Employee table to ensure no employees have a NULL
+    value in the city_number column. If they do they will not be paid.
+    inputs..
+        conn: the connection to the SQL
+        sheet: the sheet for the tally xlsx
+
+def update_employee_nulls(conn, sheet):
+
+
+This method actually inserts the city IDs for update_employee_nulls
+    inputs..
+        conn: the connection to the SQL
+        nullEmps: a list of employee rows that have null city_number values 
+        sheet: the sheet for the tally xlsx
+
+def insert_city_ids(conn, nullEmps, sheet):
+
+
+This method gets the final row that we are concerned with editing.
+    inputs..
+        sheet: the sheet for the tally xlsx
+
+def getRange(sheet):
+
+
+This method will take a name from the run reports and compare it to
+    a name in the tally xlsx in order to determine if they are the same
+    person.
+    inputs..
+        name: the name from the run report/responded table
+        fname: the first name from the tally
+        lname: the last name from the tally
+    returns..
+        case 1: True if they are the same person
+        case 2: False if they aren't the same person
+
+def match_names(name, fname, lname):
