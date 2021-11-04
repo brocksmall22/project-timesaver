@@ -47,7 +47,11 @@ class payroll_test(unittest.TestCase):
         result = p.loadWorkBooks(payroll_test.good_1)
         self.assertTrue(result[0])
         runvals = cur.execute("""SELECT * FROM Run;""").fetchall()
+        employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
+        respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'C')])
+        self.assertEqual(employeevals, [])
+        self.assertEqual(respondedvals, [])
 
     """
     This test tests that a known good file can be submitted.
@@ -57,8 +61,12 @@ class payroll_test(unittest.TestCase):
         result = p.loadWorkBooks(payroll_test.good_2)
         self.assertTrue(result[0])
         runvals = cur.execute("""SELECT * FROM Run;""").fetchall()
+        employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
+        respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'C'), 
             (585, '2021-11-01', 1114, 1133, 1, 1, 0, 'C')])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None)])
+        self.assertEqual(respondedvals, [(421, 585, '2021-11-01', 16.45)])
 
     """
     This test tests that a known good file can be submitted, updating a
@@ -69,8 +77,12 @@ class payroll_test(unittest.TestCase):
         result = p.loadWorkBooks(payroll_test.good_1_altered)
         self.assertTrue(result[0])
         runvals = cur.execute("""SELECT * FROM Run;""").fetchall()
+        employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
+        respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'A'), 
             (585, '2021-11-01', 1114, 1133, 1, 1, 0, 'C')])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None)])
+        self.assertEqual(respondedvals, [(421, 585, '2021-11-01', 16.45)])
 
     """
     Test to ensure that you can submit more than one file at once.
@@ -80,8 +92,12 @@ class payroll_test(unittest.TestCase):
         result = p.loadWorkBooks([payroll_test.good_1[0], payroll_test.good_2[0]])
         self.assertTrue(result[0])
         runvals = cur.execute("""SELECT * FROM Run;""").fetchall()
+        employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
+        respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'C'), 
             (585, '2021-11-01', 1114, 1133, 1, 1, 0, 'C')])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None)])
+        self.assertEqual(respondedvals, [(421, 585, '2021-11-01', 16.45)])
 
     """
     This test tests that a known bad file will not submit.
@@ -91,8 +107,12 @@ class payroll_test(unittest.TestCase):
         result = p.loadWorkBooks(payroll_test.bad_1)
         self.assertEqual(result, [os.getcwd() + '\\test\\resc\\bad_1.xlsx'])
         runvals = cur.execute("""SELECT * FROM Run;""").fetchall()
+        employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
+        respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'C'), 
             (585, '2021-11-01', 1114, 1133, 1, 1, 0, 'C')])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None)])
+        self.assertEqual(respondedvals, [(421, 585, '2021-11-01', 16.45)])
 
     """
     This test tests that a known bad file will not submit.
@@ -102,8 +122,12 @@ class payroll_test(unittest.TestCase):
         result = p.loadWorkBooks(payroll_test.bad_2)
         self.assertEqual(result, [os.getcwd() + '\\test\\resc\\bad_2.xlsx'])
         runvals = cur.execute("""SELECT * FROM Run;""").fetchall()
+        employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
+        respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'C'), 
             (585, '2021-11-01', 1114, 1133, 1, 1, 0, 'C')])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None)])
+        self.assertEqual(respondedvals, [(421, 585, '2021-11-01', 16.45)])
 
     """
     Test to ensure that you can submit multiple files, mixed with bad ones.
@@ -113,8 +137,12 @@ class payroll_test(unittest.TestCase):
         result = p.loadWorkBooks([payroll_test.good_1_altered[0], payroll_test.bad_2[0]])
         self.assertEqual(result, [os.getcwd() + '\\test\\resc\\bad_2.xlsx'])
         runvals = cur.execute("""SELECT * FROM Run;""").fetchall()
+        employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
+        respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'A'), 
             (585, '2021-11-01', 1114, 1133, 1, 1, 0, 'C')])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None)])
+        self.assertEqual(respondedvals, [(421, 585, '2021-11-01', 16.45)])
 
     """
     Deletes the DB as a part of the setup method.
