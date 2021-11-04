@@ -163,13 +163,13 @@ It retuns the Run Date and Number
 
 ```
 -------------------------------------------------------------------------------------------------------
-createRun 
+createRun(conn, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift)
 this is the general insertion of runs into the data base.
-it requires the runNumber, Date, StartTime, EndTime, Runtime, and the connextion to the sql database
+it requires the runNumber, Date, StartTime, EndTime, Runtime,Bool for station covered, bool for Medrun, and the connextion to the sql database
 -------------------------------------------------------------------------------------------------------
 updateRun(conn, num, date, startTime, endTime, runTime)
 this updates the run given that it has alredy been insterted into the database and has differing information then therun alredy has
-it requires the runNumber, Date, StartTime, EndTime, Runtime, and the connextion to the sql database
+it requires the runNumber, Date, StartTime, EndTime, Runtime,Bool for station covered, bool for Medrun, and the connextion to the sql database
 -------------------------------------------------------------------------------------------------------
 runNeedsUpdated(conn, num, date)
 this checks the runs alredy in the database against the given information to see if the run needs to be updatded
