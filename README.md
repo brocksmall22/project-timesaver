@@ -20,6 +20,7 @@ This class contains all of the logic to construct the application
 > This is an ovveride of the default method and is responsible for actually rendering the UI.
 
 **class MainPage extends StatelessWidget**
+
 This class houses the actual layout of the home/main page of the UI. It contains
 buttons to navigate to the several different features of the program. It serves
 no other purpose.
@@ -52,6 +53,7 @@ no other purpose.
 ## Documentation for the payroll.dart file:
 
 **class PayrollUI extends StatefulWidget**
+
 This class is responsible for creating the payroll page.
 
 **class _PayrollUIState extends State<PayrollUI>**
@@ -134,9 +136,11 @@ This class contains all of the UI elements and front-end logic for the payroll p
 ## Documentation for file.dart
 
 **class FileUploader extends StatefulWidget**
+ 
 This class loads in all of the necessary elements.
 
 **class _FileUploaderState extends State<FileUploader>**
+ 
 This class contains the entire layout of the file submission page. It contains a
 button that will opena file chooser dialogue, a button to submit, and a ListView
 of Cards that display which files have been selected for uploading. Each card
@@ -207,6 +211,7 @@ has a delete button to remove it from the list of files to submit.
 ## Documentation for ui_api.dart file:
 
 **class API**
+ 
 This is the class that contains everything we need for connecting to the Flask side of python.
 
 > **static Future<bool> checkIfServerIsAlive() async**
@@ -251,6 +256,7 @@ This is the class that contains everything we need for connecting to the Flask s
 ## Documentation for the basic_widgets.dart file:
 
 **class BasicWidgets**
+ 
 This class contains abstractions for a handful of widgets that are frequently used.
 
 > **static Widget pad(Widget toPad)**
@@ -312,6 +318,7 @@ This class contains abstractions for a handful of widgets that are frequently us
 ## Documentation for the basic_actions.dart file:
 
 **class BasicActions**
+ 
 This class contains some methods that were frequently reused.
 
 > **static nextPage(BuildContext context, page)**
