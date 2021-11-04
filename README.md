@@ -3,14 +3,15 @@
 ## Documentation from main.dart for the UI:
 
 **void main()**
-This method runs the UI. If you set `debug` to false, it check to see if an
-instance of the server is running. If so, it will continue as normal, if not, it
-will start the server.
-
-**Bugs..**
-  *medium:* A small bug prevents the server from being closed with the UI. There
-    is no way to capture when the UI is closing and close the server with it.
-    In the next iteration, with some tuning, that is to be expected behavior.
+>
+> This method runs the UI. If you set `debug` to false, it check to see if an
+> instance of the server is running. If so, it will continue as normal, if not, it
+> will start the server.
+>
+> **Bugs..**
+>>   *medium:* A small bug prevents the server from being closed with the UI. There
+>>     is no way to capture when the UI is closing and close the server with it.
+>>     In the next iteration, with some tuning, that is to be expected behavior.
 
 **class MyApp extends StatelessWidget**
 This class contains all of the logic to construct the application
