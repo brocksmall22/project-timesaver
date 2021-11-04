@@ -146,13 +146,14 @@ class _FileUploaderState extends State<FileUploader> {
   */
   Future<bool> _submitToPython() async {
     BasicWidgets.snack(context, "Processing, please wait...");
-    var _response = await API.submitFilesToDatabase(files);
-    if (_response[0] == "True") {
+    var response = await API.submitFilesToDatabase(files);
+    print(response);
+    if (response[0] == true) {
       BasicWidgets.snack(context, "Reports have been processed!", Colors.green);
       return true;
     } else {
       BasicWidgets.snack(context, "Error processing reports!", Colors.red);
-      _failedSubmissionsAlert(context, _response);
+      _failedSubmissionsAlert(context, response);
       return false;
     }
   }

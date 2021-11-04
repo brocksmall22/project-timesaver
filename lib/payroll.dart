@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:project_time_saver/basic_widgets.dart';
 import 'package:intl/intl.dart';
@@ -193,7 +195,11 @@ class _PayrollUIState extends State<PayrollUI> {
               actions: [
                 TextButton(
                     onPressed: () {
-                      //TODO: Add the ability to open the files
+                      Process.run("explorer.exe", [
+                        "/e," +
+                            Platform.environment["APPDATA"]! +
+                            "\\project-time-saver"
+                      ]);
                       Navigator.of(context).pop();
                     },
                     child: const Text("Open files")),
@@ -221,7 +227,7 @@ class _PayrollUIState extends State<PayrollUI> {
                 width: 100,
                 height: 75,
                 child: ListView(
-                  children: response.map((e) => Text(e)).toList(),
+                  children: response.map((e) => Text(e.toString())).toList(),
                 ),
               ),
               actions: [

@@ -1,10 +1,19 @@
 from flask import Flask, jsonify, request
 from datetime import datetime
 import json
-
+from .generate_report import generate_report as grp
+from .payroll import payroll
+import sqlite.check_database as cdb
 from flask.wrappers import Request
 
 app = Flask(__name__)
+
+"""
+This method will run before the first request to the server. It ensures that the DB exists and is ready for use.
+"""
+@app.before_first_request
+def ensure_database_is_ready():
+    cdb.check_database.check()
 
 """
 This section will return an error message to the requester (the UI for us)
@@ -46,19 +55,8 @@ returns..
 def submit_reports():
     files = request.json
 
-    #TODO: Interface with adding method
-    # lst: results = DylansClass.nameOfIngestionMethod(files)
+    results = payroll.loadWorkBooks(files)
 
-    """
-    Remove this line when the above work is implementd.
-    You can test the flutter by changing what is in this list.
-    True is the case when it works, a list of strings (specifically)
-    File locations for when it fails. Just comment the one you don't
-    want then restart the server.
-    """
-    #results = [True]
-    results = ['C:\\Users\\dalto\\Desktop\\509.xlsx', 'C:\\Users\\dalto\\Desktop\\510.xlsx', 'C:\\Users\\dalto\\Desktop\\511.xlsx', 'C:\\Users\\dalto\\Desktop\\512.xlsx', 'C:\\Users\\dalto\\Desktop\\513.xlsx', 'C:\\Users\\dalto\\Desktop\\514.xlsx', 'C:\\Users\\dalto\\Desktop\\515.xlsx', 'C:\\Users\\dalto\\Desktop\\516.xlsx', 'C:\\Users\\dalto\\Desktop\\518.xlsx', 'C:\\Users\\dalto\\Desktop\\519.xlsx', 'C:\\Users\\dalto\\Desktop\\520.xlsx', 'C:\\Users\\dalto\\Desktop\\521.xlsx', 'C:\\Users\\dalto\\Desktop\\522.xlsx', 'C:\\Users\\dalto\\Desktop\\523.xlsx', 'C:\\Users\\dalto\\Desktop\\524.xlsx']
-    
     return jsonify(results)
 
 """
@@ -78,20 +76,9 @@ returns..
 @app.route('/generate_report', methods=["GET", "POST"])
 def generate_reports():
     dates = request.json
-    startDate = datetime.strptime(dates["startDate"].split(" ")[0], "%Y-%m-%d")
-    endDate = datetime.strptime(dates["endDate"].split(" ")[0], "%Y-%m-%d")
+    startDate = dates["startDate"].split(" ")[0]
+    endDate = dates["endDate"].split(" ")[0]
 
-    #TODO: Interface with generating method
-    #lst: results = BlakesClass.nameOfGenerationMethod(startDate, endDate)
-
-    """
-    Remove this line when the above work is implementd.
-    You can test the flutter by changing what is in this list.
-    True is the case when it works, a list of strings (specifically)
-    File locations for when it fails. Just comment the one you don't
-    want then restart the server.
-    """
-    #results = [True, "There were 86 total runs this period.", "This report includes runs 367 to 453.", "This report ranges from startDate to endDate"]
-    results = ["Some error message!"]
+    results = grp.generate_report(startDate, endDate)
 
     return jsonify(results)
