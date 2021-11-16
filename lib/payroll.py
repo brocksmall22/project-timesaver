@@ -67,7 +67,7 @@ class payroll:
         if payroll.endRange == 0:
             payroll.endRange = 21
             while (not end):
-                if sheet[f"H{payroll.endRange + 1}"].value != None:
+                if sheet[f"L{payroll.endRange + 1}"].value != "=":
                     payroll.endRange = payroll.endRange + 1
                 else:
                     end = True
@@ -123,16 +123,30 @@ class payroll:
             medrun = 1
         else:
             medrun = 0
+        fullCover = payroll.getFullCover(sheet, shift)
         assert(None not in [date, runNumber, runTime, startTime, endTime, shift])
         assert('' not in [date, runNumber, runTime, startTime, endTime, shift])
         assert('None' not in [date, runNumber, runTime, startTime, endTime, shift])
         if payroll.runNeedsUpdated(conn, runNumber, date):
             payroll.updateRun(conn, runNumber, date, startTime,
-                              endTime, runTime, stationCovered, medrun, shift)
+                              endTime, runTime, stationCovered, medrun, shift, fullCover)
         else:
             payroll.createRun(conn, runNumber, date, startTime,
-                              endTime, runTime, stationCovered, medrun, shift)
+                              endTime, runTime, stationCovered, medrun, shift, fullCover)
         return date, runNumber
+
+    def getFullCover(sheet, shift) -> int:
+        fullCover = False
+        lastShift = None
+        for i in range(21, payroll.endRange + 1):
+            if sheet[f"L{i}"].value is not None:
+                lastShift = sheet[f"L{i}"].value
+            if lastShift == shift and (sheet[f"E{i}"].value is not None or sheet[f"F{i}"].value is not None):
+                fullCover = True
+            elif lastShift == shift:
+                fullCover = False
+                break
+        return int(fullCover)
 
 # -----------------------------------------------------------------------------------------------------------------------
     """
@@ -164,17 +178,18 @@ class payroll:
     this checks the runs alredy in the database against the given information to see if the run needs to be updatded
     it requires the Run number, date, and connection to the sql database
     """
-    def createRun(conn, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift):
-        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift)
-                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\') """
+    def createRun(conn, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift, fullCover):
+        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift, full_coverage)
+                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\', {8}) """
         cur = conn.cursor()
         sql = sql.format(runNumber, date, stopTime,
-                         endTime, runTime, Covered, Medrun, shift)
+                         endTime, runTime, Covered, Medrun, shift, fullCover)
         cur.execute(sql)
         return cur.lastrowid
 
-    def updateRun(conn, runNumber, date, startTime, endTime, runTime, Covered, Medrun, shift):
-        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\' WHERE number = {runNumber} AND date = \'{date}\';"""
+    def updateRun(conn, runNumber, date, startTime, endTime, runTime, Covered, Medrun, shift, fullCover):
+        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, 
+            Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\', full_coverage = {fullCover} WHERE number = {runNumber} AND date = \'{date}\';"""
         cur = conn.cursor()
         cur.execute(statement)
         return cur.lastrowid
