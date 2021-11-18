@@ -20,7 +20,6 @@ class API {
     } on SocketException {
       return false;
     } catch (e) {
-      print(e);
       return false;
     }
   }

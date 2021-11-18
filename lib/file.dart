@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +19,7 @@ has a delete button to remove it from the list of files to submit.
 */
 class _FileUploaderState extends State<FileUploader> {
   //This widget is the main layout of the page
+  //TODO: Implement a loading screen for when files are being processed.
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
@@ -147,7 +147,6 @@ class _FileUploaderState extends State<FileUploader> {
   Future<bool> _submitToPython() async {
     BasicWidgets.snack(context, "Processing, please wait...");
     var response = await API.submitFilesToDatabase(files);
-    print(response);
     if (response[0] == true) {
       BasicWidgets.snack(context, "Reports have been processed!", Colors.green);
       return true;

@@ -18,11 +18,14 @@ class payroll:
     def loadWorkBooks(fileList):
         payroll.reset()
         for file in fileList:
-            wb = load_workbook(file)
+            try:
+                wb = load_workbook(file)
+                payroll.readWorkBook(wb, file)
+            except Exception as e:
+                print(e)
+                payroll.returnArray.append(f"File {file} has error: Critical error, file cannot be read!")
 
-            payroll.readWorkBook(wb, file)
-
-        if len(payroll.returnArray) == 0:
+        if payroll.returnArray == []:
             return [True]
         else:
             return payroll.returnArray
@@ -45,7 +48,7 @@ class payroll:
             conn.commit()
         except Exception as e:
             print(e)
-            payroll.returnArray.append(filename)
+            payroll.returnArray.append(f"File {filename} has error: {e}")
 
         conn.close
 
@@ -79,16 +82,26 @@ class payroll:
     """
     def getEmpinfo(conn, wb, date, runNumber):
         sheet = wb.active
-        for i1 in sheet[f"A21:h{payroll.endRange}"]:
+        for i1 in sheet[f"A21:H{payroll.endRange}"]:
 
-            if i1[5].value is not None:
-                assert(None not in [i1[0].value, i1[1].value, i1[7].value])
-                assert('' not in [i1[0].value, i1[1].value, i1[7].value])
-                assert('None' not in [i1[0].value, i1[1].value, i1[7].value])
+            if i1[4].value is not None or i1[5].value is not None or i1[6].value is not None:
+                if i1[0].value is None: raise Exception("Employee number cannot be empty!")
+                if i1[1].value is None: raise Exception("Employee name cannot be empty!")
 
                 empNumber = wb["Pay"][i1[0].value.split("!")[1]].value
-                payRate = wb["Pay"][i1[7].value.split("!")[1]].value
+                if i1[7].value is not None:
+                    payRate = wb["Pay"][i1[7].value.split("!")[1]].value
+                    full_time = 0
+                else:
+                    payRate = 0
+                    full_time = 1
                 Name = wb["Pay"][i1[1].value.split("!")[1]].value
+                if i1[4].value is not None:
+                    type_of_response = "PNP"
+                elif i1[5].value is not None:
+                    type_of_response = "P"
+                elif i1[6].value is not None:
+                    type_of_response = "OD"
 
                 if payroll.empNeedsUpdated(conn, empNumber):
                     payroll.updateEmp(conn, Name, empNumber)
@@ -96,10 +109,10 @@ class payroll:
                     payroll.createEmployee(conn, Name, empNumber)
                 if payroll.respondedNeedsUpdated(conn, empNumber, date, runNumber):
                     payroll.updateResponded(
-                        conn, empNumber, payRate, date, runNumber)
+                        conn, empNumber, payRate, date, runNumber, type_of_response, full_time)
                 else:
                     payroll.createResponded(
-                        conn, empNumber, payRate, date, runNumber)
+                        conn, empNumber, payRate, date, runNumber, type_of_response, full_time)
 
     """
     getRunInfo(conn, wb)
@@ -109,7 +122,14 @@ class payroll:
     """
     def getRunInfo(conn, wb):
         sheet = wb.active
-        date = str(sheet["D3"].value).split(" ")[0]
+        if sheet["D3"].value is None: raise Exception("Date cannot be empty!")
+        if sheet["B3"].value is None: raise Exception("Run number cannot be empty!")
+        if sheet["B8"].value is None: raise Exception("Run time cannot be empty!")
+        if sheet["B5"].value is None: raise Exception("Reported cannot be empty!")
+        if sheet["L5"].value is None: raise Exception("10-8 cannot be empty!")
+        if sheet["F3"].value is None: raise Exception("Shift cannot be empty!")
+
+        date = sheet["D3"].value.strftime("%Y-%m-%d")
         runNumber = sheet["B3"].value
         runTime = sheet["B8"].value
         startTime = sheet["B5"].value
@@ -124,9 +144,7 @@ class payroll:
         else:
             medrun = 0
         fullCover = payroll.getFullCover(sheet, shift)
-        assert(None not in [date, runNumber, runTime, startTime, endTime, shift])
-        assert('' not in [date, runNumber, runTime, startTime, endTime, shift])
-        assert('None' not in [date, runNumber, runTime, startTime, endTime, shift])
+
         if payroll.runNeedsUpdated(conn, runNumber, date):
             payroll.updateRun(conn, runNumber, date, startTime,
                               endTime, runTime, stationCovered, medrun, shift, fullCover)
@@ -135,6 +153,17 @@ class payroll:
                               endTime, runTime, stationCovered, medrun, shift, fullCover)
         return date, runNumber
 
+    """
+    This function is responsible for determining if a run was fully
+    covered by its respective shift.
+
+    inputs..
+        sheet: the current run sheet
+        shift: the shift of the run
+    returns..
+        case 1: interger 1 if the run is fully covered
+        case 2: interger 0 if the run is not fully covered
+    """
     def getFullCover(sheet, shift) -> int:
         fullCover = False
         lastShift = None
@@ -143,7 +172,7 @@ class payroll:
                 lastShift = sheet[f"L{i}"].value
             if lastShift == shift and (sheet[f"E{i}"].value is not None or sheet[f"F{i}"].value is not None):
                 fullCover = True
-            elif lastShift == shift:
+            elif lastShift == shift and sheet[f"A{i}"].value not in [000, 0000, "000", "0000"]:
                 fullCover = False
                 break
         return int(fullCover)
@@ -217,11 +246,11 @@ class payroll:
     this is to update the responded table
     it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
     """
-    def createResponded(conn, empNumber, payRate, date, num):
-        sql = """INSERT INTO Responded(empNumber, runNumber, date, payRate)
-                VALUES({0},{1},\'{2}\',{3}) """
+    def createResponded(conn, empNumber, payRate, date, num, type_of_response, full_time):
+        sql = """INSERT INTO Responded(empNumber, runNumber, date, payRate, type_of_response, full_time)
+                VALUES({0},{1},\'{2}\',{3},'{4}',{5}) """
         cur = conn.cursor()
-        sql = sql.format(empNumber, num, date, payRate)
+        sql = sql.format(empNumber, num, date, payRate, type_of_response, full_time)
         cur.execute(sql)
         return cur.lastrowid
 
@@ -233,8 +262,9 @@ class payroll:
 
         return False if len(values) == 0 else True
 
-    def updateResponded(conn, empNumber, payRate, date, rNum):
-        statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum};"""
+    def updateResponded(conn, empNumber, payRate, date, rNum, type_of_response, full_time):
+        statement = f"""UPDATE Responded SET payRate = {payRate}, type_of_response = '{type_of_response}', 
+            full_time = {full_time} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum};"""
         cur = conn.cursor()
         cur.execute(statement)
         return cur.lastrowid

@@ -16,7 +16,6 @@ class PayrollUI extends StatefulWidget {
 class _PayrollUIState extends State<PayrollUI> {
   //TODO: Remove the redamentary file picking info and button when we have
   //OneDrive integration
-  //TODO: Resolve remaining function specific tasks
 
   //Layout of the page
   @override
@@ -170,7 +169,9 @@ class _PayrollUIState extends State<PayrollUI> {
   }
 
   /*
-  TODO: Add the folder opening functionality.
+  TODO: Update the messages so it is more clear when there is success but it 
+  does not meet sanity checks
+  TODO: Change output path.
 
   Draws an alert with information about the files as well as a way to open the
   generated files.
@@ -200,7 +201,6 @@ class _PayrollUIState extends State<PayrollUI> {
                             Platform.environment["APPDATA"]! +
                             "\\project-time-saver"
                       ]);
-                      Navigator.of(context).pop();
                     },
                     child: const Text("Open files")),
                 TextButton(
