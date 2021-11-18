@@ -102,12 +102,13 @@ class generate_report:
         if generate_report.cannotMatch != []:
             for emp in generate_report.cannotMatch:
                 name = emp[1]
-                runs = conn.execute(f"""SELECT COUNT(*) FROM Responded 
-                    WHERE date BETWEEN \'{start_date}\' AND \'{end_date}\' 
-                    AND empNumber = {emp[0]}""").fetchall()[0][0]
-                hours = cur.execute(f"""SELECT SUM(runTime)  FROM Run WHERE number = 
+                runs = conn.execute(f"""SELECT COUNT(*) FROM Run where number = (
+                    SELECT runNumber FROM Responded WHERE date 
+                    BETWEEN \'{start_date}\' AND \'{end_date}\' 
+                    AND empNumber = {emp[0]}) AND Medrun = 0""").fetchall()[0][0]
+                hours = cur.execute(f"""SELECT SUM(runTime) FROM Run WHERE number = 
                     (SELECT runNumber FROM Responded WHERE type_of_response = 'P' AND empNumber = 
-                    {emp[0]} AND date BETWEEN \'{start_date}\' AND \'{end_date}\');""").fetchall()[0][0]
+                    {emp[0]} AND date BETWEEN \'{start_date}\' AND \'{end_date}\') AND Medrun = 0;""").fetchall()[0][0]
                 returnArray.append(f"{name} could not be matched. They had {runs} run(s) and {hours} hour(s) logged.")
         return returnArray if len(returnArray) != 1 else None
 
@@ -240,9 +241,14 @@ class generate_report:
     """
     def getCount(conn, city_number, start_date, end_date):
         cur = conn.cursor()
-        sql = f"""SELECT COUNT(runNumber) FROM Responded WHERE empNumber = (SELECT number FROM Employee WHERE city_number = {city_number}) 
-            AND date BETWEEN \'{start_date}\' AND \'{end_date}\';"""
-        return cur.execute(sql).fetchall()[0][0]
+        total = 0
+        sql = f"""SELECT runNumber FROM Responded WHERE empNumber = (SELECT number FROM Employee 
+            WHERE city_number = {city_number} AND date BETWEEN \'{start_date}\' AND \'{end_date}\');"""
+        runNumbers = cur.execute(sql).fetchall()
+        for run in runNumbers:
+            type = cur.execute(f"""SELECT Medrun FROM Run WHERE number = {run[0]}""").fetchall()[0][0]
+            total += 1 if type == 0 else 0
+        return total
 
     """
     This method gets the number of hours a specific person
@@ -263,8 +269,8 @@ class generate_report:
             (SELECT number FROM Employee WHERE city_number = {city_number}) AND full_time = 0
             AND date BETWEEN \'{start_date}\' AND \'{end_date}\';""").fetchall()
         for run in runs:
-            hour = cur.execute(f"""SELECT runTime FROM Run WHERE number = {run[0]}""").fetchall()
-            if hour is not None:
+            hour = cur.execute(f"""SELECT runTime FROM Run WHERE number = {run[0]} AND Medrun = 0""").fetchall()
+            if hour is not None and hour != []:
                 total += hour[0][0]
         return total
 
