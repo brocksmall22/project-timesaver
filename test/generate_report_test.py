@@ -6,7 +6,7 @@ import sys
 
 from openpyxl.reader.excel import load_workbook
 
-sys.path.append("C:\\Users\\dalto\\Documents\\VS Code\\project-timesaver")
+sys.path.append(os.getcwd())
 from sqlite.check_database import check_database
 from lib.generate_report import generate_report as gp
 from lib.payroll import payroll as p
@@ -25,8 +25,8 @@ class generate_report_test(unittest.TestCase):
     def setUpClass(cls):
         generate_report_test.delete_db()
         check_database.check()
-        p.loadWorkBooks(["C:\\Users\\dalto\\Documents\\VS Code\\project-timesaver\\test\\resc\\good_1.xlsx",
-            "C:\\Users\\dalto\\Documents\\VS Code\\project-timesaver\\test\\resc\\good_2.xlsx"])
+        p.loadWorkBooks([os.getcwd() + "\\test\\resc\\good_1.xlsx",
+            os.getcwd() + "\\test\\resc\\good_2.xlsx"])
 
     """
     This is the actual test.
@@ -43,7 +43,7 @@ class generate_report_test(unittest.TestCase):
     files you submit to the database, you will have to restructure this.
     """
     def get_total():
-        wb = load_workbook("C:\\Users\\dalto\\AppData\\Roaming\\project-time-saver\\tally.xlsx",
+        wb = load_workbook(os.getenv('APPDATA') + "\\project-time-saver\\tally.xlsx",
                 data_only=True)
         sheet = wb.active
         total = 0

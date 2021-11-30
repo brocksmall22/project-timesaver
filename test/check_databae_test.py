@@ -3,7 +3,7 @@ import unittest
 import shutil
 
 import sys
-sys.path.append("C:\\Users\\dalto\\Documents\\VS Code\\project-timesaver")
+sys.path.append(os.getcwd())
 from sqlite.check_database import check_database
 
 """
