@@ -15,7 +15,9 @@ class PayrollUI extends StatefulWidget {
 
 class _PayrollUIState extends State<PayrollUI> {
   //TODO: Remove the redamentary file picking info and button when we have
-  //OneDrive integration
+  // OneDrive integration
+  //TODO: Allow the user to just select the blank sheets when generating as
+  // opposed to requiring a copies in a specific place
 
   //Layout of the page
   @override
@@ -26,7 +28,7 @@ class _PayrollUIState extends State<PayrollUI> {
       body: BasicWidgets.vertical(
         [
           //TODO: Remove the next three widgets when OneDrive functionality is
-          //added
+          // added
           const Text(
               "Don't forget to ensure all run reports have been processed!"),
           _gotToFileUpload(context),
@@ -169,8 +171,6 @@ class _PayrollUIState extends State<PayrollUI> {
   }
 
   /*
-  TODO: Update the messages so it is more clear when there is success but it 
-  does not meet sanity checks
   TODO: Change output path.
 
   Draws an alert with information about the files as well as a way to open the

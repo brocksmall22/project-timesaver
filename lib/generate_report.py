@@ -1,12 +1,13 @@
 from openpyxl import load_workbook
 from os import getenv
 from lib.payroll import payroll
+import datetime
 
 class generate_report:
     # TODO: Change the storage location of the generated files.
     # TODO: Change the path where the blank tally and blank shift
     # breakdowns are stored.
-    # TODO: Generate the shift summary output
+    # TODO: Handle the F.S.C column in the breakdown once we know what it is
     # TODO: Separate out all of the SQL, general refactoring
     endPaidOnCall = 0
     startFullTime = 0
@@ -28,7 +29,7 @@ class generate_report:
         generate_report.reset()
         conn = payroll.createConnection(getenv('APPDATA') + "\\project-time-saver\\database.db")
         try:
-            wb = load_workbook(getenv('APPDATA') + "\\project-time-saver\\base.xlsx")
+            wb = load_workbook(getenv('APPDATA') + "\\project-time-saver\\blank_tally.xlsx")
             sheet = wb["Sheet1"]
             number_of_runs = generate_report.getNumberOfRuns(conn, start_date, end_date)
             min_run = generate_report.getFirstRunNumber(conn, start_date, end_date)
@@ -37,7 +38,11 @@ class generate_report:
             generate_report.getStartFullTime(sheet)
             generate_report.getEndFullTime(sheet)
             generate_report.updateEmployeeNulls(conn, sheet)
-            generate_report.fillSheet(conn, wb, start_date, end_date, min_run, max_run)
+            generate_report.fillTallySheet(conn, wb, start_date, end_date, min_run, max_run)
+            wb.close()
+            wb = load_workbook(getenv('APPDATA') + "\\project-time-saver\\blank_breakdown.xlsx")
+            generate_report.fillBreakdownSheet(conn, wb, start_date, end_date, min_run, max_run)
+            wb.close()
             additionalReturns = generate_report.checkForIssues(conn, min_run, max_run, number_of_runs, start_date, end_date)
         except Exception as e:
             conn.close
@@ -201,7 +206,7 @@ class generate_report:
         start_date: the first date as a string
         end_date: the last date as a string
     """
-    def fillSheet(conn, wb, start_date, end_date, min_run, max_run):
+    def fillTallySheet(conn, wb, start_date, end_date, min_run, max_run):
         sheet = wb["Sheet1"]
         for i in range(8, generate_report.endPaidOnCall + 1):
             city_number = sheet[f"A{i}"].value
@@ -225,6 +230,125 @@ class generate_report:
         sheet["E5"] = min_run
         sheet["G5"] = max_run
         wb.save(getenv("APPDATA") + "\\project-time-saver\\tally.xlsx")
+
+
+    def fillBreakdownSheet(conn, wb, start_date, end_date, min_run, max_run):
+        sheet = wb["Sheet1"]
+        aWeekdayRuns, bWeekdayRuns, cWeekendRuns = generate_report.getWorkingHourRuns(conn, start_date, end_date)
+        aWeekendRuns, bWeekendRuns, cWeekendRuns = generate_report.getWeekendAndEveningRuns(conn, start_date, end_date)
+        aTotal, bTotal, cTotal = generate_report.getShiftTotals(conn, start_date, end_date)
+        aCover, bCover, cCover = generate_report.getSiftCoverage(conn, start_date, end_date)
+        aStation, bStation, cStation = generate_report.getStationCoverage(conn, start_date, end_date)
+        aMed, bMed, cMed = generate_report.getMedRuns(conn, start_date, end_date)
+        topFT = generate_report.getTopResponder(conn, start_date, end_date, ft=1)
+        topPOC = generate_report.getTopResponder(conn, start_date, end_date, ft=0)
+
+        sheet["B4"], sheet["B5"], sheet["B6"] = aWeekdayRuns, bWeekdayRuns, cWeekendRuns
+        sheet["C4"], sheet["C5"], sheet["C6"] = aWeekendRuns, bWeekendRuns, cWeekendRuns
+        sheet["E4"], sheet["E5"], sheet["E6"] = aTotal, bTotal, cTotal
+        sheet["F4"], sheet["F5"], sheet["F6"] = aCover, bCover, cCover
+        sheet["H4"], sheet["H5"], sheet["H6"] = aStation, bStation, cStation
+        sheet["I4"], sheet["I5"], sheet["I6"] = aMed, bMed, cMed
+        sheet["C8"], sheet["C9"] = topFT, topPOC
+        sheet["A2"] = f"Run {min_run} - Run {max_run}"
+        wb.save(getenv("APPDATA") + "\\project-time-saver\\breakdown.xlsx")
+
+
+    def getTopResponder(conn, start_date, end_date, ft):
+        sql = f"""SELECT empNumber FROM Responded WHERE full_time = {ft} AND date BETWEEN '{start_date}' AND '{end_date}';"""
+        cur = conn.cursor()
+        ft_responders = {}
+        results = cur.execute(sql).fetchall()
+
+        for response in results:
+            if response[0] not in ft_responders:
+                ft_responders[response[0]] = 1
+            else:
+                ft_responders[response[0]] += 1
+
+        largest = 0
+        for responder in ft_responders:
+            largest = ft_responders[responder] if ft_responders[responder] > largest else largest
+
+        names_sql = """SELECT name FROM Employee WHERE number = {}"""
+        names = []
+        for number in [number for number, runs in ft_responders if runs == largest]:
+            names.append(cur.execute(names_sql.format(number)).fetchall()[0][0])
+
+        if len(names) == 1:
+            return f"{names[0]} with {largest} runs"
+        elif len(names) == 2:
+            return f"{names[0]} and {names[1]} with {largest} runs"
+        else:
+            return f"{names[0]}, " + "".join([f"{name}, " for name in names[1:-1]]) + f"and {names[-1]} with {largest} runs" 
+
+
+    def getMedRuns(conn, start_date, end_date):
+        sql = """SELECT COUNT(*) FROM Run WHERE Shift = '{}' AND Medrun = 1 AND date BETWEEN '{}' and '{}';"""
+        cur = conn.cursor()
+        a = int(cur.execute(sql.format("A", start_date, end_date)).fetchall()[0][0])
+        b = int(cur.execute(sql.format("B", start_date, end_date)).fetchall()[0][0])
+        c = int(cur.execute(sql.format("C", start_date, end_date)).fetchall()[0][0])
+        return a, b, c
+
+
+    def getStationCoverage(conn, start_date, end_date):
+        sql = """SELECT COUNT(*) FROM Run WHERE Shift = '{}' AND Covered = 0 AND date BETWEEN '{}' and '{}';"""
+        cur = conn.cursor()
+        a = int(cur.execute(sql.format("A", start_date, end_date)).fetchall()[0][0])
+        b = int(cur.execute(sql.format("B", start_date, end_date)).fetchall()[0][0])
+        c = int(cur.execute(sql.format("C", start_date, end_date)).fetchall()[0][0])
+        return a, b, c
+
+
+    def getSiftCoverage(conn, start_date, end_date):
+        sql = """SELECT COUNT(*) FROM Run WHERE Shift = '{}' AND full_coverage = 1 AND date BETWEEN '{}' and '{}';"""
+        cur = conn.cursor()
+        a = int(cur.execute(sql.format("A", start_date, end_date)).fetchall()[0][0])
+        b = int(cur.execute(sql.format("B", start_date, end_date)).fetchall()[0][0])
+        c = int(cur.execute(sql.format("C", start_date, end_date)).fetchall()[0][0])
+        return a, b, c
+
+
+    def getShiftTotals(conn, start_date, end_date):
+        sql = """SELECT COUNT(*) FROM Run WHERE Shift = '{}' AND date BETWEEN '{}' and '{}';"""
+        cur = conn.cursor()
+        a = int(cur.execute(sql.format("A", start_date, end_date)).fetchall()[0][0])
+        b = int(cur.execute(sql.format("B", start_date, end_date)).fetchall()[0][0])
+        c = int(cur.execute(sql.format("C", start_date, end_date)).fetchall()[0][0])
+        return a, b, c
+
+
+    def getWorkingHourRuns(conn, start_date, end_date):
+        sql = """SELECT date, startTime FROM Run WHERE Shift = '{}' AND date BETWEEN '{}' and '{}';"""
+        cur = conn.cursor()
+        a = len(generate_report.stripOffHours(cur.execute(sql.format("A", start_date, end_date)).fetchall()))
+        b = len(generate_report.stripOffHours(cur.execute(sql.format("B", start_date, end_date)).fetchall()))
+        c = len(generate_report.stripOffHours(cur.execute(sql.format("C", start_date, end_date)).fetchall()))
+        return a, b, c
+
+    
+    def getWeekendAndEveningRuns(conn, start_date, end_date):
+        sql = """SELECT date, startTime FROM Run WHERE Shift = '{}' AND date BETWEEN '{}' and '{}';"""
+        cur = conn.cursor()
+        a = len(generate_report.stripWorkingHours(cur.execute(sql.format("A", start_date, end_date)).fetchall()))
+        b = len(generate_report.stripWorkingHours(cur.execute(sql.format("B", start_date, end_date)).fetchall()))
+        c = len(generate_report.stripWorkingHours(cur.execute(sql.format("C", start_date, end_date)).fetchall()))
+
+        return a, b, c
+
+
+    def stripWorkingHours(toStrip):
+        return [run for run in toStrip if not generate_report.isWorkingHours(run)]
+
+    
+    def stripOffHours(toStrip):
+        return [run for run in toStrip if generate_report.isWorkingHours(run)]
+
+
+    def isWorkingHours(date_time):
+        return True if datetime.datetime.strptime(date_time[0], "%Y-%m-%d").weekday() < 5 \
+            and (date_time[1] >= 500 and date_time[1] <= 1700) else False
 
 
     """
