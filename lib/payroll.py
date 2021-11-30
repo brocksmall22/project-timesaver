@@ -4,10 +4,8 @@ from openpyxl import load_workbook
 import sqlite3
 from sqlite3 import Error
 
-
 class payroll:
 
-    database = r"C://sqlite/RunReportDB"
     returnArray = []
     endRange = 0
 
@@ -18,8 +16,8 @@ class payroll:
     It returns the retun array of the failed files or true if no files have failed
     """
     def loadWorkBooks(fileList):
+        payroll.reset()
         for file in fileList:
-            print(file)
             wb = load_workbook(file)
 
             payroll.readWorkBook(wb, file)
@@ -42,13 +40,21 @@ class payroll:
             payroll.getRange(wb)
 
             date, runNumber = payroll.getRunInfo(conn, wb)
-
             payroll.getEmpinfo(conn, wb, date, runNumber)
+
+            conn.commit()
         except Exception as e:
             print(e)
             payroll.returnArray.append(filename)
 
         conn.close
+
+    """
+    Resets the global variables for the next run of this class.
+    """
+    def reset():
+        payroll.endRange = 0
+        payroll.returnArray = []
 
     """
     getRange(wb)
@@ -75,14 +81,15 @@ class payroll:
         sheet = wb.active
         for i1 in sheet[f"A21:h{payroll.endRange}"]:
 
-            if i1[5].value == 1:
+            if i1[5].value is not None:
+                assert(None not in [i1[0].value, i1[1].value, i1[7].value])
+                assert('' not in [i1[0].value, i1[1].value, i1[7].value])
+                assert('None' not in [i1[0].value, i1[1].value, i1[7].value])
 
                 empNumber = wb["Pay"][i1[0].value.split("!")[1]].value
-                print("Emp Num: " + str(empNumber))
                 payRate = wb["Pay"][i1[7].value.split("!")[1]].value
-                print("PayRate: " + str(payRate))
                 Name = wb["Pay"][i1[1].value.split("!")[1]].value
-                print("Name: "+Name)
+
                 if payroll.empNeedsUpdated(conn, empNumber):
                     payroll.updateEmp(conn, Name, empNumber)
                 else:
@@ -108,7 +115,7 @@ class payroll:
         startTime = sheet["B5"].value
         endTime = sheet["L5"].value
         shift = sheet["F3"].value
-        if(sheet["F6"].value == 1):
+        if(sheet["F6"].value is not None):
             stationCovered = 1
         else:
             stationCovered = 0
@@ -116,6 +123,9 @@ class payroll:
             medrun = 1
         else:
             medrun = 0
+        assert(None not in [date, runNumber, runTime, startTime, endTime, shift])
+        assert('' not in [date, runNumber, runTime, startTime, endTime, shift])
+        assert('None' not in [date, runNumber, runTime, startTime, endTime, shift])
         if payroll.runNeedsUpdated(conn, runNumber, date):
             payroll.updateRun(conn, runNumber, date, startTime,
                               endTime, runTime, stationCovered, medrun, shift)
@@ -160,16 +170,13 @@ class payroll:
         cur = conn.cursor()
         sql = sql.format(runNumber, date, stopTime,
                          endTime, runTime, Covered, Medrun, shift)
-        print(sql)
         cur.execute(sql)
-        conn.commit()
         return cur.lastrowid
 
     def updateRun(conn, runNumber, date, startTime, endTime, runTime, Covered, Medrun, shift):
         statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\' WHERE number = {runNumber} AND date = \'{date}\';"""
         cur = conn.cursor()
         cur.execute(statement)
-        conn.commit()
         return cur.lastrowid
 
     def runNeedsUpdated(conn, runNumber, date):
@@ -196,13 +203,11 @@ class payroll:
     it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
     """
     def createResponded(conn, empNumber, payRate, date, num):
-        sql = """ INSERT INTO Responded(empNumber, runNumber, date, payRate)
+        sql = """INSERT INTO Responded(empNumber, runNumber, date, payRate)
                 VALUES({0},{1},\'{2}\',{3}) """
         cur = conn.cursor()
         sql = sql.format(empNumber, num, date, payRate)
-        print(sql)
         cur.execute(sql)
-        conn.commit()
         return cur.lastrowid
 
     def respondedNeedsUpdated(conn, empNumber, date, rNum):
@@ -217,7 +222,6 @@ class payroll:
         statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum};"""
         cur = conn.cursor()
         cur.execute(statement)
-        conn.commit()
         return cur.lastrowid
     """
     This Contains all of the SQL functions related to the Employee tabel
@@ -239,7 +243,6 @@ class payroll:
                 VALUES(\'{name}\',{empNumber}) """
         cur = conn.cursor()
         cur.execute(sql)
-        conn.commit()
         return cur.lastrowid
 
     def empNeedsUpdated(conn, empNumber):
@@ -254,5 +257,4 @@ class payroll:
         statement = f"""UPDATE Employee SET name = \'{name}\' WHERE number = {empNumber};"""
         cur = conn.cursor()
         cur.execute(statement)
-        conn.commit()
         return cur.lastrowid

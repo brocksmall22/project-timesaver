@@ -95,6 +95,7 @@ class generate_report:
         for i in range(8, generate_report.endRange + 1):
             city_number = sheet[f"A{i}"].value
             if city_number is not None:
+                city_number = int(city_number)
                 hours = generate_report.get_hours(conn, city_number, start_date, end_date)
                 count = generate_report.get_count(conn, city_number, start_date, end_date)
                 sheet[f"D{i}"].value = count

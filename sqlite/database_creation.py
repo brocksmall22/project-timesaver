@@ -21,9 +21,9 @@ class creator:
             creator.create_table(conn, sql_create_employee_table)
             creator.create_table(conn, sql_create_run_table)
             creator.create_table(conn, sql_create_report_table)
-            print("Success!")
         else:
             print("Error! cannot create the database connection.")
+        conn.close
 
     @staticmethod
     def create_connection(db_file):
