@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:project_time_saver/basic_widgets.dart';
-import 'package:project_time_saver/main.dart';
 import 'package:project_time_saver/payroll.dart';
 
 Widget _buildPayrollUI() => MaterialApp(

@@ -8,11 +8,11 @@ class creator:
         sql_create_employee_table = """ CREATE TABLE IF NOT EXISTS Employee (name STRING, number SMALLINT PRIMARY KEY, city_number SMALLINT NULL); """
 
         sql_create_run_table = """CREATE TABLE IF NOT EXISTS Run (number TINYINT, date DATE, 
-                                    startTime SMALLINT, stopTime SMALLINT, runTime TINYINT, Covered BIT, Medrun BIT, shift char(1), PRIMARY KEY(number, date)); """
+                                    startTime SMALLINT, stopTime SMALLINT, runTime TINYINT, Covered BIT, Medrun BIT, shift char(1), full_coverage BIT, PRIMARY KEY(number, date)); """
 
         sql_create_report_table = """CREATE TABLE IF NOT EXISTS Responded (empNumber STRING REFERENCES Employee (number), 
                                     runNumber TINYINT REFERENCES Run (number), date DATE REFERENCES Run (date), 
-                                    payRate FLOAT, PRIMARY KEY(date, empNumber, runNumber));"""
+                                    payRate FLOAT, type_of_response varchar(20), full_time BIT, PRIMARY KEY(date, empNumber, runNumber));"""
 
         conn = creator.create_connection(db_file)
 

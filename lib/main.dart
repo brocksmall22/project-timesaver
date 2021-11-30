@@ -16,19 +16,12 @@ Bugs..
     In the next iteration, with some tuning, that is to be expected behavior.
 */
 void main() async {
-  bool debug = true;
+  bool debug = false;
   bool awake = await API.checkIfServerIsAlive();
 
   !debug & !awake
-      ? Process.run("waitress-serve", [
-          "--host=127.0.0.1",
-          "--port=8080",
-          "lib.api:app"
-        ]).then((ProcessResult pr) {
-          print(pr.exitCode);
-          print(pr.stdout);
-          print(pr.stderr);
-        })
+      ? Process.run(
+          "waitress-serve", ["--host=127.0.0.1", "--port=8080", "lib.api:app"])
       : null;
 
   runApp(const MyApp());
