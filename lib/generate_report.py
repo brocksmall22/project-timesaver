@@ -232,6 +232,17 @@ class generate_report:
         wb.save(getenv("APPDATA") + "\\project-time-saver\\tally.xlsx")
 
 
+    """
+    This method is responsible for generating the shift breakdown file.
+
+    inputs..
+        conn: the connection to the sqlite db
+        wb: the workbook in memory
+        start_date: the start date of the period
+        end_date: the end date of the period
+        min_run: the first run of the period
+        max_run: the last run of the period
+    """
     def fillBreakdownSheet(conn, wb, start_date, end_date, min_run, max_run):
         sheet = wb["Sheet1"]
         aWeekdayRuns, bWeekdayRuns, cWeekendRuns = generate_report.getWorkingHourRuns(conn, start_date, end_date)
@@ -240,8 +251,8 @@ class generate_report:
         aCover, bCover, cCover = generate_report.getSiftCoverage(conn, start_date, end_date)
         aStation, bStation, cStation = generate_report.getStationCoverage(conn, start_date, end_date)
         aMed, bMed, cMed = generate_report.getMedRuns(conn, start_date, end_date)
-        topFT = generate_report.getTopResponder(conn, start_date, end_date, ft=1)
-        topPOC = generate_report.getTopResponder(conn, start_date, end_date, ft=0)
+        topFT = generate_report.getTopResponder(conn, start_date, end_date, ft = True)
+        topPOC = generate_report.getTopResponder(conn, start_date, end_date, ft = False)
 
         sheet["B4"], sheet["B5"], sheet["B6"] = aWeekdayRuns, bWeekdayRuns, cWeekendRuns
         sheet["C4"], sheet["C5"], sheet["C6"] = aWeekendRuns, bWeekendRuns, cWeekendRuns
@@ -254,26 +265,43 @@ class generate_report:
         wb.save(getenv("APPDATA") + "\\project-time-saver\\breakdown.xlsx")
 
 
+    """
+    This method is responsible for getting the responder who responded to the most runs during the period.
+
+    inputs..
+        conn: a connection to the sqlite db
+        strt_date: the start of the period
+        end_date: the end of the period
+        ft: a bool indicating if the top full time employee is wanted or not
+    returns..
+        A string that contains the top responder(s) followed by the number of runs
+    """
     def getTopResponder(conn, start_date, end_date, ft):
-        sql = f"""SELECT empNumber FROM Responded WHERE full_time = {ft} AND date BETWEEN '{start_date}' AND '{end_date}';"""
+        responders_sql = f"""SELECT empNumber, runNumber FROM Responded WHERE full_time = {int(ft)} AND date BETWEEN '{start_date}' AND '{end_date}';"""
+        run_type_sql = """SELECT Medrun FROM Run WHERE number = {};"""
         cur = conn.cursor()
-        ft_responders = {}
-        results = cur.execute(sql).fetchall()
+        responders = {}
+        results = cur.execute(responders_sql).fetchall()
+        filtered_redults = []
 
         for response in results:
-            if response[0] not in ft_responders:
-                ft_responders[response[0]] = 1
+            if cur.execute(run_type_sql.format(response[1])).fetchall()[0][0] == 0:
+                filtered_redults.append(response)
+        
+        for response in filtered_redults:
+            if response[0] not in responders:
+                responders[response[0]] = 1
             else:
-                ft_responders[response[0]] += 1
+                responders[response[0]] += 1
 
         largest = 0
-        for responder in ft_responders:
-            largest = ft_responders[responder] if ft_responders[responder] > largest else largest
+        for responder in responders:
+            largest = responders[responder] if responders[responder] > largest else largest
 
         names_sql = """SELECT name FROM Employee WHERE number = {}"""
         names = []
-        for number in [number for number, runs in ft_responders if runs == largest]:
-            names.append(cur.execute(names_sql.format(number)).fetchall()[0][0])
+        for runNumber in [number for number, runs in responders.items() if runs == largest]:
+            names.append(cur.execute(names_sql.format(runNumber)).fetchall()[0][0])
 
         if len(names) == 1:
             return f"{names[0]} with {largest} runs"
@@ -283,6 +311,18 @@ class generate_report:
             return f"{names[0]}, " + "".join([f"{name}, " for name in names[1:-1]]) + f"and {names[-1]} with {largest} runs" 
 
 
+    """
+    This gets the number of med runs for the period.
+
+    inputs..
+        conn: a connection to the sqlite db
+        strt_date: the start of the period
+        end_date: the end of the period
+    returns..
+        a: the number of med runs for shift a
+        b: the number of med runs for shift b
+        c: the number of med runs for shift c
+    """
     def getMedRuns(conn, start_date, end_date):
         sql = """SELECT COUNT(*) FROM Run WHERE Shift = '{}' AND Medrun = 1 AND date BETWEEN '{}' and '{}';"""
         cur = conn.cursor()
@@ -292,8 +332,20 @@ class generate_report:
         return a, b, c
 
 
+    """
+    This gets the number of runs where the station was not covered.
+
+    inputs..
+        conn: a connection to the sqlite db
+        strt_date: the start of the period
+        end_date: the end of the period
+    returns..
+        a: the number of sifts with no station coverage for shift a
+        b: the number of sifts with no station coverage for shift b
+        c: the number of sifts with no station coverage for shift c
+    """
     def getStationCoverage(conn, start_date, end_date):
-        sql = """SELECT COUNT(*) FROM Run WHERE Shift = '{}' AND Covered = 0 AND date BETWEEN '{}' and '{}';"""
+        sql = """SELECT COUNT(*) FROM Run WHERE Shift = '{}' AND Covered = 0 AND Medrun = 0 AND date BETWEEN '{}' and '{}';"""
         cur = conn.cursor()
         a = int(cur.execute(sql.format("A", start_date, end_date)).fetchall()[0][0])
         b = int(cur.execute(sql.format("B", start_date, end_date)).fetchall()[0][0])
@@ -301,8 +353,20 @@ class generate_report:
         return a, b, c
 
 
+    """
+    Gets the number of runs with 100% shift coverage.
+
+    inputs..
+        conn: a connection to the sqlite db
+        strt_date: the start of the period
+        end_date: the end of the period
+    returns..
+        a: the number of runs with 100% shift coverage for shift a
+        b: the number of runs with 100% shift coverage for shift b
+        c: the number of runs with 100% shift coverage for shift c
+    """
     def getSiftCoverage(conn, start_date, end_date):
-        sql = """SELECT COUNT(*) FROM Run WHERE Shift = '{}' AND full_coverage = 1 AND date BETWEEN '{}' and '{}';"""
+        sql = """SELECT COUNT(*) FROM Run WHERE Shift = '{}' AND full_coverage = 1 AND Medrun = 0 AND date BETWEEN '{}' and '{}';"""
         cur = conn.cursor()
         a = int(cur.execute(sql.format("A", start_date, end_date)).fetchall()[0][0])
         b = int(cur.execute(sql.format("B", start_date, end_date)).fetchall()[0][0])
@@ -310,8 +374,20 @@ class generate_report:
         return a, b, c
 
 
+    """
+    Gets the total number of fire runs.
+
+    inputs..
+        conn: a connection to the sqlite db
+        strt_date: the start of the period
+        end_date: the end of the period
+    returns..
+        a: the number of fire runs for shift a
+        b: the number of fire runs for shift b
+        c: the number of fire runs for shift c
+    """
     def getShiftTotals(conn, start_date, end_date):
-        sql = """SELECT COUNT(*) FROM Run WHERE Shift = '{}' AND date BETWEEN '{}' and '{}';"""
+        sql = """SELECT COUNT(*) FROM Run WHERE Shift = '{}' AND Medrun = 0 AND date BETWEEN '{}' and '{}';"""
         cur = conn.cursor()
         a = int(cur.execute(sql.format("A", start_date, end_date)).fetchall()[0][0])
         b = int(cur.execute(sql.format("B", start_date, end_date)).fetchall()[0][0])
@@ -319,8 +395,20 @@ class generate_report:
         return a, b, c
 
 
+    """
+    Gets the number of runs between 0500 and 1700 M-F.
+
+    inputs..
+        conn: a connection to the sqlite db
+        strt_date: the start of the period
+        end_date: the end of the period
+    returns..
+        a: the number of working hour runs for shift a
+        b: the number of working hour runs for shift b
+        c: the number of working hour runs for shift c
+    """
     def getWorkingHourRuns(conn, start_date, end_date):
-        sql = """SELECT date, startTime FROM Run WHERE Shift = '{}' AND date BETWEEN '{}' and '{}';"""
+        sql = """SELECT date, startTime FROM Run WHERE Shift = '{}' AND Medrun = 0 AND date BETWEEN '{}' and '{}';"""
         cur = conn.cursor()
         a = len(generate_report.stripOffHours(cur.execute(sql.format("A", start_date, end_date)).fetchall()))
         b = len(generate_report.stripOffHours(cur.execute(sql.format("B", start_date, end_date)).fetchall()))
@@ -328,8 +416,20 @@ class generate_report:
         return a, b, c
 
     
+    """
+    Gets the number of runs between 1700 and 0500 on weekdays and all weekend runs.
+
+    inputs..
+        conn: a connection to the sqlite db
+        strt_date: the start of the period
+        end_date: the end of the period
+    returns..
+        a: the number of off hour runs for shift a
+        b: the number of off hour runs for shift b
+        c: the number of off hour runs for shift c
+    """
     def getWeekendAndEveningRuns(conn, start_date, end_date):
-        sql = """SELECT date, startTime FROM Run WHERE Shift = '{}' AND date BETWEEN '{}' and '{}';"""
+        sql = """SELECT date, startTime FROM Run WHERE Shift = '{}' AND Medrun = 0 AND date BETWEEN '{}' and '{}';"""
         cur = conn.cursor()
         a = len(generate_report.stripWorkingHours(cur.execute(sql.format("A", start_date, end_date)).fetchall()))
         b = len(generate_report.stripWorkingHours(cur.execute(sql.format("B", start_date, end_date)).fetchall()))
@@ -338,14 +438,32 @@ class generate_report:
         return a, b, c
 
 
+    """
+    Takes a list of dates and times and returns a list of dates 
+    and times that are on the weekend or between 1700 and 0500.
+    """
     def stripWorkingHours(toStrip):
         return [run for run in toStrip if not generate_report.isWorkingHours(run)]
 
     
+    """
+    Takes a list of dates and times and returns a list of dates 
+    and times that are during weekdays between 0500 and 1700.
+    """
     def stripOffHours(toStrip):
         return [run for run in toStrip if generate_report.isWorkingHours(run)]
 
 
+    """
+    Determines if a date is on a weekday between 0500 and 1700 or not.
+
+    inputs..
+        date_time: a tuple with a string date in position 0 and an
+            int that represents a military time in position 1
+    returns..
+        case 1: True if it is a weekday between 0500 and 1700
+        case 2: False if not
+    """
     def isWorkingHours(date_time):
         return True if datetime.datetime.strptime(date_time[0], "%Y-%m-%d").weekday() < 5 \
             and (date_time[1] >= 500 and date_time[1] <= 1700) else False
