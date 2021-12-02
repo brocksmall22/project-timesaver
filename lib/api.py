@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request
 from datetime import datetime
-import json
 from .generate_report import generate_report as grp
 from .payroll import payroll
 import sqlite.check_database as cdb
