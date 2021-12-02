@@ -50,8 +50,8 @@ class payroll_test(unittest.TestCase):
         employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'C')])
-        self.assertEqual(employeevals, [])
-        self.assertEqual(respondedvals, [])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None), ('K. Gerber', 621, None)])
+        self.assertEqual(respondedvals, [(421, 584, '2021-11-01', 16.45), (621, 584, '2021-11-01', 14.5)])
 
     """
     This test tests that a known good file can be submitted.
@@ -65,8 +65,8 @@ class payroll_test(unittest.TestCase):
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'C'), 
             (585, '2021-11-01', 1114, 1133, 1, 1, 0, 'C')])
-        self.assertEqual(employeevals, [('M. Burkholder', 421, None)])
-        self.assertEqual(respondedvals, [(421, 585, '2021-11-01', 16.45)])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None), ('K. Gerber', 621, None)])
+        self.assertEqual(respondedvals, [(421, 584, '2021-11-01', 16.45), (621, 584, '2021-11-01', 14.5), (421, 585, '2021-11-01', 16.45), (621, 585, '2021-11-01', 14.5)])
 
     """
     This test tests that a known good file can be submitted, updating a
@@ -81,23 +81,23 @@ class payroll_test(unittest.TestCase):
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'A'), 
             (585, '2021-11-01', 1114, 1133, 1, 1, 0, 'C')])
-        self.assertEqual(employeevals, [('M. Burkholder', 421, None)])
-        self.assertEqual(respondedvals, [(421, 585, '2021-11-01', 16.45)])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None), ('K. Gerber', 621, None)])
+        self.assertEqual(respondedvals, [(421, 584, '2021-11-01', 16.45), (621, 584, '2021-11-01', 14.5), (421, 585, '2021-11-01', 16.45), (621, 585, '2021-11-01', 14.5)])
 
     """
     Test to ensure that you can submit more than one file at once.
     """
     def test_4_insert_multiple_good(self):
         cur = payroll_test.conn.cursor()
-        result = p.loadWorkBooks([payroll_test.good_1[0], payroll_test.good_2[0]])
+        result = p.loadWorkBooks(payroll_test.good_1 + payroll_test.good_2)
         self.assertTrue(result[0])
         runvals = cur.execute("""SELECT * FROM Run;""").fetchall()
         employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'C'), 
             (585, '2021-11-01', 1114, 1133, 1, 1, 0, 'C')])
-        self.assertEqual(employeevals, [('M. Burkholder', 421, None)])
-        self.assertEqual(respondedvals, [(421, 585, '2021-11-01', 16.45)])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None), ('K. Gerber', 621, None)])
+        self.assertEqual(respondedvals, [(421, 584, '2021-11-01', 16.45), (621, 584, '2021-11-01', 14.5), (421, 585, '2021-11-01', 16.45), (621, 585, '2021-11-01', 14.5)])
 
     """
     This test tests that a known bad file will not submit.
@@ -111,8 +111,8 @@ class payroll_test(unittest.TestCase):
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'C'), 
             (585, '2021-11-01', 1114, 1133, 1, 1, 0, 'C')])
-        self.assertEqual(employeevals, [('M. Burkholder', 421, None)])
-        self.assertEqual(respondedvals, [(421, 585, '2021-11-01', 16.45)])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None), ('K. Gerber', 621, None)])
+        self.assertEqual(respondedvals, [(421, 584, '2021-11-01', 16.45), (621, 584, '2021-11-01', 14.5), (421, 585, '2021-11-01', 16.45), (621, 585, '2021-11-01', 14.5)])
 
     """
     This test tests that a known bad file will not submit.
@@ -126,8 +126,8 @@ class payroll_test(unittest.TestCase):
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'C'), 
             (585, '2021-11-01', 1114, 1133, 1, 1, 0, 'C')])
-        self.assertEqual(employeevals, [('M. Burkholder', 421, None)])
-        self.assertEqual(respondedvals, [(421, 585, '2021-11-01', 16.45)])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None), ('K. Gerber', 621, None)])
+        self.assertEqual(respondedvals, [(421, 584, '2021-11-01', 16.45), (621, 584, '2021-11-01', 14.5), (421, 585, '2021-11-01', 16.45), (621, 585, '2021-11-01', 14.5)])
 
     """
     Test to ensure that you can submit multiple files, mixed with bad ones.
@@ -141,8 +141,8 @@ class payroll_test(unittest.TestCase):
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
         self.assertEqual(runvals, [(584, '2021-11-01', 949, 1038, 1, 1, 1, 'A'), 
             (585, '2021-11-01', 1114, 1133, 1, 1, 0, 'C')])
-        self.assertEqual(employeevals, [('M. Burkholder', 421, None)])
-        self.assertEqual(respondedvals, [(421, 585, '2021-11-01', 16.45)])
+        self.assertEqual(employeevals, [('M. Burkholder', 421, None), ('K. Gerber', 621, None)])
+        self.assertEqual(respondedvals, [(421, 584, '2021-11-01', 16.45), (621, 584, '2021-11-01', 14.5), (421, 585, '2021-11-01', 16.45), (621, 585, '2021-11-01', 14.5)])
 
     """
     Deletes the DB as a part of the setup method.

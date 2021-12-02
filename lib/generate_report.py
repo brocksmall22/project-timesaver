@@ -1,6 +1,6 @@
 
 from openpyxl import load_workbook
-from os import getenv, stat
+from os import getenv
 from lib.payroll import payroll
 
 class generate_report:
