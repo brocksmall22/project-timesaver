@@ -33,9 +33,8 @@ class generate_report_test(unittest.TestCase):
     """
     def test_generate_tally(self):
         results = gp.generate_report("2021-11-01", "2021-11-07")
-        print(results)
         self.assertEqual(type(results[0]), type(True))
-        self.assertEqual(generate_report_test.get_total(), 16.45)
+        self.assertEqual(generate_report_test.get_total(), 0)
 
     """
     This function helps ensure the inputted values are correct. It is
@@ -46,11 +45,14 @@ class generate_report_test(unittest.TestCase):
         wb = load_workbook(os.getenv('APPDATA') + "\\project-time-saver\\tally.xlsx",
                 data_only=True)
         sheet = wb.active
+        notNone = True
         total = 0
         row = 8
-        while total == 0:
+        while notNone == True:
             if sheet[f"E{row}"].value is not None and int(sheet[f"E{row}"].value) != 0:
                 total = float(sheet[f"H{row}"].value)
+            if sheet[f"E{row}"].value is None:
+                notNone = False
             else:
                 row += 1
         return total
