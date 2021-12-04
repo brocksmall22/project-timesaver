@@ -151,7 +151,14 @@ class sqlFunctions():
         return cur.lastrowid
 
     """
-    
+    Get the count of runs a specific employee has responded to in a specific period.
+
+    inputs..
+        start_date: the start of the period
+        end_date: the end of the period
+        empNum: the department employee ID
+    returns..
+        An int containing the number of runs
     """
     def getCountOfRunsForEmployeeBetweenDates(self, start_date, end_date, empNum):
         cur = self.conn.cursor()
@@ -162,7 +169,14 @@ class sqlFunctions():
 
                 
     """
-    
+    Get the total hours a specific employee is being paid for.
+
+    inputs..
+        start_date: the start of the period
+        end_date: the end of the period
+        empNumber: the department employee ID
+    returns..
+        An int containing the number of hours
     """
     def getSumOfHoursForEmployeeBetweenGivenDates(self, start_date, end_date, empNumber):
         cur = self.conn.cursor()
@@ -172,7 +186,13 @@ class sqlFunctions():
 
 
     """
-    
+    Get an ordered list of runs in a given range of dates.
+
+    inputs..
+        start_date: the start of the period
+        end_date: the end of the period
+    returns..
+        A list of tuples containing one run number each like `(run number)`
     """
     def getOrderedRunsBetweenTwoDates(self, start_date, end_date):
         cur = self.conn.cursor()
