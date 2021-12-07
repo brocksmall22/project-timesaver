@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:project_time_saver/basic_widgets.dart';
 import 'package:project_time_saver/file.dart';
 import 'package:project_time_saver/payroll.dart';
+import 'package:project_time_saver/settings.dart';
 import 'package:project_time_saver/ui_api.dart';
+import 'package:window_size/window_size.dart';
 import 'dart:io';
 
 /*
@@ -16,20 +18,18 @@ Bugs..
     In the next iteration, with some tuning, that is to be expected behavior.
 */
 void main() async {
-  bool debug = true;
+  bool debug = false;
   bool awake = await API.checkIfServerIsAlive();
 
   !debug & !awake
-      ? Process.run("waitress-serve", [
-          "--host=127.0.0.1",
-          "--port=8080",
-          "lib.api:app"
-        ]).then((ProcessResult pr) {
-          print(pr.exitCode);
-          print(pr.stdout);
-          print(pr.stderr);
-        })
+      ? Process.run(
+          "waitress-serve", ["--host=127.0.0.1", "--port=8080", "lib.api:app"])
       : null;
+
+  WidgetsFlutterBinding.ensureInitialized();
+  if (Platform.isWindows) {
+    setWindowMinSize(const Size(512, 750));
+  }
 
   runApp(const MyApp());
 }
@@ -96,5 +96,6 @@ class MainPage extends StatelessWidget {
 
   //This button will open the settings page once implemented
   Widget _settingsButton(BuildContext context) =>
-      BasicWidgets.mainNavigationButton(context, "Settings", null);
+      BasicWidgets.mainNavigationButton(
+          context, "Settings", const SettingsUI());
 }

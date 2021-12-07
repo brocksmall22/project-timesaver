@@ -1,5 +1,6 @@
 import sqlite3
 from sqlite3 import Error
+from sqlite3.dbapi2 import Cursor
 
 """
 This class is responsible for running all sql operations. It requires that it be enstantiated.
@@ -148,3 +149,281 @@ class sqlFunctions():
         cur = self.conn.cursor()
         cur.execute(statement)
         return cur.lastrowid
+
+    """
+    Get the count of runs a specific employee has responded to in a specific period.
+
+    inputs..
+        start_date: the start of the period
+        end_date: the end of the period
+        empNum: the department employee ID
+    returns..
+        An int containing the number of runs
+    """
+    def getCountOfRunsForEmployeeBetweenDates(self, start_date, end_date, empNum):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT COUNT(*) FROM Run where number = (
+                    SELECT runNumber FROM Responded WHERE date 
+                    BETWEEN \'{start_date}\' AND \'{end_date}\' 
+                    AND empNumber = {empNum}) AND Medrun = 0""").fetchall()[0][0]
+
+                
+    """
+    Get the total hours a specific employee is being paid for.
+
+    inputs..
+        start_date: the start of the period
+        end_date: the end of the period
+        empNumber: the department employee ID
+    returns..
+        An int containing the number of hours
+    """
+    def getSumOfHoursForEmployeeBetweenGivenDates(self, start_date, end_date, empNumber):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT SUM(runTime) FROM Run WHERE number = 
+                    (SELECT runNumber FROM Responded WHERE type_of_response = 'P' AND empNumber = 
+                    {empNumber} AND date BETWEEN \'{start_date}\' AND \'{end_date}\') AND Medrun = 0;""").fetchall()[0][0]
+
+
+    """
+    Get an ordered list of runs in a given range of dates.
+
+    inputs..
+        start_date: the start of the period
+        end_date: the end of the period
+    returns..
+        A list of tuples containing one run number each like `(run number)`
+    """
+    def getOrderedRunsBetweenTwoDates(self, start_date, end_date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT DISTINCT number FROM Run WHERE 
+                    date BETWEEN \'{start_date}\' AND \'{end_date}\' ORDER BY number;""").fetchall()
+
+
+    """
+    This method gets the number of runs for a given period.
+
+    inputs..
+        start_date: the first date as a string
+        end_date: the last date as a string
+    returns..
+        case 1: the number of runs
+    """
+    def getNumberOfRuns(self, start_date, end_date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT COUNT(number) FROM Run WHERE date BETWEEN \'{start_date}\' AND \'{end_date}\';""").fetchall()[0][0]
+
+
+    """
+    This method gets the lowest run number for a given period.
+
+    inputs..
+        start_date: the first date as a string
+        end_date: the last date as a string
+    returns..
+        case 1: the first run
+    """
+    def getFirstRunNumber(self, start_date, end_date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT MIN(number) FROM Run WHERE date BETWEEN \'{start_date}\' AND \'{end_date}\';""").fetchall()[0][0]
+
+
+    """
+    This method gets the highest run number for a given period.
+
+    inputs..
+        start_date: the first date as a string
+        end_date: the last date as a string
+    returns..
+        case 1: the last run
+    """
+    def getLastRunNumber(self, start_date, end_date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT MAX(number) FROM Run WHERE date BETWEEN \'{start_date}\' AND \'{end_date}\';""").fetchall()[0][0]
+
+
+    """
+    This method gets the employee number and run number of every responded entry in the table between two dates.
+    The full_time bool is used to get full time responded or paid on call responded.
+
+    inputs..
+        ft: True for full time, False for paid on call
+        start_date: the date for the beginning of a period
+        end_date: the date for the end of a period
+    returns..
+        A list of tuples like `(employee_number, run_number)`
+    """
+    def getEAndRNumbersFromRespondedBasedOnFullTimeBetweenDates(self, ft, start_date, end_date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT empNumber, runNumber FROM Responded WHERE full_time = {int(ft)} AND date BETWEEN '{start_date}' AND '{end_date}';""").fetchall()
+
+    """
+    This method gets the Medrun bit for a given run.
+
+    inputs..
+        run_number: the number of the run
+    returns..
+        An int, 1 for a med run, or 0 for a fire run
+    """
+    def getMedRunBitFromRun(self, run_number):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT Medrun FROM Run WHERE number = {run_number};""").fetchall()[0][0]
+
+
+    """
+    Gets the name of an employee from the employee number.
+
+    inputs..
+        employee_number: the fire department internal employee ID
+    returns..
+        A string containing a name
+    """
+    def getNameOfEmployeeBasedOnNumber(self, employee_number):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT name FROM Employee WHERE number = {employee_number}""").fetchall()[0][0]
+
+
+    """
+    Gets the count of med runs for a given shift between two dates.
+
+    inputs..
+        shift: a string containing the shift
+        start_date: the beginning date
+        end_date: the end date
+    returns..
+        An integer indicating the number of runs
+    """
+    def getCountShiftMedRunsBetweenDates(self, shift, start_date, end_date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT COUNT(*) FROM Run WHERE Shift = '{shift}' AND Medrun = 1 AND date BETWEEN '{start_date}' and '{end_date}';""").fetchall()[0][0]
+
+
+    """
+    Gets the number of runs for a given shift that the station was not covered during the run.
+
+    inputs..
+        shift: a string containing the shift
+        start_date: the beginning date
+        end_date: the end date
+    returns..
+        An integer indicating the number of runs
+    """
+    def getCountShiftNotCoveredRunsBetweenDates(self, shift, start_date, end_date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT COUNT(*) FROM Run WHERE Shift = '{shift}' AND Covered = 0 AND Medrun = 0 AND date BETWEEN '{start_date}' and '{end_date}';""").fetchall()[0][0]
+
+
+    """
+    Gets the number of runs for a given shift that every employee for the shift responded.
+
+    inputs..
+        shift: a string containing the shift
+        start_date: the beginning date
+        end_date: the end date
+    returns..
+        An integer indicating the number of runs
+    """
+    def getCountShiftFullyCoveredRunsBetweenDates(self, shift, start_date, end_date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT COUNT(*) FROM Run WHERE Shift = '{shift}' AND full_coverage = 1 AND Medrun = 0 AND date BETWEEN '{start_date}' and '{end_date}';""").fetchall()[0][0]
+
+
+    """
+    Gets the number of runs for a given shift that are fire runs.
+
+    inputs..
+        shift: a string containing the shift
+        start_date: the beginning date
+        end_date: the end date
+    returns..
+        An integer indicating the number of runs
+    """
+    def getCountShiftFireRunsBetweenDates(self, shift, start_date, end_date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT COUNT(*) FROM Run WHERE Shift = '{shift}' AND Medrun = 0 AND date BETWEEN '{start_date}' and '{end_date}';""").fetchall()[0][0]
+
+
+    """
+    Gets the date and the start time of all fire runs for a given shift between two dates.
+
+    inputs..
+        shift: a string containing the shift
+        start_date: the beginning date
+        end_date: the end date
+    returns..
+        A list of tuples containing the date and start time like `(date, start_time)`
+    """
+    def getDateAndStartOfFireRunsBetweenDatesForShift(self, shift, start_date, end_date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT date, startTime FROM Run WHERE Shift = '{shift}' AND Medrun = 0 AND date BETWEEN '{start_date}' and '{end_date}';""").fetchall()
+
+    
+    """
+    Gets all the run numbers that an employee (identified by city ID) responded to between two dates.
+
+    inputs..
+        start_date: the beginning date
+        end_date: the end date
+        city_number: the city ID number of an employee
+    returns..
+        A list of tuples containing only the run number for a run
+    """
+    def getAllRunsNumbersEmployeeByCityNumberRespondedToBetweenDates(self, start_date, end_date, city_number):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT runNumber FROM Responded WHERE empNumber = (SELECT number FROM Employee 
+            WHERE city_number = {city_number} AND date BETWEEN \'{start_date}\' AND \'{end_date}\');""").fetchall()
+
+
+    """
+    Gets the run number of all runs a given employee is paid for.
+
+    inputs..
+        start_date: the beginning date
+        end_date: the end date
+        city_number: the city ID number of an employee
+    returns..
+        A list of tuples containing only the run number for a run
+    """
+    def getRunNumberOfAllPaidRunsForEmplyeeByEmployeeNumberBetweenDates(self, city_number, start_date, end_date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT runNumber FROM Responded WHERE type_of_response = 'P' AND empNumber = 
+            (SELECT number FROM Employee WHERE city_number = {city_number}) AND full_time = 0
+            AND date BETWEEN \'{start_date}\' AND \'{end_date}\';""").fetchall()
+
+
+    """
+    Gets the length of any given run that is a fire run.
+
+    inputs..
+        run_number: the id number for a run
+    returns..
+        A float that contains the length of the run
+    """
+    def getRunTimeOfFireRunByRunNumber(self, run_number):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT runTime FROM Run WHERE number = {run_number} AND Medrun = 0""").fetchall()[0][0]
+
+
+    """
+    Gets the inter department number and the name of every employee
+    that does not yet have a city ID attached to them.
+
+    returns..
+        A list of tuples that contains the internal number and name like `(employee number, employee name)`
+    """
+    def getNumberAndNameOfAllEmployeesWithNoCityNumver(self):
+        cur = self.conn.cursor()
+        return cur.execute("""SELECT number, name FROM Employee where city_number is NULL;""").fetchall()
+
+
+    """
+    Updates a given employee with a city ID number.
+
+    inputs..
+        city_number: the city ID number
+        employee_number: the internal department ID number
+    """
+    def addCityNumberToEmployee(self, city_number, employee_number):
+        cur = self.conn.cursor()
+        cur.execute(f"""UPDATE Employee SET city_number = {city_number} WHERE number = {employee_number};""")
+        self.conn.commit()

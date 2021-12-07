@@ -1,7 +1,7 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:project_time_saver/basic_actions.dart';
 import 'package:project_time_saver/basic_widgets.dart';
 import 'package:project_time_saver/ui_api.dart';
 
@@ -25,21 +25,41 @@ class _FileUploaderState extends State<FileUploader> {
         appBar: AppBar(
           title: const Text("Process run reports"),
         ),
-        body: Center(
-            child: BasicWidgets.pad(
-          BasicWidgets.horizontal([
-            BasicWidgets.vertical([_getFile(context), _processButton(context)]),
-            BasicWidgets.vertical(
-                [const Text("Selected Files"), _listOfFiles(context)])
-          ]),
-        )),
+        body: _getLayout(),
       );
 
   //Variables:
 
   List<File> files = [];
+  bool processing = false;
 
   //Widgets:
+
+  /*
+  This widget determines which layout to use.
+
+  returns..
+    case 1: The main layout of the page
+    case 2: A circular progress indicator when reports are being processed
+  */
+  Widget _getLayout() {
+    if (processing == false) {
+      return Center(
+          child: BasicWidgets.pad(
+        BasicWidgets.horizontal([
+          BasicWidgets.vertical([_getFile(context), _processButton(context)]),
+          BasicWidgets.vertical(
+              [const Text("Selected Files"), _listOfFiles(context)])
+        ]),
+      ));
+    } else {
+      return Center(
+          child: BasicWidgets.vertical([
+        BasicWidgets.pad(const Text("Processing... This may take a while.")),
+        BasicWidgets.pad(const CircularProgressIndicator())
+      ]));
+    }
+  }
 
   //This is the button to select new files
   Widget _getFile(BuildContext context) => BasicWidgets.pad(ElevatedButton.icon(
@@ -145,45 +165,23 @@ class _FileUploaderState extends State<FileUploader> {
     case 2: false if not
   */
   Future<bool> _submitToPython() async {
-    BasicWidgets.snack(context, "Processing, please wait...");
+    setState(() {
+      processing = true;
+    });
     var response = await API.submitFilesToDatabase(files);
-    print(response);
+    setState(() {
+      processing = false;
+    });
     if (response[0] == true) {
       BasicWidgets.snack(context, "Reports have been processed!", Colors.green);
       return true;
     } else {
       BasicWidgets.snack(context, "Error processing reports!", Colors.red);
-      _failedSubmissionsAlert(context, response);
+      BasicActions.generalAlertBox(
+          context,
+          response.map((e) => e.split("\\").last.toString()).toList(),
+          "Some reports could not be processed!");
       return false;
     }
   }
-
-  /*
-  This function is responsible for drawing an error alert if not all files could
-  be imported into the DB.
-
-  inputs.. 
-    response: a list of Strings; each string is an error message
-  */
-  void _failedSubmissionsAlert(BuildContext context, List response) =>
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("Some reports could not be processed!"),
-              content: SizedBox(
-                width: 100,
-                height: 75,
-                child: ListView(
-                  children:
-                      response.map((e) => Text(e.split("\\").last)).toList(),
-                ),
-              ),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text("Okay"))
-              ],
-            );
-          });
 }

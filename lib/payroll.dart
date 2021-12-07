@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:project_time_saver/basic_actions.dart';
 import 'package:project_time_saver/basic_widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:project_time_saver/file.dart';
@@ -15,8 +16,9 @@ class PayrollUI extends StatefulWidget {
 
 class _PayrollUIState extends State<PayrollUI> {
   //TODO: Remove the redamentary file picking info and button when we have
-  //OneDrive integration
-  //TODO: Resolve remaining function specific tasks
+  // OneDrive integration
+  //TODO: Allow the user to just select the blank sheets when generating as
+  // opposed to requiring a copies in a specific place
 
   //Layout of the page
   @override
@@ -27,7 +29,7 @@ class _PayrollUIState extends State<PayrollUI> {
       body: BasicWidgets.vertical(
         [
           //TODO: Remove the next three widgets when OneDrive functionality is
-          //added
+          // added
           const Text(
               "Don't forget to ensure all run reports have been processed!"),
           _gotToFileUpload(context),
@@ -164,13 +166,16 @@ class _PayrollUIState extends State<PayrollUI> {
       return true;
     } else {
       BasicWidgets.snack(context, "Error generating payroll!", Colors.red);
-      _failedGenerationAlert(context, response);
+      BasicActions.generalAlertBox(
+          context,
+          response.map((e) => e.toString()).toList(),
+          "Reports could not be generated!");
       return false;
     }
   }
 
   /*
-  TODO: Add the folder opening functionality.
+  TODO: Change output path.
 
   Draws an alert with information about the files as well as a way to open the
   generated files.
@@ -200,37 +205,8 @@ class _PayrollUIState extends State<PayrollUI> {
                             Platform.environment["APPDATA"]! +
                             "\\project-time-saver"
                       ]);
-                      Navigator.of(context).pop();
                     },
                     child: const Text("Open files")),
-                TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text("Close"))
-              ],
-            );
-          });
-
-  /*
-  Draws an alert that informs the user about a failed attempt to make the
-  reports.
-
-  inputs..
-    response: A list containing error messages strings
-  */
-  void _failedGenerationAlert(BuildContext context, List response) =>
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("Reports could not be generated!"),
-              content: SizedBox(
-                width: 100,
-                height: 75,
-                child: ListView(
-                  children: response.map((e) => Text(e.toString())).toList(),
-                ),
-              ),
-              actions: [
                 TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text("Close"))

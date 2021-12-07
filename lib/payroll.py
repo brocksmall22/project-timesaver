@@ -17,9 +17,14 @@ class payroll:
     def loadWorkBooks(fileList):
         payroll.reset()
         for file in fileList:
-            wb = load_workbook(file)
-            payroll.readWorkBook(wb, file)
-        if len(payroll.returnArray) == 0:
+            try:
+                wb = load_workbook(file)
+                payroll.readWorkBook(wb, file)
+            except Exception as e:
+                print(e)
+                payroll.returnArray.append(f"File {file} has error: Critical error, file cannot be read!")
+
+        if payroll.returnArray == []:
             return [True]
         else:
             return payroll.returnArray
@@ -39,7 +44,7 @@ class payroll:
                     payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
         except Exception as e:
             print(e)
-            payroll.returnArray.append(filename)
+            payroll.returnArray.append(f"File {filename} has error: {e}")
 
 
     """
@@ -61,7 +66,7 @@ class payroll:
         if payroll.endRange == 0:
             payroll.endRange = 21
             while (not end):
-                if sheet[f"H{payroll.endRange + 1}"].value != None:
+                if sheet[f"L{payroll.endRange + 1}"].value != "=":
                     payroll.endRange = payroll.endRange + 1
                 else:
                     end = True

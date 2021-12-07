@@ -81,3 +81,27 @@ def generate_reports():
     results = grp.generate_report(startDate, endDate)
 
     return jsonify(results)
+
+@app.route("/get_client_id", methods=["GET"])
+def get_client_id():
+    # RUN BROCK CODE TO GET THE VALUE THEN RETURN
+    return jsonify({"clientID": "HJ46-J9JH-PI98"})
+
+@app.route("/get_one_drive_folder", methods=["GET"])
+def get_one_drive_filder():
+    # RUN BROCK CODE TO GET THE VALUE THEN RETURN
+    return jsonify({"oneDriveFolder": "processed reports"})
+
+@app.route("/set_client_id", methods=["POST"])
+def set_client_id():
+    clientID = request.json
+    print(clientID)
+    return jsonify({"error": ""})
+    # RUN BROCK CODE TO SET THE VALUE
+
+@app.route("/set_one_drive_folder", methods=["POST"])
+def set_one_drive_folder():
+    oneDrivefolder = request.json
+    print(oneDrivefolder)
+    return jsonify({"error": ""})
+    # RUN BROCK CODE TO SET THE VALUE
