@@ -1,6 +1,8 @@
 import sqlite3
 from sqlite3 import Error
-from sqlite3.dbapi2 import Cursor
+from sqlite3.dbapi2 import Cursor, Timestamp
+from datetime import datetime
+
 
 """
 This class is responsible for running all sql operations. It requires that it be enstantiated.
@@ -56,16 +58,18 @@ class sqlFunctions():
     it requires the Run number, date, and connection to the sql database
     """
     def createRun(self, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift):
-        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift)
-                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\') """
+        Timestamp = datetime.now()
+        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift, timeStamp)
+                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\', \'{8}\') """
         cur = self.conn.cursor()
         sql = sql.format(runNumber, date, stopTime,
-                         endTime, runTime, Covered, Medrun, shift)
+                         endTime, runTime, Covered, Medrun, shift, Timestamp)
         cur.execute(sql)
         return cur.lastrowid
 
     def updateRun(self, runNumber, date, startTime, endTime, runTime, Covered, Medrun, shift):
-        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\' WHERE number = {runNumber} AND date = \'{date}\';"""
+        Timestamp = datetime.now()
+        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\', timeStamp = \'{Timestamp}\' WHERE number = {runNumber} AND date = \'{date}\';"""
         cur = self.conn.cursor()
         cur.execute(statement)
         return cur.lastrowid
