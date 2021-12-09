@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:project_time_saver/basic_actions.dart';
 import 'package:project_time_saver/basic_widgets.dart';
 import 'package:project_time_saver/ui_api.dart';
 
@@ -176,37 +177,11 @@ class _FileUploaderState extends State<FileUploader> {
       return true;
     } else {
       BasicWidgets.snack(context, "Error processing reports!", Colors.red);
-      _failedSubmissionsAlert(context, response);
+      BasicActions.generalAlertBox(
+          context,
+          response.map((e) => e.split("\\").last.toString()).toList(),
+          "Some reports could not be processed!");
       return false;
     }
   }
-
-  /*
-  This function is responsible for drawing an error alert if not all files could
-  be imported into the DB.
-
-  inputs.. 
-    response: a list of Strings; each string is an error message
-  */
-  void _failedSubmissionsAlert(BuildContext context, List response) =>
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("Some reports could not be processed!"),
-              content: SizedBox(
-                width: 100,
-                height: 75,
-                child: ListView(
-                  children:
-                      response.map((e) => Text(e.split("\\").last)).toList(),
-                ),
-              ),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text("Okay"))
-              ],
-            );
-          });
 }

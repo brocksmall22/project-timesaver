@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:project_time_saver/basic_actions.dart';
 import 'package:project_time_saver/basic_widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:project_time_saver/file.dart';
@@ -165,7 +166,10 @@ class _PayrollUIState extends State<PayrollUI> {
       return true;
     } else {
       BasicWidgets.snack(context, "Error generating payroll!", Colors.red);
-      _failedGenerationAlert(context, response);
+      BasicActions.generalAlertBox(
+          context,
+          response.map((e) => e.toString()).toList(),
+          "Reports could not be generated!");
       return false;
     }
   }
@@ -203,34 +207,6 @@ class _PayrollUIState extends State<PayrollUI> {
                       ]);
                     },
                     child: const Text("Open files")),
-                TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text("Close"))
-              ],
-            );
-          });
-
-  /*
-  Draws an alert that informs the user about a failed attempt to make the
-  reports.
-
-  inputs..
-    response: A list containing error messages strings
-  */
-  void _failedGenerationAlert(BuildContext context, List response) =>
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("Reports could not be generated!"),
-              content: SizedBox(
-                width: 100,
-                height: 75,
-                child: ListView(
-                  children: response.map((e) => Text(e.toString())).toList(),
-                ),
-              ),
-              actions: [
                 TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text("Close"))
