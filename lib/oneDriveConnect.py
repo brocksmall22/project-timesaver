@@ -13,9 +13,7 @@ class oneDriveConnect:
         for file in os.listdir(path):
             if file.endswith(".xlxs"):
                 oneDriveConnect.files.apened(os.path.join(path,file))
-        for i in oneDriveConnect.files:
-            oneDriveConnect.getLastModifiedDate(i)
-
+            
 
     """
     getLastModifiedDate(file)
@@ -30,9 +28,8 @@ class oneDriveConnect:
     this function given the file path strips the path and the file extenstion and returns the run number
     """
     def extensionStripper(file):
-        os.path.splitext(file)
+        file = os.path.splitext(file)
         return(file.split("/")[-1])
-
 
 
 
