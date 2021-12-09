@@ -1,8 +1,8 @@
 import os
 
 class oneDriveConnect:
-    # TODO finish getFiles function
-    # TODO make a compertor function to compare last 
+    # TODO finish getFiles function ---DONE
+    # TODO make a compertor function to compare last modifed dates
     # TODO strip off .xlxs from filename to get run number and get last modified date 
     """
     getFiles(path) 
@@ -12,6 +12,12 @@ class oneDriveConnect:
     def getFiles(path):
         for file in os.listdir(path):
             if file.endswith(".xlxs"):
-                oneDriveConnect.files.apened(file)
+                oneDriveConnect.files.apened(os.path.join(path,file))
+        for i in oneDriveConnect.files:
+            print(i)
 
-    
+    def getLastModifiedDate(file):
+       return(os.path.getmtime(file))
+
+    def main():
+        oneDriveConnect.getFiles()
