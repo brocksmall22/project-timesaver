@@ -15,7 +15,7 @@ class PayrollUI extends StatefulWidget {
 }
 
 class _PayrollUIState extends State<PayrollUI> {
-  //TODO: Remove the redamentary file picking info and button when we have
+  //TODO: Remove the rudimentary file picking info and button when we have
   // OneDrive integration
   //TODO: Allow the user to just select the blank sheets when generating as
   // opposed to requiring a copies in a specific place
@@ -90,7 +90,7 @@ class _PayrollUIState extends State<PayrollUI> {
   default builder to open the DateRangePicker widget as a popup.
 
   Bugs..
-    minor: You cannot close the dialouge by clicking out of it unless you click
+    minor: You cannot close the dialogue by clicking out of it unless you click
       above or below it. Ideally it would close if you click anywhere outside.
   */
   Widget _boxedBuilder(Widget? child) => Center(
@@ -148,7 +148,7 @@ class _PayrollUIState extends State<PayrollUI> {
   }
 
   /*
-  This method is responseible for interfacing with the API and handling the
+  This method is responsible for interfacing with the API and handling the
   server response. It will draw a dialog for both failed and successful cases.
 
   returns..

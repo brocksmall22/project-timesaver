@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 configFile = ""
 folder_path = ""
 
-##Detect if Configureation File is present
+##Detect if Configuration File is present
 
 def isPresent():
     if(configFile == ""):

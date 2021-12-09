@@ -130,7 +130,7 @@ class _SettingsUIState extends State<SettingsUI> {
 
   // This method gets the hint text for the folder input box.
   String _getCurrentOneDriveFolderHint() => _currentOneDriveFolder == ""
-      ? "Enter the name of the folder containing proofed runreports."
+      ? "Enter the name of the folder containing proofed run reports."
       : "Current folder is: " + _currentOneDriveFolder;
 
   // This method gets and sets the strings containing the current config values.
@@ -151,7 +151,7 @@ class _SettingsUIState extends State<SettingsUI> {
     clientResponse != "" ? errors.add(clientResponse) : null;
     folderResponse != "" ? errors.add(folderResponse) : null;
     if (errors.isNotEmpty) {
-      BasicActions.generalAlertBox(context, errors, "Errors occured!");
+      BasicActions.generalAlertBox(context, errors, "Errors occurred!");
     } else {
       BasicWidgets.snack(context, "Settings have been applied!", Colors.green);
     }

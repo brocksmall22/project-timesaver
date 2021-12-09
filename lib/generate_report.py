@@ -94,7 +94,7 @@ class generate_report:
         start_date: the starting date of this report
         end_date: the ending date of this report
     returns..
-        case 1: a list of strings containing a discription of the issue followed
+        case 1: a list of strings containing a description of the issue followed
             by a the unmatched employee(s) and some info about them
         case 2: None of no unmatched employees
     """
@@ -218,7 +218,7 @@ class generate_report:
 
     inputs..
         sqlRunner: a sqlFunctions object
-        strt_date: the start of the period
+        start_date: the start of the period
         end_date: the end of the period
         ft: a bool indicating if the top full time employee is wanted or not
     returns..
@@ -262,7 +262,7 @@ class generate_report:
 
     inputs..
         sqlRunner: a sqlFunctions object
-        strt_date: the start of the period
+        start_date: the start of the period
         end_date: the end of the period
     returns..
         a: the number of med runs for shift a
@@ -281,7 +281,7 @@ class generate_report:
 
     inputs..
         sqlRunner: a sqlFunctions object
-        strt_date: the start of the period
+        start_date: the start of the period
         end_date: the end of the period
     returns..
         a: the number of sifts with no station coverage for shift a
@@ -300,7 +300,7 @@ class generate_report:
 
     inputs..
         sqlRunner: a sqlFunctions object
-        strt_date: the start of the period
+        start_date: the start of the period
         end_date: the end of the period
     returns..
         a: the number of runs with 100% shift coverage for shift a
@@ -319,7 +319,7 @@ class generate_report:
 
     inputs..
         sqlRunner: a sqlFunctions object
-        strt_date: the start of the period
+        start_date: the start of the period
         end_date: the end of the period
     returns..
         a: the number of fire runs for shift a
@@ -338,7 +338,7 @@ class generate_report:
 
     inputs..
         sqlRunner: a sqlFunctions object
-        strt_date: the start of the period
+        start_date: the start of the period
         end_date: the end of the period
     returns..
         a: the number of working hour runs for shift a
@@ -357,7 +357,7 @@ class generate_report:
 
     inputs..
         sqlRunner: a sqlFunctions object
-        strt_date: the start of the period
+        start_date: the start of the period
         end_date: the end of the period
     returns..
         a: the number of off hour runs for shift a

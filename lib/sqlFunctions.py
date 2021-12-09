@@ -82,8 +82,17 @@ class sqlFunctions():
 
         return False if len(values) == 0 else True
 
+    def runNeedsUpdated2(self, runNumber, date):
+        Timestamp = datetime.now()
+        statement = f"""SELECT * FROM Run WHERE Date = \'{date}\' AND number = {runNumber} AND timeStamp = \'{Timestamp}\';"""
+        cur = self.conn.cursor()
+        cur.execute(statement)
+        values = cur.fetchall()
+
+        return False if len(values) == 0 else True
+
     """
-    This Contains all of the SQL functions related to the Responded tabel
+    This Contains all of the SQL functions related to the Responded table
     -------------------------------------------------------------------------------------------------------
     createResponded(self, empNumber, payRate, date, num)
     this is the general insertion for the Responded Table
@@ -119,7 +128,7 @@ class sqlFunctions():
         cur.execute(statement)
         return cur.lastrowid
     """
-    This Contains all of the SQL functions related to the Employee tabel
+    This Contains all of the SQL functions related to the Employee table
     -------------------------------------------------------------------------------------------------------
     createEmployee(self, name, empNumber)
     This is the insertion for the Employee table
@@ -127,7 +136,7 @@ class sqlFunctions():
     -------------------------------------------------------------------------------------------------------
     empNeedsUpdated(self, empNumber)
     this checks the Employee table against the given information to see if it needs to be updated
-    it rquires the SQL connection as well as the Employee number
+    it requires the SQL connection as well as the Employee number
     -------------------------------------------------------------------------------------------------------
     updateEmp(self, name ,empNumber)
     this updates the employee table given the new information

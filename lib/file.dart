@@ -14,7 +14,7 @@ class FileUploader extends StatefulWidget {
 
 /*
 This class contains the entire layout of the file submission page. It contains a
-button that will opena file chooser dialogue, a button to submit, and a ListView
+button that will open file chooser dialogue, a button to submit, and a ListView
 of Cards that display which files have been selected for uploading. Each card
 has a delete button to remove it from the list of files to submit.
 */

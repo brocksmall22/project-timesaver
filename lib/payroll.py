@@ -12,7 +12,7 @@ class payroll:
     loadWorkBooks(fileList)
     loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
     This requires the whole file list
-    It returns the retun array of the failed files or true if no files have failed
+    It returns the return array of the failed files or true if no files have failed
     """
     def loadWorkBooks(fileList):
         payroll.reset()
@@ -32,7 +32,7 @@ class payroll:
 
     """
     readWorkBook(wb, filename)
-    reads an indiual work book then prints the resulting values from in the range of cells A21->F55
+    reads an individual work book then prints the resulting values from in the range of cells A21->F55
     It requires the Workbook and the Filename
     """
     def readWorkBook(wb, filename):
@@ -133,7 +133,7 @@ class payroll:
     getRunInfo(sqlRunner, wb)
     This gets the Run info from the sheet and runs the SQL import statements
     it requires the SQL connection class and the workbook file
-    It retuns the Run Date and Number
+    It returns the Run Date and Number
     """
     def getRunInfo(sqlRunner, wb):
         sheet = wb.active
@@ -169,8 +169,8 @@ class payroll:
         sheet: the current run sheet
         shift: the shift of the run
     returns..
-        case 1: interger 1 if the run is fully covered
-        case 2: interger 0 if the run is not fully covered
+        case 1: integer 1 if the run is fully covered
+        case 2: integer 0 if the run is not fully covered
     """
     def getFullCover(sheet, shift) -> int:
         fullCover = False

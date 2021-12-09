@@ -25,8 +25,8 @@ def invalid_route():
 
 """
 This function is for the UI to determine if the server is running. If the server
-sees any call to this address, it will return a signal signifying the sercer is alive.
-If the UI recieves a socket error, that means the server is not running and needs
+sees any call to this address, it will return a signal signifying the server is alive.
+If the UI receives a socket error, that means the server is not running and needs
 to be started.
 
 inputs..
@@ -47,8 +47,8 @@ the information into the database.
 inputs..
     (request): A post request containing a Json array of strings
 returns..
-    case 1: A Json array containing true (in the case of sucessful inserts)
-    case 2: A list of files that failed to be insterted
+    case 1: A Json array containing true (in the case of successful inserts)
+    case 2: A list of files that failed to be inserted
 """
 @app.route('/submit_reports', methods=["GET", "POST"])
 def submit_reports():
