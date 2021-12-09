@@ -1,32 +1,36 @@
 import json
-from os import getenv
-from openpyxl import load_workbook
+import os
 
-configFile = ""
-folder_path = ""
+class ConfigManager:
+    configFile = os.getenv('APPDATA') + "\\project-time-saver\\config.json"
 
-##Detect if Configureation File is present
+    ##Detect if Configureation File is present
+    @staticmethod
+    def createConfigIfNotExists():
+        emptyConf = {"folder_path": ""}
+        if not os.path.exists(ConfigManager.configFile):
+            with open(ConfigManager.configFile, "w") as conf:
+                json.dump(emptyConf, conf)
+        elif os.path.getsize(ConfigManager.configFile) == 0:
+            with open(ConfigManager.configFile, "w+") as conf:
+                json.dump(emptyConf, conf)
+        
+    ##Checks if the config file has been created, then returns the Folder Path
+    @staticmethod
+    def get_folderPath():
+        ConfigManager.createConfigIfNotExists()
+        with open(ConfigManager.configFile, "r") as conf:
+            return json.load(conf)["folder_path"]
 
-def isPresent():
-    if(configFile == ""):
-        return False
-    else:
-        return True
-
-##Instantiate the config file and set variables
-
-def setConfig():
-    configFile = load_workbook(getenv('APPDATA') + "\\project-time-saver\\config.json")
-    print("There was an error setting the config file.")
-    data = json.load(configFile)
-    folder_path = data['folder_path']
-    
-##Checks if the config file has been created, then returns the Folder Path
-
-def get_folderPath():
-    if(isPresent() == True):
-        return folder_path
-    
-
-
-##load_workbook(getenv('APPDATA') + "\\project-time-saver\\config.json")
+    ###Updates the folder path value
+    @staticmethod
+    def set_folderPath(path):
+        ConfigManager.createConfigIfNotExists()
+        file = ""
+        with open(ConfigManager.configFile, "r") as conf:
+            file = json.load(conf)
+            file["folder_path"] = path
+            print(file)
+        with open(ConfigManager.configFile, "w+") as conf:
+            json.dump(file, conf)
+            

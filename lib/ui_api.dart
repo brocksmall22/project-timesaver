@@ -71,40 +71,6 @@ class API {
   }
 
   /*
-  Calls to the backend to get the current config client ID value.
-
-  returns..
-    A string containing the current client ID
-  */
-  static Future<String> getClientID() async {
-    Uri _url = Uri.parse('http://127.0.0.1:8080/get_client_id');
-    Response response = await get(_url);
-    Map retrunValue = jsonDecode(response.body);
-    return retrunValue["clientID"];
-  }
-
-  /*
-  Requests that the backend update the config value for client ID.
-
-  inputs..
-    clientID: the new client ID
-  returns..
-    case 1: An empty string indicating success
-    case 2: A string with an error
-  */
-  static Future<String> updateClientID(String clientID) async {
-    if (clientID != "") {
-      Uri _url = Uri.parse('http://127.0.0.1:8080/set_client_id');
-      String postJson = jsonEncode({"clientID": clientID});
-      Map<String, String> header = {"Content-Type": "application/json"};
-      Response response = await post(_url, headers: header, body: postJson);
-      Map returnValue = jsonDecode(response.body);
-      return returnValue["error"];
-    }
-    return "";
-  }
-
-  /*
   Calls to the backend to get the current config folder value.
 
   returns..

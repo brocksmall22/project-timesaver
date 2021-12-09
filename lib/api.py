@@ -1,9 +1,12 @@
 from flask import Flask, jsonify, request
 from datetime import datetime
+
+from flask.config import Config
 from .generate_report import generate_report as grp
 from .payroll import payroll
 import sqlite.check_database as cdb
 from flask.wrappers import Request
+from .config_manager import ConfigManager
 
 app = Flask(__name__)
 
@@ -82,26 +85,12 @@ def generate_reports():
 
     return jsonify(results)
 
-@app.route("/get_client_id", methods=["GET"])
-def get_client_id():
-    # RUN BROCK CODE TO GET THE VALUE THEN RETURN
-    return jsonify({"clientID": "HJ46-J9JH-PI98"})
-
 @app.route("/get_one_drive_folder", methods=["GET"])
 def get_one_drive_filder():
-    # RUN BROCK CODE TO GET THE VALUE THEN RETURN
-    return jsonify({"oneDriveFolder": "processed reports"})
-
-@app.route("/set_client_id", methods=["POST"])
-def set_client_id():
-    clientID = request.json
-    print(clientID)
-    return jsonify({"error": ""})
-    # RUN BROCK CODE TO SET THE VALUE
+    return jsonify({"oneDriveFolder": ConfigManager.get_folderPath()})
 
 @app.route("/set_one_drive_folder", methods=["POST"])
 def set_one_drive_folder():
     oneDrivefolder = request.json
-    print(oneDrivefolder)
-    return jsonify({"error": ""})
-    # RUN BROCK CODE TO SET THE VALUE
+    ConfigManager.set_folderPath(oneDrivefolder["oneDriveFolder"])
+    return(jsonify(True))
