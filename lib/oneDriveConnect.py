@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 class oneDriveConnect:
     # TODO finish getFiles function ---DONE
@@ -31,6 +32,17 @@ class oneDriveConnect:
     def extensionStripper(file):
         file = os.path.splitext(file)
         return(file.split("\\")[-1])
+
+
+    def compareModifications(self, runNumber, date):
+        Timestamp = datetime.now()
+        mod= self.getLastModifiedDate()
+        statement = f"""SELECT * FROM Run WHERE Date = \'{date}\' AND number = {runNumber} AND timeStamp = \'{Timestamp}\' AND modified = \'{mod}'\;"""
+        cur = self.conn.cursor()
+        cur.execute(statement)
+        values = cur.fetchall()
+
+        return False if len(values) == 0 else True
 
 
 

@@ -82,14 +82,6 @@ class sqlFunctions():
 
         return False if len(values) == 0 else True
 
-    def runNeedsUpdated2(self, runNumber, date):
-        Timestamp = datetime.now()
-        statement = f"""SELECT * FROM Run WHERE Date = \'{date}\' AND number = {runNumber} AND timeStamp = \'{Timestamp}\';"""
-        cur = self.conn.cursor()
-        cur.execute(statement)
-        values = cur.fetchall()
-
-        return False if len(values) == 0 else True
 
     """
     This Contains all of the SQL functions related to the Responded table
