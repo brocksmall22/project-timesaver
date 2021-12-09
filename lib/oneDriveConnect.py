@@ -3,7 +3,8 @@ import os
 class oneDriveConnect:
     # TODO finish getFiles function ---DONE
     # TODO make a compertor function to compare last modifed dates
-    # TODO strip off .xlxs from filename to get run number and get last modified date 
+    # TODO strip off .xlxs from filename to get run number ---DONE
+    # TODO get last modified date ---DONE
     """
     getFiles(path) 
     accepts the path varible to the run folder and retrevies the run reports from the folder
@@ -29,7 +30,7 @@ class oneDriveConnect:
     """
     def extensionStripper(file):
         file = os.path.splitext(file)
-        return(file.split("/")[-1])
+        return(file.split("\\")[-1])
 
 
 
