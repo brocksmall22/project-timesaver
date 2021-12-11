@@ -8,7 +8,7 @@ class payroll:
 
     returnArray = []
     endRange = 0
-    Year = dateime.now().strftime("%Y") + "-1-1"
+    Year = datetime.now().strftime("%Y") + "-1-1"
 
     """
     loadWorkBooks(fileList)
