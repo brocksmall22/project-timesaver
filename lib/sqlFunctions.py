@@ -427,3 +427,27 @@ class sqlFunctions():
         cur = self.conn.cursor()
         cur.execute(f"""UPDATE Employee SET city_number = {city_number} WHERE number = {employee_number};""")
         self.conn.commit()
+
+    """
+    Returns the maximum run from the database in the current year.
+
+    inputs..
+        date: the first of the year as a string in the format Y-m-d 
+    """
+    def getMostRecentRun(self, date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT MAX(number) FROM Run where date >= {date};""").fetchall()[0][0]
+
+    """
+    Returns if there are runs between two dates.
+
+    inputs..
+        start_date: the start of the period
+        end_date: the end of the period
+    returns..
+        True if there are runs between those dates
+        Falsd if there are not
+    """
+    def checkForRunsBetweenDates(self, start_date, end_date):
+        cur = self.conn.cursor()
+        return not len(cur.execute(f"""SELECT * FROM Run WHERE date BETWEEN '{start_date}' AND '{end_date}';""").fetchall()) == 0

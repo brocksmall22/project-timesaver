@@ -31,10 +31,13 @@ class _SettingsUIState extends State<SettingsUI> {
                     160.px,
                     ((MediaQuery.of(context).size.width - 160) / 2).px
                   ]
-                : [auto, auto],
+                : [
+                    (MediaQuery.of(context).size.width / 2).px,
+                    (MediaQuery.of(context).size.width / 2).px
+                  ],
             rowSizes: MediaQuery.of(context).size.width > _minWidth
-                ? [50.px, 50.px]
-                : [200.px, 200.px, 200.px],
+                ? [75.px, 75.px]
+                : [50.px, 50.px, 50.px],
             children: MediaQuery.of(context).size.width > _minWidth
                 ? [
                     Align(
@@ -48,9 +51,13 @@ class _SettingsUIState extends State<SettingsUI> {
                   ]
                 : [
                     Align(
-                        child: _folderText(),
-                        alignment: Alignment.bottomCenter),
-                    Center(child: _getFolder()),
+                        child: _folderText(), alignment: Alignment.centerRight),
+                    Align(child: _getFolder(), alignment: Alignment.centerLeft),
+                    Align(
+                            child: _seletedFolder(),
+                            alignment: Alignment.topCenter)
+                        .withGridPlacement(
+                            columnStart: 0, columnSpan: 2, rowStart: 1),
                     _navigationOptions().withGridPlacement(
                         columnStart: 0, columnSpan: 2, rowStart: 2)
                   ],
@@ -62,7 +69,7 @@ class _SettingsUIState extends State<SettingsUI> {
 
   String _oneDriveFolder = "";
   String _currentOneDriveFolder = "";
-  final int _minWidth = 700;
+  final int _minWidth = 758;
 
   // Widgets
 
@@ -89,6 +96,7 @@ class _SettingsUIState extends State<SettingsUI> {
   Widget _cancelButton() => BasicWidgets.pad(ElevatedButton(
       onPressed: () => Navigator.pop(context), child: const Text("Cancel")));
 
+  //This widget is a button that spawns a folder choosing window.
   Widget _getFolder() => BasicWidgets.pad(ElevatedButton.icon(
       onPressed: () async {
         String? result = await FilePicker.platform.getDirectoryPath();
@@ -113,17 +121,19 @@ class _SettingsUIState extends State<SettingsUI> {
 
   // This method updates the config values.
   void _submitToPython() async {
-    List<String> errors = [];
-    String folderResponse = await API.updateOneDriveFolder(_oneDriveFolder);
-    folderResponse != "" ? errors.add(folderResponse) : null;
-    if (errors.isNotEmpty) {
-      BasicActions.generalAlertBox(context, errors, "Errors occured!");
-    } else {
+    await API.updateOneDriveFolder(_oneDriveFolder);
+    if (!await BasicActions.displayThenClearErrors(context)) {
       BasicWidgets.snack(context, "Settings have been applied!", Colors.green);
     }
     _updateStrings();
   }
 
+  /*
+  This method makes the selected folder text.
+
+  returns..
+    A string describing the selected folder
+  */
   String _selectedFolderText() {
     return _oneDriveFolder != ""
         ? "Currently selected folder is: " + _oneDriveFolder

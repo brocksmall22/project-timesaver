@@ -1,7 +1,11 @@
+import os
 from flask import Flask, jsonify, request
 from datetime import datetime
 
 from flask.config import Config
+from .logger import Logger
+
+from lib.sqlFunctions import sqlFunctions
 from .generate_report import generate_report as grp
 from .payroll import payroll
 import sqlite.check_database as cdb
@@ -50,16 +54,13 @@ the information into the database.
 inputs..
     (request): A post request containing a Json array of strings
 returns..
-    case 1: A Json array containing true (in the case of sucessful inserts)
-    case 2: A list of files that failed to be insterted
+    True on completion
 """
 @app.route('/submit_reports', methods=["GET", "POST"])
 def submit_reports():
     files = request.json
-
-    results = payroll.loadWorkBooks(files)
-
-    return jsonify(results)
+    payroll.loadWorkBooks(files)
+    return jsonify(True)
 
 """
 This is the function responsible for accepting a request from the UI
@@ -70,27 +71,110 @@ inputs..
         startDate and endDate that express the start and end of the
         pay period as strings
 returns.. 
-    case 1: A Json array that either contains a True value
-        and several strings
-    case 2: A Json array that contains one or more strings in
-        the event that the files could not be generated
+    True on completion
 """
 @app.route('/generate_report', methods=["GET", "POST"])
 def generate_reports():
     dates = request.json
     startDate = dates["startDate"].split(" ")[0]
     endDate = dates["endDate"].split(" ")[0]
+    grp.generate_report(startDate, endDate)
+    return jsonify(True)
 
-    results = grp.generate_report(startDate, endDate)
+"""
+This method gets the one drive folder location on a GET request.
 
-    return jsonify(results)
-
+returns..
+    the one drive folder as stored in the config
+"""
 @app.route("/get_one_drive_folder", methods=["GET"])
 def get_one_drive_filder():
     return jsonify({"oneDriveFolder": ConfigManager.get_folderPath()})
 
+"""
+This method sets the one drive folder value in the config.
+
+inputs..
+    (request): A json file containing the new value
+returns..
+    True upon completion
+"""
 @app.route("/set_one_drive_folder", methods=["POST"])
 def set_one_drive_folder():
     oneDrivefolder = request.json
     ConfigManager.set_folderPath(oneDrivefolder["oneDriveFolder"])
-    return(jsonify(True))
+    return jsonify(True)
+
+"""
+This method gets the value of the most recent sync operation on the DB.
+
+returns..
+    A json containing the most recent value
+"""
+@app.route("/get_most_recent_db_update", methods=["GET"])
+def get_most_recent_db_update():
+    with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sql:
+        return jsonify({"update": sql.getMostRecentUpdate()})
+
+"""
+This method gets the number of the most revent run.
+
+returns..
+    A json containing the number of the most recent run
+"""
+@app.route("/get_most_recent_run", methods=["GET"])
+def get_most_recent_run():
+    with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sql:
+        return jsonify({"update": sql.getMostRecentRun(datetime.now().strftime("%Y")+"-01-01")})
+
+"""
+This method is responsible for triggering an update to the DB.
+
+returns..
+    True on completion
+"""
+@app.route("/trigger_update", methods = ["GET"])
+def trigger_update():
+    return jsonify(True)
+
+"""
+This method is responsible for getting all of the logged errors.
+
+returns..
+    A json array containing error json objects
+"""
+@app.route("/get_errors", methods = ["GET"])
+def get_errors():
+    return jsonify(Logger.getErrors())
+
+"""
+This method is responsible for triggering a clear errors call.
+
+returns..
+    True upon completion
+"""
+@app.route("/clear_errors", methods = ["GET"])
+def clear_errors():
+    Logger.clearErrors()
+    return jsonify(True)
+
+"""
+This method is responsible for getting the generation messages.
+
+returns..
+    A json array containing a list of strings
+"""
+@app.route("/get_generation_messages", methods = ["GET"])
+def get_generation_messages():
+    return jsonify(Logger.getGenerateMessages())
+
+"""
+This method is responsible for clearing the saved generation messages.
+
+returns..
+    True upon completion
+"""
+@app.route("/clear_generation_messages", methods = ["GET"])
+def clear_generation_messages():
+    Logger.clearGenerateMessages()
+    return jsonify(True)

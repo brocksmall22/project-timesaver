@@ -59,15 +59,12 @@ class API {
       and the path of the files generated
     case 2: A list containing some errors
   */
-  static Future<List> generatePayrollFiles(List<String> dates) async {
+  static Future<void> generatePayrollFiles(List<String> dates) async {
     Uri _url = Uri.parse('http://127.0.0.1:8080/generate_report');
     String filesAsJsonArray =
         jsonEncode({"startDate": dates[0], "endDate": dates[1]});
     Map<String, String> header = {"Content-Type": "application/json"};
-    Response response =
-        await post(_url, headers: header, body: filesAsJsonArray);
-    List returnValue = jsonDecode(response.body);
-    return returnValue;
+    await post(_url, headers: header, body: filesAsJsonArray);
   }
 
   /*
@@ -92,15 +89,85 @@ class API {
     case 1: An empty string indicating success
     case 2: A string with an error
   */
-  static Future<String> updateOneDriveFolder(String folderString) async {
+  static Future<void> updateOneDriveFolder(String folderString) async {
     if (folderString != "") {
       Uri _url = Uri.parse('http://127.0.0.1:8080/set_one_drive_folder');
       String postJson = jsonEncode({"oneDriveFolder": folderString});
       Map<String, String> header = {"Content-Type": "application/json"};
-      Response response = await post(_url, headers: header, body: postJson);
-      Map returnValue = jsonDecode(response.body);
-      return returnValue["error"];
+      await post(_url, headers: header, body: postJson);
     }
-    return "";
+  }
+
+  /*
+  Gets the most recent update to the DB from the backend.
+
+  returns..
+    The last update from the log
+  */
+  static Future<String> getMostRecentDatabaseUpdate() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/get_most_recent_db_update');
+    Response response = await get(_url);
+    Map returnValue = jsonDecode(response.body);
+    return returnValue["lastUpdate"];
+  }
+
+  /*
+  Gets the most recent run in the DB from the backend.
+
+  returns..
+    The most recent run
+  */
+  static Future<int> getMostRecentRun() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/get_most_recent_run');
+    Response response = await get(_url);
+    Map returnValue = jsonDecode(response.body);
+    return returnValue["update"];
+  }
+
+  /*
+  Triggers the backend to update the DB.
+  */
+  static Future<void> triggerDatabaseUpdate() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/trigger_update');
+    await get(_url);
+    await Future.delayed(const Duration(seconds: 5));
+  }
+
+  /*
+  Gets the errors logged from the backend.
+
+  returns..
+    A list of map objects describing the errors.
+  */
+  static Future<List> getErrors() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/get_errors');
+    Response response = await get(_url);
+    List returnValue = jsonDecode(response.body);
+    return returnValue;
+  }
+
+  //Triggers the backend to clear all of the errors logged.
+  static Future<void> clearErrors() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/clear_errors');
+    await get(_url);
+  }
+
+  /*
+  Gets the success messages for generating the reports from the log.
+
+  returns..
+    A list of strings
+  */
+  static Future<List> getGenerationMessages() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/get_generation_messages');
+    Response response = await get(_url);
+    List returnValue = jsonDecode(response.body);
+    return returnValue;
+  }
+
+  //Triggers the backend to clear out the generation messages.
+  static Future<void> clearGenerationMessages() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/clear_generation_messages');
+    await get(_url);
   }
 }

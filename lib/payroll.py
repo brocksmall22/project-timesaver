@@ -2,17 +2,16 @@ from datetime import datetime
 import os
 from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
+from .logger import Logger
 
 class payroll:
 
-    returnArray = []
     endRange = 0
 
     """
     loadWorkBooks(fileList)
     loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
     This requires the whole file list
-    It returns the retun array of the failed files or true if no files have failed
     """
     def loadWorkBooks(fileList):
         payroll.reset()
@@ -22,12 +21,7 @@ class payroll:
                 payroll.readWorkBook(wb, file)
             except Exception as e:
                 print(e)
-                payroll.returnArray.append(f"File {file} has error: Critical error, file cannot be read!")
-
-        if payroll.returnArray == []:
-            return [True]
-        else:
-            return payroll.returnArray
+                Logger.addNewError("I/O error", datetime.now(), f"File {file} has error: Critical error, file cannot be read!")
 
 
     """
@@ -44,7 +38,7 @@ class payroll:
                     payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
         except Exception as e:
             print(e)
-            payroll.returnArray.append(f"File {filename} has error: {e}")
+            Logger.addNewError("report format error", datetime.now(), f"File {filename} has error: {e}")
 
 
     """
@@ -52,7 +46,6 @@ class payroll:
     """
     def reset():
         payroll.endRange = 0
-        payroll.returnArray = []
 
 
     """

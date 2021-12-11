@@ -1,14 +1,14 @@
 from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
+from .logger import Logger
 from os import getenv
-import datetime
+from datetime import datetime
 
 class generate_report:
     # TODO: Change the storage location of the generated files.
     # TODO: Change the path where the blank tally and blank shift
     # breakdowns are stored.
     # TODO: Handle the F.S.C column in the breakdown once we know what it is
-    # TODO: Separate out all of the SQL, general refactoring
     endPaidOnCall = 0
     startFullTime = 0
     endFullTime = 0
@@ -29,26 +29,31 @@ class generate_report:
         generate_report.reset()
         try:
             with sqlFunctions(getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
-                wb = load_workbook(getenv('APPDATA') + "\\project-time-saver\\blank_tally.xlsx")
-                sheet = wb["Sheet1"]
-                number_of_runs = sqlRunner.getNumberOfRuns(start_date, end_date)
-                min_run = sqlRunner.getFirstRunNumber(start_date, end_date)
-                max_run = sqlRunner.getLastRunNumber(start_date, end_date)
-                generate_report.getEndPaidOnCall(sheet)
-                generate_report.getStartFullTime(sheet)
-                generate_report.getEndFullTime(sheet)
-                generate_report.updateEmployeeNulls(sqlRunner, sheet)
-                generate_report.fillTallySheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
-                wb.close()
-                wb = load_workbook(getenv('APPDATA') + "\\project-time-saver\\blank_breakdown.xlsx")
-                generate_report.fillBreakdownSheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
-                wb.close()
-                additionalReturns = generate_report.checkForIssues(sqlRunner, min_run, max_run, number_of_runs, start_date, end_date)
+                if not sqlRunner.checkForRunsBetweenDates(start_date, end_date):
+                    Logger.addNewError("generation error", datetime.now(), "There are no runs for the selected period.")
+                else:
+                    wb = load_workbook(getenv('APPDATA') + "\\project-time-saver\\blank_tally.xlsx")
+                    sheet = wb["Sheet1"]
+                    number_of_runs = sqlRunner.getNumberOfRuns(start_date, end_date)
+                    min_run = sqlRunner.getFirstRunNumber(start_date, end_date)
+                    max_run = sqlRunner.getLastRunNumber(start_date, end_date)
+                    generate_report.getEndPaidOnCall(sheet)
+                    generate_report.getStartFullTime(sheet)
+                    generate_report.getEndFullTime(sheet)
+                    generate_report.updateEmployeeNulls(sqlRunner, sheet)
+                    generate_report.fillTallySheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
+                    wb.close()
+                    wb = load_workbook(getenv('APPDATA') + "\\project-time-saver\\blank_breakdown.xlsx")
+                    generate_report.fillBreakdownSheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
+                    wb.close()
+                    additionalReturns = generate_report.checkForIssues(sqlRunner, min_run, max_run, number_of_runs, start_date, end_date)
+                    messages = additionalReturns + [f"The generated pay period is from {start_date} to {end_date}.",
+                    f"There were {number_of_runs} runs total this period.", f"This includes runs from run {min_run} to run {max_run}."]
+                    for message in messages:
+                        Logger.addNewGenerateMessage(message)
         except Exception as e:
             print(e)
-            return [str(e)]
-        return [True] + additionalReturns + [f"The generated pay period is from {start_date} to {end_date}.",
-            f"There were {number_of_runs} runs total this period.", f"This includes runs from run {min_run} to run {max_run}."]
+            Logger.addNewError("generation error", datetime.now(), str(e))
 
     """
     Resets the global variables. Should not be needed as this class
@@ -398,7 +403,7 @@ class generate_report:
         case 2: False if not
     """
     def isWorkingHours(date_time):
-        return True if datetime.datetime.strptime(date_time[0], "%Y-%m-%d").weekday() < 5 \
+        return True if datetime.strptime(date_time[0], "%Y-%m-%d").weekday() < 5 \
             and (date_time[1] >= 500 and date_time[1] <= 1700) else False
 
 

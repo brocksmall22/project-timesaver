@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:project_time_saver/ui_api.dart';
 
 class BasicActions {
   /*
@@ -20,7 +21,7 @@ class BasicActions {
     title: A string of the title for the alert box.
   */
   static void generalAlertBox(
-          BuildContext context, List<String> response, String title) =>
+          BuildContext context, List<Widget> response, String title) =>
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -30,7 +31,7 @@ class BasicActions {
                 width: 100,
                 height: 75,
                 child: ListView(
-                  children: response.map((e) => Text(e)).toList(),
+                  children: response,
                 ),
               ),
               actions: [
@@ -40,4 +41,29 @@ class BasicActions {
               ],
             );
           });
+
+  /*
+  This method gets all the errors from the log, displays them if there are any,
+  and returns if there are any.
+
+  returns..
+    case 1: true if there are errors
+    case 2: false if there are not errors
+  */
+  static Future<bool> displayThenClearErrors(BuildContext context) async {
+    List errors = await API.getErrors();
+    if (errors.isNotEmpty) {
+      BasicActions.generalAlertBox(
+          context,
+          errors
+              .map((e) => Tooltip(
+                  message: "error type: " + e["type"] + "\ntime: " + e["time"],
+                  child: Text(e["message"])))
+              .toList(),
+          "Errors occured!");
+      await API.clearErrors();
+      return true;
+    }
+    return false;
+  }
 }

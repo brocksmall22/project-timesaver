@@ -1,9 +1,6 @@
 import unittest
-import openpyxl
 import os
-
 import sys
-
 from openpyxl.reader.excel import load_workbook
 
 sys.path.append(os.getcwd())
