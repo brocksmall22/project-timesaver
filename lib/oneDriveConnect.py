@@ -29,7 +29,7 @@ class oneDriveConnect:
     this function given the file path strips the path and the file extenstion and returns the run number
     """
     def extensionStripper(file):
-        file = os.path.splitext(file)
+        file = os.path.splitext(file)[0]
         return(file.split("\\")[-1])
 
 
