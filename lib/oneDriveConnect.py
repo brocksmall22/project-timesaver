@@ -1,5 +1,6 @@
 import os
 
+
 class oneDriveConnect:
     # TODO finish getFiles function ---DONE
     # TODO make a compertor function to compare last modifed dates
@@ -10,19 +11,19 @@ class oneDriveConnect:
     accepts the path varible to the run folder and retrevies the run reports from the folder
     """
     files = []
+
     def getFiles(path):
         for file in os.listdir(path):
             if file.endswith(".xlxs"):
-                oneDriveConnect.files.apened(os.path.join(path,file))
-            
+                oneDriveConnect.files.apened(os.path.join(path, file))
+        return oneDriveConnect.files
 
     """
     getLastModifiedDate(file)
     this gets the last modified date of the file with the given path
     """
     def getLastModifiedDate(file):
-       return(os.path.getmtime(file))
-
+        return(os.path.getmtime(file))
 
     """
     extensionStripper(file)
@@ -31,6 +32,3 @@ class oneDriveConnect:
     def extensionStripper(file):
         file = os.path.splitext(file)[0]
         return(file.split("\\")[-1])
-
-
-

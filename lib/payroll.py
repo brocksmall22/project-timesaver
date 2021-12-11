@@ -3,10 +3,12 @@ import os
 from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
 
+
 class payroll:
 
     returnArray = []
     endRange = 0
+    Year = dateime.now().strftime("%Y") + "-1-1"
 
     """
     loadWorkBooks(fileList)
@@ -22,13 +24,13 @@ class payroll:
                 payroll.readWorkBook(wb, file)
             except Exception as e:
                 print(e)
-                payroll.returnArray.append(f"File {file} has error: Critical error, file cannot be read!")
+                payroll.returnArray.append(
+                    f"File {file} has error: Critical error, file cannot be read!")
 
         if payroll.returnArray == []:
             return [True]
         else:
             return payroll.returnArray
-
 
     """
     readWorkBook(wb, filename)
@@ -46,14 +48,12 @@ class payroll:
             print(e)
             payroll.returnArray.append(f"File {filename} has error: {e}")
 
-
     """
     Resets the global variables for the next run of this class.
     """
     def reset():
         payroll.endRange = 0
         payroll.returnArray = []
-
 
     """
     getRange(wb)
@@ -71,8 +71,6 @@ class payroll:
                 else:
                     end = True
 
-            
-
     """
     This method stops execution and raises an error if there is a detectable issue
     with a run sheet.
@@ -84,15 +82,22 @@ class payroll:
         sheet = wb.active
         for i1 in sheet[f"A21:h{payroll.endRange}"]:
             if i1[4].value is not None or i1[5].value is not None or i1[6].value is not None:
-                if i1[0].value in [None, '']: raise Exception("Employee number cannot be empty!")
-                if i1[1].value in [None, '']: raise Exception("Employee name cannot be empty!")
-                if sheet["D3"].value in [None, '']: raise Exception("Date cannot be empty!")
-        if sheet["B3"].value in [None, '']: raise Exception("Run number cannot be empty!")
-        if sheet["B8"].value in [None, '']: raise Exception("Run time cannot be empty!")
-        if sheet["B5"].value in [None, '']: raise Exception("Reported cannot be empty!")
-        if sheet["L5"].value in [None, '']: raise Exception("10-8 cannot be empty!")
-        if sheet["F3"].value in [None, '']: raise Exception("Shift cannot be empty!")
-
+                if i1[0].value in [None, '']:
+                    raise Exception("Employee number cannot be empty!")
+                if i1[1].value in [None, '']:
+                    raise Exception("Employee name cannot be empty!")
+                if sheet["D3"].value in [None, '']:
+                    raise Exception("Date cannot be empty!")
+        if sheet["B3"].value in [None, '']:
+            raise Exception("Run number cannot be empty!")
+        if sheet["B8"].value in [None, '']:
+            raise Exception("Run time cannot be empty!")
+        if sheet["B5"].value in [None, '']:
+            raise Exception("Reported cannot be empty!")
+        if sheet["L5"].value in [None, '']:
+            raise Exception("10-8 cannot be empty!")
+        if sheet["F3"].value in [None, '']:
+            raise Exception("Shift cannot be empty!")
 
     """
     getEmpinfo(sqlRunner, wb, date, rNum)
@@ -128,7 +133,6 @@ class payroll:
                     sqlRunner.createResponded(
                         empNumber, payRate, date, runNumber)
 
-
     """
     getRunInfo(sqlRunner, wb)
     This gets the Run info from the sheet and runs the SQL import statements
@@ -152,14 +156,13 @@ class payroll:
         else:
             medrun = 0
         fullCover = payroll.getFullCover(sheet, shift)
-        if sqlRunner.runNeedsUpdated(runNumber, date):
+        if sqlRunner.newRunNeedsUpdated(runNumber, date, payroll.Year):
             sqlRunner.updateRun(runNumber, date, startTime,
-                              endTime, runTime, stationCovered, medrun, shift)
+                                endTime, runTime, stationCovered, medrun, shift)
         else:
             sqlRunner.createRun(runNumber, date, startTime,
-                              endTime, runTime, stationCovered, medrun, shift)
+                                endTime, runTime, stationCovered, medrun, shift)
         return date, runNumber
-
 
     """
     This function is responsible for determining if a run was fully
