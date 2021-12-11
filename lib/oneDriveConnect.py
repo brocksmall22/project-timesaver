@@ -1,4 +1,5 @@
 import os
+from .ConfigManger import ConfigManager
 
 
 class oneDriveConnect:
@@ -12,8 +13,8 @@ class oneDriveConnect:
     """
     files = []
 
-    def getFiles(path):
-        for file in os.listdir(path):
+    def getFiles():
+        for file in os.listdir(ConfigManager.get_folderPath()):
             if file.endswith(".xlxs"):
                 oneDriveConnect.files.apened(os.path.join(path, file))
         return oneDriveConnect.files

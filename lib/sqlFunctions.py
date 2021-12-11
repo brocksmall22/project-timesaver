@@ -62,7 +62,7 @@ class sqlFunctions():
 
     def createRun(self, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift, Timestamp):
         sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift, timeStamp)
-                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\', \'{8}\') """
+                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\', {8}) """
         cur = self.conn.cursor()
         sql = sql.format(runNumber, date, stopTime,
                          endTime, runTime, Covered, Medrun, shift, Timestamp)
@@ -70,13 +70,13 @@ class sqlFunctions():
         return cur.lastrowid
 
     def updateRun(self, runNumber, date, startTime, endTime, runTime, Covered, Medrun, shift, Timestamp):
-        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\', timeStamp = \'{Timestamp}\' WHERE number = {runNumber} AND date = \'{date}\';"""
+        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\', timeStamp = {Timestamp} WHERE number = {runNumber} AND date = \'{date}\';"""
         cur = self.conn.cursor()
         cur.execute(statement)
         return cur.lastrowid
 
     def newRunNeedsUpdated(self, runNumber, Timestamp, Year):
-        statement = f"""SELECT * FROM Run WHERE timeStamp < {Timestamp} AND number = {runNumber} AND date => \'{Year}\';"""
+        statement = f"""SELECT * FROM Run WHERE timeStamp < {Timestamp} AND number = {runNumber} AND date >= \'{Year}\';"""
         cur = self.conn.cursor()
         cur.execute(statement)
         values = cur.fetchall()

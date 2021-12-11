@@ -1,7 +1,9 @@
 from datetime import datetime
 import os
+from sqlite3.dbapi2 import Timestamp
 from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
+from .oneDriveConnect import oneDriveConnect
 
 
 class payroll:
@@ -16,8 +18,9 @@ class payroll:
     This requires the whole file list
     It returns the retun array of the failed files or true if no files have failed
     """
-    def loadWorkBooks(fileList):
+    def loadWorkBooks():
         payroll.reset()
+        fileList = oneDriveConnect.getFiles()
         for file in fileList:
             try:
                 wb = load_workbook(file)
@@ -38,11 +41,13 @@ class payroll:
     It requires the Workbook and the Filename
     """
     def readWorkBook(wb, filename):
+        Timestamp = oneDriveConnect.getLastModifiedDate(filename)
         try:
             with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
                 payroll.getRange(wb)
                 if not payroll.checkForErrors(wb):
-                    date, runNumber = payroll.getRunInfo(sqlRunner, wb)
+                    date, runNumber = payroll.getRunInfo(
+                        sqlRunner, wb, Timestamp)
                     payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
         except Exception as e:
             print(e)
@@ -139,7 +144,7 @@ class payroll:
     it requires the SQL connection class and the workbook file
     It retuns the Run Date and Number
     """
-    def getRunInfo(sqlRunner, wb):
+    def getRunInfo(sqlRunner, wb, Timestamp):
         sheet = wb.active
         date = sheet["D3"].value.strftime("%Y-%m-%d")
         runNumber = sheet["B3"].value
@@ -156,12 +161,12 @@ class payroll:
         else:
             medrun = 0
         fullCover = payroll.getFullCover(sheet, shift)
-        if sqlRunner.newRunNeedsUpdated(runNumber, date, payroll.Year):
+        if sqlRunner.newRunNeedsUpdated(runNumber, Timestamp, payroll.Year):
             sqlRunner.updateRun(runNumber, date, startTime,
-                                endTime, runTime, stationCovered, medrun, shift)
+                                endTime, runTime, stationCovered, medrun, shift, Timestamp)
         else:
             sqlRunner.createRun(runNumber, date, startTime,
-                                endTime, runTime, stationCovered, medrun, shift)
+                                endTime, runTime, stationCovered, medrun, shift, Timestamp)
         return date, runNumber
 
     """
