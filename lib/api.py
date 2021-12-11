@@ -11,8 +11,12 @@ from .payroll import payroll
 import sqlite.check_database as cdb
 from flask.wrappers import Request
 from .config_manager import ConfigManager
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
+scheduler = BackgroundScheduler()
+job = scheduler.add_job(payroll.loadWorkBooks(), 'interval', minutes=30)
+scheduler.start()
 
 """
 This method will run before the first request to the server. It ensures that the DB exists and is ready for use.
@@ -44,23 +48,6 @@ returns..
 @app.route('/verify', methods=["GET", "POST"])
 def verify_awake():
     return jsonify({"result": True})
-
-
-"""
-This is the function responsible for accepting a request from the UI that
-contains a list of file paths and forwarding that to the backend to insert
-the information into the database.
-
-inputs..
-    (request): A post request containing a Json array of strings
-returns..
-    True on completion
-"""
-@app.route('/submit_reports', methods=["GET", "POST"])
-def submit_reports():
-    files = request.json
-    payroll.loadWorkBooks(files)
-    return jsonify(True)
 
 """
 This is the function responsible for accepting a request from the UI
@@ -114,7 +101,7 @@ returns..
 @app.route("/get_most_recent_db_update", methods=["GET"])
 def get_most_recent_db_update():
     with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sql:
-        return jsonify({"update": sql.getMostRecentUpdate()})
+        return jsonify({"update": Logger.getLastUpdate()})
 
 """
 This method gets the number of the most revent run.
@@ -135,6 +122,7 @@ returns..
 """
 @app.route("/trigger_update", methods = ["GET"])
 def trigger_update():
+    payroll.loadWorkBooks()
     return jsonify(True)
 
 """

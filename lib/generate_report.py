@@ -2,6 +2,7 @@ from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
 from .logger import Logger
 from os import getenv
+import traceback
 from datetime import datetime
 
 class generate_report:
@@ -52,6 +53,7 @@ class generate_report:
                     for message in messages:
                         Logger.addNewGenerateMessage(message)
         except Exception as e:
+            traceback.print_exc()
             print(e)
             Logger.addNewError("generation error", datetime.now(), str(e))
 

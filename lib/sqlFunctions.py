@@ -386,9 +386,9 @@ class sqlFunctions():
     """
     def getRunNumberOfAllPaidRunsForEmplyeeByEmployeeNumberBetweenDates(self, city_number, start_date, end_date):
         cur = self.conn.cursor()
-        return cur.execute(f"""SELECT runNumber FROM Responded WHERE type_of_response = 'P' AND empNumber = 
-            (SELECT number FROM Employee WHERE city_number = {city_number}) AND full_time = 0
-            AND date BETWEEN \'{start_date}\' AND \'{end_date}\';""").fetchall()
+        return cur.execute(f"""SELECT number FROM Run WHERE Medrun = 0 AND number = (SELECT runNumber FROM Responded 
+            WHERE type_of_response = 'P' AND empNumber = (SELECT number FROM Employee WHERE city_number = 
+            {city_number}) AND full_time = 0 AND date BETWEEN \'{start_date}\' AND \'{end_date}\');""").fetchall()
 
 
     """
