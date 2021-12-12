@@ -60,17 +60,19 @@ class sqlFunctions():
     it requires the Run number, date, and connection to the sql database
     """
 
-    def createRun(self, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift, Timestamp):
-        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift, timeStamp)
-                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\', {8}) """
+    def createRun(self, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift, Timestamp, fullCover):
+        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift, timeStamp, full_coverage)
+                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\', {8}, {9}) """
         cur = self.conn.cursor()
         sql = sql.format(runNumber, date, stopTime,
-                         endTime, runTime, Covered, Medrun, shift, Timestamp)
+                         endTime, runTime, Covered, Medrun, shift, Timestamp, fullCover)
         cur.execute(sql)
         return cur.lastrowid
 
-    def updateRun(self, runNumber, date, startTime, endTime, runTime, Covered, Medrun, shift, Timestamp):
-        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\', timeStamp = {Timestamp} WHERE number = {runNumber} AND date = \'{date}\';"""
+    def updateRun(self, runNumber, date, startTime, endTime, runTime, Covered, Medrun, shift, Timestamp, fullCover):
+        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, 
+                    Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\', timeStamp = 
+                    {Timestamp}, full_coverage = {fullCover} WHERE number = {runNumber} AND date = \'{date}\';"""
         cur = self.conn.cursor()
         cur.execute(statement)
         return cur.lastrowid
@@ -83,8 +85,8 @@ class sqlFunctions():
 
         return False if len(values) == 0 else True
 
-    def runNeedsUpdated(self, runNumber, date):
-        statement = f"""SELECT * FROM Run WHERE Date = \'{date}\' AND number = {runNumber};"""
+    def checkIfExists(self, runNumber, year):
+        statement = f"""SELECT * FROM Run WHERE Date >= \'{year}\' AND number = {runNumber};"""
         cur = self.conn.cursor()
         cur.execute(statement)
         values = cur.fetchall()

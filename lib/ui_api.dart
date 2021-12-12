@@ -108,7 +108,7 @@ class API {
     Uri _url = Uri.parse('http://127.0.0.1:8080/get_most_recent_db_update');
     Response response = await get(_url);
     Map returnValue = jsonDecode(response.body);
-    return returnValue["lastUpdate"];
+    return returnValue["lastUpdate"].toString();
   }
 
   /*
@@ -130,7 +130,6 @@ class API {
   static Future<void> triggerDatabaseUpdate() async {
     Uri _url = Uri.parse('http://127.0.0.1:8080/trigger_update');
     await get(_url);
-    await Future.delayed(const Duration(seconds: 5));
   }
 
   /*

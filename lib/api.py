@@ -11,12 +11,16 @@ from .payroll import payroll
 import sqlite.check_database as cdb
 from flask.wrappers import Request
 from .config_manager import ConfigManager
-from apscheduler.schedulers.background import BackgroundScheduler
+from flask_apscheduler import APScheduler
 
 app = Flask(__name__)
-scheduler = BackgroundScheduler()
-job = scheduler.add_job(payroll.loadWorkBooks(), 'interval', minutes=30)
+scheduler = APScheduler()
+scheduler.init_app(app)
 scheduler.start()
+
+INTERVAL_TASK_ID = 'interval-task-id'
+
+scheduler.add_job(id=INTERVAL_TASK_ID, func=payroll.loadWorkBooks, trigger='interval', minutes=30)
 
 """
 This method will run before the first request to the server. It ensures that the DB exists and is ready for use.
@@ -122,7 +126,9 @@ returns..
 """
 @app.route("/trigger_update", methods = ["GET"])
 def trigger_update():
+    scheduler.pause_job(id=INTERVAL_TASK_ID)
     payroll.loadWorkBooks()
+    scheduler.resume_job(id=INTERVAL_TASK_ID)
     return jsonify(True)
 
 """

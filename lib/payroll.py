@@ -20,10 +20,15 @@ class payroll:
     def loadWorkBooks():
         payroll.reset()
         fileList = oneDriveConnect.getFiles()
+        print("Checking to see if the loop works....")
         for file in fileList:
             try:
-                wb = load_workbook(file)
-                payroll.readWorkBook(wb, file)
+                with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
+                    Timestamp = oneDriveConnect.getLastModifiedDate(file)
+                    fileRunNumber = oneDriveConnect.extensionStripper(file)
+                    if sqlRunner.newRunNeedsUpdated(fileRunNumber, Timestamp, payroll.Year) or not sqlRunner.checkIfExists(fileRunNumber, payroll.Year):
+                        wb = load_workbook(file)
+                        payroll.readWorkBook(wb, file)
             except Exception as e:
                 print(e)
                 Logger.addNewError("I/O error", datetime.now(), f"File {file} has error: Critical error, file cannot be read!")
@@ -39,9 +44,10 @@ class payroll:
             with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
                 payroll.getRange(wb)
                 if not payroll.checkForErrors(wb):
-                    date, runNumber = payroll.getRunInfo(
+                    date, runNumber, needsUpdated= payroll.getRunInfo(
                         sqlRunner, wb, Timestamp)
-                    payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
+                    if needsUpdated:
+                        payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
         except Exception as e:
             print(e)
             Logger.addNewError("report format error", datetime.now(), f"File {filename} has error: {e}")
@@ -155,11 +161,13 @@ class payroll:
         fullCover = payroll.getFullCover(sheet, shift)
         if sqlRunner.newRunNeedsUpdated(runNumber, Timestamp, payroll.Year):
             sqlRunner.updateRun(runNumber, date, startTime,
-                                endTime, runTime, stationCovered, medrun, shift, Timestamp)
-        else:
+                                endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover)
+            return date, runNumber, True
+        elif not sqlRunner.checkIfExists(runNumber, date):
             sqlRunner.createRun(runNumber, date, startTime,
-                                endTime, runTime, stationCovered, medrun, shift, Timestamp)
-        return date, runNumber
+                                endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover)
+            return date, runNumber, True
+        return date, runNumber, False
 
     """
     This function is responsible for determining if a run was fully
