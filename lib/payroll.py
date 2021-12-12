@@ -1,20 +1,25 @@
 from datetime import datetime
 import os
+from sqlite3.dbapi2 import Timestamp
 from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
 from .logger import Logger
+from .oneDriveConnect import oneDriveConnect
+
 
 class payroll:
 
     endRange = 0
+    Year = datetime.now().strftime("%Y") + "-1-1"
 
     """
     loadWorkBooks(fileList)
     loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
     This requires the whole file list
     """
-    def loadWorkBooks(fileList):
+    def loadWorkBooks():
         payroll.reset()
+        fileList = oneDriveConnect.getFiles()
         for file in fileList:
             try:
                 wb = load_workbook(file)
@@ -23,30 +28,29 @@ class payroll:
                 print(e)
                 Logger.addNewError("I/O error", datetime.now(), f"File {file} has error: Critical error, file cannot be read!")
 
-
     """
     readWorkBook(wb, filename)
     reads an indiual work book then prints the resulting values from in the range of cells A21->F55
     It requires the Workbook and the Filename
     """
     def readWorkBook(wb, filename):
+        Timestamp = oneDriveConnect.getLastModifiedDate(filename)
         try:
             with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
                 payroll.getRange(wb)
                 if not payroll.checkForErrors(wb):
-                    date, runNumber = payroll.getRunInfo(sqlRunner, wb)
+                    date, runNumber = payroll.getRunInfo(
+                        sqlRunner, wb, Timestamp)
                     payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
         except Exception as e:
             print(e)
             Logger.addNewError("report format error", datetime.now(), f"File {filename} has error: {e}")
-
 
     """
     Resets the global variables for the next run of this class.
     """
     def reset():
         payroll.endRange = 0
-
 
     """
     getRange(wb)
@@ -64,8 +68,6 @@ class payroll:
                 else:
                     end = True
 
-            
-
     """
     This method stops execution and raises an error if there is a detectable issue
     with a run sheet.
@@ -77,15 +79,22 @@ class payroll:
         sheet = wb.active
         for i1 in sheet[f"A21:h{payroll.endRange}"]:
             if i1[4].value is not None or i1[5].value is not None or i1[6].value is not None:
-                if i1[0].value in [None, '']: raise Exception("Employee number cannot be empty!")
-                if i1[1].value in [None, '']: raise Exception("Employee name cannot be empty!")
-                if sheet["D3"].value in [None, '']: raise Exception("Date cannot be empty!")
-        if sheet["B3"].value in [None, '']: raise Exception("Run number cannot be empty!")
-        if sheet["B8"].value in [None, '']: raise Exception("Run time cannot be empty!")
-        if sheet["B5"].value in [None, '']: raise Exception("Reported cannot be empty!")
-        if sheet["L5"].value in [None, '']: raise Exception("10-8 cannot be empty!")
-        if sheet["F3"].value in [None, '']: raise Exception("Shift cannot be empty!")
-
+                if i1[0].value in [None, '']:
+                    raise Exception("Employee number cannot be empty!")
+                if i1[1].value in [None, '']:
+                    raise Exception("Employee name cannot be empty!")
+                if sheet["D3"].value in [None, '']:
+                    raise Exception("Date cannot be empty!")
+        if sheet["B3"].value in [None, '']:
+            raise Exception("Run number cannot be empty!")
+        if sheet["B8"].value in [None, '']:
+            raise Exception("Run time cannot be empty!")
+        if sheet["B5"].value in [None, '']:
+            raise Exception("Reported cannot be empty!")
+        if sheet["L5"].value in [None, '']:
+            raise Exception("10-8 cannot be empty!")
+        if sheet["F3"].value in [None, '']:
+            raise Exception("Shift cannot be empty!")
 
     """
     getEmpinfo(sqlRunner, wb, date, rNum)
@@ -121,14 +130,13 @@ class payroll:
                     sqlRunner.createResponded(
                         empNumber, payRate, date, runNumber)
 
-
     """
     getRunInfo(sqlRunner, wb)
     This gets the Run info from the sheet and runs the SQL import statements
     it requires the SQL connection class and the workbook file
     It retuns the Run Date and Number
     """
-    def getRunInfo(sqlRunner, wb):
+    def getRunInfo(sqlRunner, wb, Timestamp):
         sheet = wb.active
         date = sheet["D3"].value.strftime("%Y-%m-%d")
         runNumber = sheet["B3"].value
@@ -145,14 +153,13 @@ class payroll:
         else:
             medrun = 0
         fullCover = payroll.getFullCover(sheet, shift)
-        if sqlRunner.runNeedsUpdated(runNumber, date):
+        if sqlRunner.newRunNeedsUpdated(runNumber, Timestamp, payroll.Year):
             sqlRunner.updateRun(runNumber, date, startTime,
-                              endTime, runTime, stationCovered, medrun, shift)
+                                endTime, runTime, stationCovered, medrun, shift, Timestamp)
         else:
             sqlRunner.createRun(runNumber, date, startTime,
-                              endTime, runTime, stationCovered, medrun, shift)
+                                endTime, runTime, stationCovered, medrun, shift, Timestamp)
         return date, runNumber
-
 
     """
     This function is responsible for determining if a run was fully
