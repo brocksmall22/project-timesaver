@@ -20,10 +20,11 @@ class payroll:
 
     TODO: Fix error handling here. if SQL statement fails, causes error that looks like an I/O error
     """
-    def loadWorkBooks():
+    def loadWorkBooks(fileList = []):
         payroll.reset()
         Logger.setLastUpdate(datetime.now().strftime("%Y-%m-%d %H:%M"))
-        fileList = oneDriveConnect.getFiles()
+        if fileList == []:
+            fileList = oneDriveConnect.getFiles()
         for file in fileList:
             try:
                 with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
