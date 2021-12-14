@@ -1,4 +1,3 @@
-from lib.oneDriveConnect import oneDriveConnect as o
 import unittest
 import sqlite3
 import os
@@ -6,6 +5,7 @@ import os
 import sys
 sys.path.append(os.getcwd())
 from unittest import result
+from lib.oneDriveConnect import oneDriveConnect as o
 
 class OneDriveConnect_test(unittest.TestCase):
     goodFiles = []
