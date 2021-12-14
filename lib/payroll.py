@@ -19,6 +19,7 @@ class payroll:
     This requires the whole file list
 
     TODO: Fix error handling here. if SQL statement fails, causes error that looks like an I/O error
+    TODO: Add error for when no folder is set
     """
     def loadWorkBooks(fileList = [], test_log_location = ""):
         payroll.reset()

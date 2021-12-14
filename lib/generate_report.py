@@ -11,6 +11,7 @@ class generate_report:
     # breakdowns are stored.
     # TODO: Handle the F.S.C column in the breakdown once we know what it is
     # TODO: Fix bug where top responders are left not being filled correctly
+    # TODO: Add error for when no folder is set
     endPaidOnCall = 0
     startFullTime = 0
     endFullTime = 0

@@ -20,6 +20,7 @@ class _PayrollUIState extends State<PayrollUI> {
   }
   //TODO: Allow the user to just select the blank sheets when generating as
   // opposed to requiring a copies in a specific place
+  //TODO: Add error for when no folder is set
 
   //Layout of the page
   @override
