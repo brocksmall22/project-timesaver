@@ -22,15 +22,14 @@ class generate_report_test(unittest.TestCase):
     def setUpClass(cls):
         generate_report_test.delete_db()
         check_database.check()
-        p.loadWorkBooks([os.getcwd() + "\\test\\resc\\good_1.xlsx",
-            os.getcwd() + "\\test\\resc\\good_2.xlsx"])
+        p.loadWorkBooks([os.getcwd() + "\\test\\resc\\good_tests\\584.xlsx",
+            os.getcwd() + "\\test\\resc\\good_tests\\585.xlsx"])
 
     """
     This is the actual test.
     """
     def test_generate_tally(self):
         results = gp.generate_report("2021-11-01", "2021-11-07")
-        self.assertEqual(type(results[0]), type(True))
         self.assertEqual(generate_report_test.get_total(), 0)
 
     """

@@ -20,9 +20,9 @@ class payroll:
 
     TODO: Fix error handling here. if SQL statement fails, causes error that looks like an I/O error
     """
-    def loadWorkBooks(fileList = []):
+    def loadWorkBooks(fileList = [], test_log_location = ""):
         payroll.reset()
-        Logger.setLastUpdate(datetime.now().strftime("%Y-%m-%d %H:%M"))
+        Logger.setLastUpdate(datetime.now().strftime("%Y-%m-%d %H:%M"), file  = test_log_location)
         if fileList == []:
             fileList = oneDriveConnect.getFiles()
         for file in fileList:
@@ -32,18 +32,18 @@ class payroll:
                     fileRunNumber = oneDriveConnect.extensionStripper(file)
                     if sqlRunner.newRunNeedsUpdated(fileRunNumber, Timestamp, payroll.Year) or not sqlRunner.checkIfExists(fileRunNumber, payroll.Year):
                         wb = load_workbook(file)
-                        payroll.readWorkBook(wb, file)
+                        payroll.readWorkBook(wb, file, test_log_location)
             except Exception as e:
                 print(e)
                 traceback.print_exc()
-                Logger.addNewError("I/O error", datetime.now(), f"File {file} has error: Critical error, file cannot be read!")
+                Logger.addNewError("I/O error", datetime.now(), f"File {file} has error: Critical error, file cannot be read!", file = test_log_location)
 
     """
     readWorkBook(wb, filename)
     reads an indiual work book then prints the resulting values from in the range of cells A21->F55
     It requires the Workbook and the Filename
     """
-    def readWorkBook(wb, filename):
+    def readWorkBook(wb, filename, test_log_location):
         Timestamp = oneDriveConnect.getLastModifiedDate(filename)
         try:
             with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
@@ -55,7 +55,7 @@ class payroll:
                         payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
         except Exception as e:
             print(e)
-            Logger.addNewError("report format error", datetime.now(), f"File {filename} has error: {e}")
+            Logger.addNewError("report format error", datetime.now(), f"File {filename} has error: {e}", file = test_log_location)
 
     """
     Resets the global variables for the next run of this class.
