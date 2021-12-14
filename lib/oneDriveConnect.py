@@ -10,7 +10,7 @@ class oneDriveConnect:
     """
     files = []
 
-    def getFiles(path):
+    def getFiles(path = ""):
         if path == "":
             path = ConfigManager.get_folderPath()
         for file in os.listdir(path):

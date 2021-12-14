@@ -109,11 +109,11 @@ class sqlFunctions():
     it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
     """
 
-    def createResponded(self, empNumber, payRate, date, num):
-        sql = """INSERT INTO Responded(empNumber, runNumber, date, payRate)
-                VALUES({0},{1},\'{2}\',{3}) """
+    def createResponded(self, empNumber, payRate, date, num, type_of_response):
+        sql = """INSERT INTO Responded(empNumber, runNumber, date, payRate, type_of_response)
+                VALUES({0},{1},\'{2}\',{3}, '{4}') """
         cur = self.conn.cursor()
-        sql = sql.format(empNumber, num, date, payRate)
+        sql = sql.format(empNumber, num, date, payRate, type_of_response)
         cur.execute(sql)
         return cur.lastrowid
 
@@ -125,8 +125,8 @@ class sqlFunctions():
 
         return False if len(values) == 0 else True
 
-    def updateResponded(self, empNumber, payRate, date, rNum):
-        statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum};"""
+    def updateResponded(self, empNumber, payRate, date, rNum, type_of_response):
+        statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum} AND type_of_response = {type_of_response};"""
         cur = self.conn.cursor()
         cur.execute(statement)
         return cur.lastrowid
@@ -198,9 +198,7 @@ class sqlFunctions():
 
     def getSumOfHoursForEmployeeBetweenGivenDates(self, start_date, end_date, empNumber):
         cur = self.conn.cursor()
-        return cur.execute(f"""SELECT SUM(runTime) FROM Run WHERE number = 
-                    (SELECT runNumber FROM Responded WHERE type_of_response = 'P' AND empNumber = 
-                    {empNumber} AND date BETWEEN \'{start_date}\' AND \'{end_date}\') AND Medrun = 0;""").fetchall()[0][0]
+        return cur.execute(f"""SELECT SUM(runTime) FROM Run WHERE number = (SELECT runNumber FROM Responded WHERE type_of_response = 'P' AND empNumber = {empNumber} AND date BETWEEN \'{start_date}\' AND \'{end_date}\') AND Medrun = 0;""").fetchall()[0][0]
 
     """
     Get an ordered list of runs in a given range of dates.
@@ -405,9 +403,8 @@ class sqlFunctions():
 
     def getRunNumberOfAllPaidRunsForEmplyeeByEmployeeNumberBetweenDates(self, city_number, start_date, end_date):
         cur = self.conn.cursor()
-        return cur.execute(f"""SELECT number FROM Run WHERE Medrun = 0 AND number = (SELECT runNumber FROM Responded 
-            WHERE type_of_response = 'P' AND empNumber = (SELECT number FROM Employee WHERE city_number = 
-            {city_number}) AND full_time = 0 AND date BETWEEN \'{start_date}\' AND \'{end_date}\');""").fetchall()
+        return cur.execute(f"""SELECT runNumber FROM Responded WHERE empNumber = (SELECT number FROM Employee WHERE city_number = 
+            {city_number}) AND type_of_response = 'P' AND date BETWEEN '{start_date}' AND '{end_date}';""").fetchall()
 
     """
     Gets the length of any given run that is a fire run.
@@ -420,7 +417,7 @@ class sqlFunctions():
 
     def getRunTimeOfFireRunByRunNumber(self, run_number):
         cur = self.conn.cursor()
-        return cur.execute(f"""SELECT runTime FROM Run WHERE number = {run_number} AND Medrun = 0""").fetchall()[0][0]
+        return cur.execute(f"""SELECT runTime FROM Run WHERE number = {run_number} AND Medrun = 0""").fetchall()
 
     """
     Gets the inter department number and the name of every employee

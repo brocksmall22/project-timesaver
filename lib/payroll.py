@@ -51,6 +51,7 @@ class payroll:
                 if not payroll.checkForErrors(wb):
                     date, runNumber, needsUpdated= payroll.getRunInfo(
                         sqlRunner, wb, Timestamp)
+                    assert runNumber == int(oneDriveConnect.extensionStripper(filename)), "The file's name and the run number within do not match"
                     if needsUpdated:
                         payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
         except Exception as e:
@@ -124,10 +125,10 @@ class payroll:
                     payRate = 0
                     full_time = 1
                 Name = wb["Pay"][i1[1].value.split("!")[1]].value
-                if i1[4].value is not None:
-                    type_of_response = "PNP"
-                elif i1[5].value is not None:
+                if i1[5].value is not None:
                     type_of_response = "P"
+                elif i1[4].value is not None:
+                    type_of_response = "PNP"
                 elif i1[6].value is not None:
                     type_of_response = "OD"
                 if sqlRunner.empNeedsUpdated(empNumber):
@@ -136,10 +137,10 @@ class payroll:
                     sqlRunner.createEmployee(Name, empNumber)
                 if sqlRunner.respondedNeedsUpdated(empNumber, date, runNumber):
                     sqlRunner.updateResponded(
-                        empNumber, payRate, date, runNumber)
+                        empNumber, payRate, date, runNumber, type_of_response)
                 else:
                     sqlRunner.createResponded(
-                        empNumber, payRate, date, runNumber)
+                        empNumber, payRate, date, runNumber, type_of_response)
 
     """
     getRunInfo(sqlRunner, wb)
