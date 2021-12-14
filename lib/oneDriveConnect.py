@@ -3,18 +3,16 @@ from .config_manager import ConfigManager
 
 
 class oneDriveConnect:
-    # TODO finish getFiles function ---DONE
-    # TODO make a compertor function to compare last modifed dates
-    # TODO strip off .xlxs from filename to get run number ---DONE
-    # TODO get last modified date ---DONE
+
     """
     getFiles(path) 
     accepts the path varible to the run folder and retrevies the run reports from the folder
     """
     files = []
 
-    def getFiles():
-        path = ConfigManager.get_folderPath()
+    def getFiles(path):
+        if path == "":
+            path = ConfigManager.get_folderPath()
         for file in os.listdir(path):
             if file.endswith(".xlsx"):
                 oneDriveConnect.files.append(os.path.join(path, file))
