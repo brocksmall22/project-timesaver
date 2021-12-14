@@ -446,14 +446,12 @@ class generate_report:
     def getHours(sqlRunner, city_number, start_date, end_date):
         total = 0
         runs = sqlRunner.getRunNumberOfAllPaidRunsForEmplyeeByEmployeeNumberBetweenDates(city_number, start_date, end_date)
-        print(runs)
         for run in runs:
             hour = sqlRunner.getRunTimeOfFireRunByRunNumber(run[0])
             if len(hour) == 1:
                 hour = hour[0][0]
             else:
                 hour = 0
-            print(hour)
             if hour is not None and hour != []:
                 total += hour
         return total
