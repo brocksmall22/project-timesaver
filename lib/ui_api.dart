@@ -108,7 +108,7 @@ class API {
     Uri _url = Uri.parse('http://127.0.0.1:8080/get_most_recent_db_update');
     Response response = await get(_url);
     Map returnValue = jsonDecode(response.body);
-    return returnValue["lastUpdate"].toString();
+    return returnValue["update"].toString();
   }
 
   /*

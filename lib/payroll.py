@@ -19,8 +19,8 @@ class payroll:
     """
     def loadWorkBooks():
         payroll.reset()
+        Logger.setLastUpdate(datetime.now().strftime("%Y-%m-%d %H:%M"))
         fileList = oneDriveConnect.getFiles()
-        print("Checking to see if the loop works....")
         for file in fileList:
             try:
                 with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
