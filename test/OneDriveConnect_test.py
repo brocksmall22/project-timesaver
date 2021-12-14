@@ -12,7 +12,7 @@ class OneDriveConnect_test(unittest.TestCase):
     badFiles = []
 
     def test_1_a_getFilesTest1(self):
-        path = "C:\\Users\\Flameon9521\\Documents\\GitHub\\project-timesaver\\test\\resc\\good_tests"
+        path = os.getcwd() + "\\test\\resc\\good_tests"
         OneDriveConnect_test.goodFiles = o.getFiles(path)
         self.assertEqual(len(OneDriveConnect_test.goodFiles), 2)
 
@@ -22,10 +22,10 @@ class OneDriveConnect_test(unittest.TestCase):
 
     def test_1_c_getLastModifiedDateTest1(self):
         result = o.getLastModifiedDate(OneDriveConnect_test.goodFiles[0])
-        self.assertEqual(result, 1639447547.951233)
+        self.assertEqual(type(result), type(1639447547.951233))
 
     def test_2_a_getFilesTest2(self):
-        path = "C:\\Users\\Flameon9521\\Documents\\GitHub\\project-timesaver\\test\\resc\\bad_tests"
+        path = os.getcwd() + "\\test\\resc\\bad_tests"
         OneDriveConnect_test.badFiles = o.getFiles(path)
 
         self.assertEqual(len(OneDriveConnect_test.badFiles), 4)
@@ -38,7 +38,7 @@ class OneDriveConnect_test(unittest.TestCase):
     def test_2_c_getLastModifiedDateTest2(self):
         result = o.getLastModifiedDate(OneDriveConnect_test.badFiles[2])
 
-        self.assertEqual(result, 1639447547.9457757)
+        self.assertEqual(type(result), type(1639447547.9457757))
 
 
 if __name__ == '__main__':
