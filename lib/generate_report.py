@@ -10,6 +10,7 @@ class generate_report:
     # TODO: Change the path where the blank tally and blank shift
     # breakdowns are stored.
     # TODO: Handle the F.S.C column in the breakdown once we know what it is
+    # TODO: Fix bug where top responders are left not being filled correctly
     endPaidOnCall = 0
     startFullTime = 0
     endFullTime = 0

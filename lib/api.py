@@ -116,7 +116,10 @@ returns..
 @app.route("/get_most_recent_run", methods=["GET"])
 def get_most_recent_run():
     with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sql:
-        return jsonify({"update": sql.getMostRecentRun(datetime.now().strftime("%Y")+"-01-01")})
+        stored = sql.getMostRecentRun(datetime.now().strftime("%Y")+"-01-01")
+        if stored == "0" or stored == 0:
+            stored = "No runs stored"
+        return jsonify({"update": stored})
 
 """
 This method is responsible for triggering an update to the DB.

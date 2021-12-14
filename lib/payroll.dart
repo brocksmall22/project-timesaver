@@ -232,7 +232,8 @@ class _PayrollUIState extends State<PayrollUI> {
   the db text.
   */
   void _databaseUpdateTime() async {
-    _lastUpdateDate = await API.getMostRecentDatabaseUpdate();
+    String stored = await API.getMostRecentDatabaseUpdate();
+    _lastUpdateDate = stored.isNotEmpty ? stored : "Unknown";
     setState(() {});
   }
 
