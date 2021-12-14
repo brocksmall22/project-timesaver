@@ -137,10 +137,10 @@ class payroll:
                     sqlRunner.createEmployee(Name, empNumber)
                 if sqlRunner.respondedNeedsUpdated(empNumber, date, runNumber):
                     sqlRunner.updateResponded(
-                        empNumber, payRate, date, runNumber, type_of_response)
+                        empNumber, payRate, date, runNumber, type_of_response, full_time)
                 else:
                     sqlRunner.createResponded(
-                        empNumber, payRate, date, runNumber, type_of_response)
+                        empNumber, payRate, date, runNumber, type_of_response, full_time)
 
     """
     getRunInfo(sqlRunner, wb)

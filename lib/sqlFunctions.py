@@ -109,11 +109,11 @@ class sqlFunctions():
     it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
     """
 
-    def createResponded(self, empNumber, payRate, date, num, type_of_response):
-        sql = """INSERT INTO Responded(empNumber, runNumber, date, payRate, type_of_response)
-                VALUES({0},{1},\'{2}\',{3}, '{4}') """
+    def createResponded(self, empNumber, payRate, date, num, type_of_response, full_time):
+        sql = """INSERT INTO Responded(empNumber, runNumber, date, payRate, type_of_response, full_time)
+                VALUES({0},{1},\'{2}\',{3}, '{4}', {5}) """
         cur = self.conn.cursor()
-        sql = sql.format(empNumber, num, date, payRate, type_of_response)
+        sql = sql.format(empNumber, num, date, payRate, type_of_response, full_time)
         cur.execute(sql)
         return cur.lastrowid
 
@@ -125,8 +125,8 @@ class sqlFunctions():
 
         return False if len(values) == 0 else True
 
-    def updateResponded(self, empNumber, payRate, date, rNum, type_of_response):
-        statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum} AND type_of_response = {type_of_response};"""
+    def updateResponded(self, empNumber, payRate, date, rNum, type_of_response, full_time):
+        statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum} AND type_of_response = {type_of_response}, full_time = {full_time};"""
         cur = self.conn.cursor()
         cur.execute(statement)
         return cur.lastrowid
