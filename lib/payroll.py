@@ -5,6 +5,7 @@ from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
 from .logger import Logger
 from .oneDriveConnect import oneDriveConnect
+import traceback
 
 
 class payroll:
@@ -16,6 +17,8 @@ class payroll:
     loadWorkBooks(fileList)
     loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
     This requires the whole file list
+
+    TODO: Fix error handling here. if SQL statement fails, causes error that looks like an I/O error
     """
     def loadWorkBooks():
         payroll.reset()
@@ -31,6 +34,7 @@ class payroll:
                         payroll.readWorkBook(wb, file)
             except Exception as e:
                 print(e)
+                traceback.print_exc()
                 Logger.addNewError("I/O error", datetime.now(), f"File {file} has error: Critical error, file cannot be read!")
 
     """

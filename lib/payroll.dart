@@ -204,8 +204,8 @@ class _PayrollUIState extends State<PayrollUI> {
             return AlertDialog(
               title: const Text("Reports were sucessfully generated!"),
               content: SizedBox(
-                width: 100,
-                height: 75,
+                width: 250,
+                height: 150,
                 child: ListView(
                   children: response.map((e) => Text(e)).toList(),
                 ),

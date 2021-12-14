@@ -28,8 +28,8 @@ class BasicActions {
             return AlertDialog(
               title: Text(title),
               content: SizedBox(
-                width: 100,
-                height: 75,
+                width: 250,
+                height: 150,
                 child: ListView(
                   children: response,
                 ),
