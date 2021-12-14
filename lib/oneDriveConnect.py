@@ -8,7 +8,7 @@ class oneDriveConnect:
     # TODO strip off .xlxs from filename to get run number ---DONE
     # TODO get last modified date ---DONE
     """
-    getFiles(path) 
+    getFiles() 
     accepts the path varible to the run folder and retrevies the run reports from the folder
     """
     files = []
