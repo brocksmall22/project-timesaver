@@ -3,10 +3,7 @@ from .ConfigManger import ConfigManager
 
 
 class oneDriveConnect:
-    # TODO finish getFiles function ---DONE
-    # TODO make a compertor function to compare last modifed dates
-    # TODO strip off .xlxs from filename to get run number ---DONE
-    # TODO get last modified date ---DONE
+    
     """
     getFiles() 
     accepts the path varible to the run folder and retrevies the run reports from the folder
