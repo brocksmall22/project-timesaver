@@ -1,11 +1,13 @@
 from contextlib import nullcontext
+from hmac import digest
 from config_manager import config_manager as conf
 import os
 import shutil
+import hashlib
 
 # TODO get database from local directory --DONE
 # TODO upload database to onedrive with the given config --DONE
-# TODO make checksum function
+# TODO make checksum function --DONE
 # TODO Run checksum function against version stored on Local against onedrive to check stablity
 # TODO get database from onedrive
 # TODO get last modified date from onedrive check against local copy for backup update
@@ -36,3 +38,10 @@ class backup:
         return endPath
 
 
+    def generateHash(filepath):
+        md5_hash = hashlib.md5()
+        file = open(filepath,"rb")
+        file_content = file.read()
+        md5_hash.update(file_content)
+        digest = md5_hash.hexdigest()
+        return(digest)
