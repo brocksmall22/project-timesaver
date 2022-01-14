@@ -8,7 +8,7 @@ import hashlib
 # TODO get database from local directory --DONE
 # TODO upload database to onedrive with the given config --DONE
 # TODO make checksum function --DONE
-# TODO Run checksum function against version stored on Local against onedrive to check stablity
+# TODO Run checksum function against version stored on Local against onedrive to check stablity --DONE
 # TODO get database from onedrive
 # TODO get last modified date from onedrive check against local copy for backup update
 
@@ -45,3 +45,10 @@ class backup:
         md5_hash.update(file_content)
         digest = md5_hash.hexdigest()
         return(digest)
+
+    def checksum(local_filePath, cloud_filePath):
+
+        if backup.generateHash(local_filePath) != backup.generateHash(cloud_filePath):
+            return False
+
+        return True
