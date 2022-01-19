@@ -20,13 +20,11 @@ class backup:
 
     def getLocalDB(database_path):
         if database_path == "":
-            database_path = conf.get_DataBasePath()
+            database_path = os.getenv("APPDATA") + "\\project-time-saver\\database.db"
         backup.database_file = database_path
 
         backup.filename = os.path.basename(backup.database_file)
         return backup.database_file
-
-
 
     def uploadLocalDB(database, onedrive_path):
         if onedrive_path == "":
@@ -37,14 +35,13 @@ class backup:
 
         return endPath
 
-
     def generateHash(filepath):
         md5_hash = hashlib.md5()
-        file = open(filepath,"rb")
+        file = open(filepath, "rb")
         file_content = file.read()
         md5_hash.update(file_content)
         digest = md5_hash.hexdigest()
-        return(digest)
+        return digest
 
     def checksum(local_filePath, cloud_filePath):
 
