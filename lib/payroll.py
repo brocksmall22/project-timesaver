@@ -57,6 +57,7 @@ class payroll:
                         payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
         except Exception as e:
             print(e)
+            traceback.print_exc()
             Logger.addNewError("report format error", datetime.now(), f"File {filename} has error: {e}", file = test_log_location)
 
     """
@@ -157,6 +158,9 @@ class payroll:
         startTime = sheet["B5"].value
         endTime = sheet["L5"].value
         shift = sheet["F3"].value
+        fsc = 0
+        if payroll.checkColorForFsc(sheet) or sheet["Q6"].value is not None:
+            fsc = 1 
         if(sheet["F6"].value is not None):
             stationCovered = 1
         else:
@@ -168,13 +172,30 @@ class payroll:
         fullCover = payroll.getFullCover(sheet, shift)
         if sqlRunner.newRunNeedsUpdated(runNumber, Timestamp, payroll.Year):
             sqlRunner.updateRun(runNumber, date, startTime,
-                                endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover)
+                                endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover, fsc)
             return date, runNumber, True
         elif not sqlRunner.checkIfExists(runNumber, date):
             sqlRunner.createRun(runNumber, date, startTime,
-                                endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover)
+                                endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover, fsc)
             return date, runNumber, True
         return date, runNumber, False
+
+    """
+    This method is to check if the FSC cell is filled or not.
+    Checks for both color and legacy index.
+
+    inputs..
+        sheet: the sheet we are checking
+    outputs..
+        case 1: False if it is not filled
+        case 2: True if it is
+    """
+    def checkColorForFsc(sheet):
+        color = sheet["Q6"].fill.start_color.index
+        if type(color) == int:
+            return False if color == 1 else True
+        else:
+            return False if color[2:] == "FFFFFF" else True
 
     """
     This function is responsible for determining if a run was fully

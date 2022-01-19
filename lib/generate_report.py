@@ -209,12 +209,14 @@ class generate_report:
         aTotal, bTotal, cTotal = generate_report.getShiftTotals(sqlRunner, start_date, end_date)
         aCover, bCover, cCover = generate_report.getSiftCoverage(sqlRunner, start_date, end_date)
         aStation, bStation, cStation = generate_report.getStationCoverage(sqlRunner, start_date, end_date)
+        aFSC, bFSC, cFSC = generate_report.getFscCount(sqlRunner, start_date, end_date)
         aMed, bMed, cMed = generate_report.getMedRuns(sqlRunner, start_date, end_date)
         topFT = generate_report.getTopResponder(sqlRunner, start_date, end_date, ft = True)
         topPOC = generate_report.getTopResponder(sqlRunner, start_date, end_date, ft = False)
 
         sheet["B4"], sheet["B5"], sheet["B6"] = aWeekdayRuns, bWeekdayRuns, cWeekendRuns
         sheet["C4"], sheet["C5"], sheet["C6"] = aWeekendRuns, bWeekendRuns, cWeekendRuns
+        sheet["D4"], sheet["D5"], sheet["D6"] = aFSC, bFSC, cFSC
         sheet["E4"], sheet["E5"], sheet["E6"] = aTotal, bTotal, cTotal
         sheet["F4"], sheet["F5"], sheet["F6"] = aCover, bCover, cCover
         sheet["H4"], sheet["H5"], sheet["H6"] = aStation, bStation, cStation
@@ -284,6 +286,16 @@ class generate_report:
         a = int(sqlRunner.getCountShiftMedRunsBetweenDates("A", start_date, end_date))
         b = int(sqlRunner.getCountShiftMedRunsBetweenDates("B", start_date, end_date))
         c = int(sqlRunner.getCountShiftMedRunsBetweenDates("C", start_date, end_date))
+        return a, b, c
+
+    
+    """
+    
+    """
+    def getFscCount(sqlRunner, start_date, end_date):
+        a = int(sqlRunner.getCountShiftFscRunsBetweenDates("A", start_date, end_date))
+        b = int(sqlRunner.getCountShiftFscRunsBetweenDates("B", start_date, end_date))
+        c = int(sqlRunner.getCountShiftFscRunsBetweenDates("C", start_date, end_date))
         return a, b, c
 
 
@@ -429,7 +441,7 @@ class generate_report:
         total = 0
         runNumbers = sqlRunner.getAllRunsNumbersEmployeeByCityNumberRespondedToBetweenDates(start_date, end_date, city_number)
         for run in runNumbers:
-            total += 1 if sqlRunner.getMedRunBitFromRun(run[0]) == 0 else 0
+            total += 1 if sqlRunner.getMedRunBitFromRun(run[0]) == 0 and sqlRunner.getFscBitFromRun(run[0]) == 0 else 0
         return total
 
     """

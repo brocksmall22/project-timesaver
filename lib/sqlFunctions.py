@@ -60,19 +60,19 @@ class sqlFunctions():
     it requires the Run number, date, and connection to the sql database
     """
 
-    def createRun(self, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift, Timestamp, fullCover):
-        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift, timeStamp, full_coverage)
-                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\', {8}, {9}) """
+    def createRun(self, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift, Timestamp, fullCover, fsc):
+        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift, timeStamp, full_coverage, fsc)
+                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\', {8}, {9}, {10}) """
         cur = self.conn.cursor()
         sql = sql.format(runNumber, date, stopTime,
-                         endTime, runTime, Covered, Medrun, shift, Timestamp, fullCover)
+                         endTime, runTime, Covered, Medrun, shift, Timestamp, fullCover, fsc)
         cur.execute(sql)
         return cur.lastrowid
 
-    def updateRun(self, runNumber, date, startTime, endTime, runTime, Covered, Medrun, shift, Timestamp, fullCover):
+    def updateRun(self, runNumber, date, startTime, endTime, runTime, Covered, Medrun, shift, Timestamp, fullCover, fsc):
         statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, 
                     Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\', timeStamp = 
-                    {Timestamp}, full_coverage = {fullCover} WHERE number = {runNumber} AND date = \'{date}\';"""
+                    {Timestamp}, full_coverage = {fullCover}, fsc = {fsc} WHERE number = {runNumber} AND date = \'{date}\';"""
         cur = self.conn.cursor()
         cur.execute(statement)
         return cur.lastrowid
@@ -287,6 +287,18 @@ class sqlFunctions():
         return cur.execute(f"""SELECT Medrun FROM Run WHERE number = {run_number};""").fetchall()[0][0]
 
     """
+    This method gets the FSC bit for a given run.
+
+    inputs..
+        run_number: the number of the run
+    returns..
+        An int, 1 for a FSC run, or 0 for a standard run
+    """
+    def getFscBitFromRun(self, run_number):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT fsc FROM Run WHERE number = {run_number};""").fetchall()[0][0]
+
+    """
     Gets the name of an employee from the employee number.
 
     inputs..
@@ -313,6 +325,20 @@ class sqlFunctions():
     def getCountShiftMedRunsBetweenDates(self, shift, start_date, end_date):
         cur = self.conn.cursor()
         return cur.execute(f"""SELECT COUNT(*) FROM Run WHERE Shift = '{shift}' AND Medrun = 1 AND date BETWEEN '{start_date}' and '{end_date}';""").fetchall()[0][0]
+
+    """
+    Gets the count of FSC runs for a given shift between two dates.
+
+    inputs..
+        shift: a string containing the shift
+        start_date: the beginning date
+        end_date: the end date
+    returns..
+        An integer indicating the number of FSC runs
+    """
+    def getCountShiftFscRunsBetweenDates(self, shift, start_date, end_date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT COUNT(*) FROM Run WHERE Shift = '{shift}' AND fsc = 1 AND date BETWEEN '{start_date}' and '{end_date}';""").fetchall()[0][0]
 
     """
     Gets the number of runs for a given shift that the station was not covered during the run.
@@ -384,7 +410,6 @@ class sqlFunctions():
     returns..
         A list of tuples containing only the run number for a run
     """
-
     def getAllRunsNumbersEmployeeByCityNumberRespondedToBetweenDates(self, start_date, end_date, city_number):
         cur = self.conn.cursor()
         return cur.execute(f"""SELECT runNumber FROM Responded WHERE empNumber = (SELECT number FROM Employee 
@@ -400,7 +425,6 @@ class sqlFunctions():
     returns..
         A list of tuples containing only the run number for a run
     """
-
     def getRunNumberOfAllPaidRunsForEmplyeeByEmployeeNumberBetweenDates(self, city_number, start_date, end_date):
         cur = self.conn.cursor()
         return cur.execute(f"""SELECT runNumber FROM Responded WHERE empNumber = (SELECT number FROM Employee WHERE city_number = 
@@ -414,10 +438,9 @@ class sqlFunctions():
     returns..
         A float that contains the length of the run
     """
-
     def getRunTimeOfFireRunByRunNumber(self, run_number):
         cur = self.conn.cursor()
-        return cur.execute(f"""SELECT runTime FROM Run WHERE number = {run_number} AND Medrun = 0""").fetchall()
+        return cur.execute(f"""SELECT runTime FROM Run WHERE number = {run_number} AND Medrun = 0 AND fsc = 0""").fetchall()
 
     """
     Gets the inter department number and the name of every employee
@@ -426,7 +449,6 @@ class sqlFunctions():
     returns..
         A list of tuples that contains the internal number and name like `(employee number, employee name)`
     """
-
     def getNumberAndNameOfAllEmployeesWithNoCityNumver(self):
         cur = self.conn.cursor()
         return cur.execute("""SELECT number, name FROM Employee where city_number is NULL;""").fetchall()
@@ -438,7 +460,6 @@ class sqlFunctions():
         city_number: the city ID number
         employee_number: the internal department ID number
     """
-
     def addCityNumberToEmployee(self, city_number, employee_number):
         cur = self.conn.cursor()
         cur.execute(

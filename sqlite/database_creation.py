@@ -8,7 +8,7 @@ class creator:
         sql_create_employee_table = """ CREATE TABLE IF NOT EXISTS Employee (name STRING, number SMALLINT PRIMARY KEY, city_number SMALLINT NULL); """
 
         sql_create_run_table = """CREATE TABLE IF NOT EXISTS Run (number TINYINT, date DATE, 
-                                    startTime SMALLINT, stopTime SMALLINT, runTime TINYINT, Covered BIT, Medrun BIT, shift char(1), full_coverage BIT, 
+                                    startTime SMALLINT, stopTime SMALLINT, runTime TINYINT, fsc BIT, Covered BIT, Medrun BIT, shift char(1), full_coverage BIT, 
                                     timeStamp FLOAT, PRIMARY KEY(number, date)); """
 
         sql_create_report_table = """CREATE TABLE IF NOT EXISTS Responded (empNumber STRING REFERENCES Employee (number), 
