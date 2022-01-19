@@ -1,14 +1,17 @@
 from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
-from os import getenv
-import datetime
+from .logger import Logger
+import os
+import traceback
+from datetime import datetime
 
 class generate_report:
     # TODO: Change the storage location of the generated files.
     # TODO: Change the path where the blank tally and blank shift
     # breakdowns are stored.
     # TODO: Handle the F.S.C column in the breakdown once we know what it is
-    # TODO: Separate out all of the SQL, general refactoring
+    # TODO: Fix bug where top responders are left not being filled correctly
+    # TODO: Add error for when no folder is set
     endPaidOnCall = 0
     startFullTime = 0
     endFullTime = 0
@@ -25,30 +28,38 @@ class generate_report:
             strings with basic details about the report
         case 2: an error message to be displayed to the user
     """
-    def generate_report(start_date, end_date):
+    def generate_report(start_date, end_date, test_log_file = ""):
         generate_report.reset()
         try:
-            with sqlFunctions(getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
-                wb = load_workbook(getenv('APPDATA') + "\\project-time-saver\\blank_tally.xlsx")
-                sheet = wb["Sheet1"]
-                number_of_runs = sqlRunner.getNumberOfRuns(start_date, end_date)
-                min_run = sqlRunner.getFirstRunNumber(start_date, end_date)
-                max_run = sqlRunner.getLastRunNumber(start_date, end_date)
-                generate_report.getEndPaidOnCall(sheet)
-                generate_report.getStartFullTime(sheet)
-                generate_report.getEndFullTime(sheet)
-                generate_report.updateEmployeeNulls(sqlRunner, sheet)
-                generate_report.fillTallySheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
-                wb.close()
-                wb = load_workbook(getenv('APPDATA') + "\\project-time-saver\\blank_breakdown.xlsx")
-                generate_report.fillBreakdownSheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
-                wb.close()
-                additionalReturns = generate_report.checkForIssues(sqlRunner, min_run, max_run, number_of_runs, start_date, end_date)
+            with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
+                if not sqlRunner.checkForRunsBetweenDates(start_date, end_date):
+                    Logger.addNewError("generation error", datetime.now(), "There are no runs for the selected period.", test_log_file)
+                else:
+                    assert os.path.isfile(os.getenv('APPDATA') + "\\project-time-saver\\blank_tally.xlsx"), "blank_tally.xlsx is missing"
+                    assert os.path.isfile(os.getenv('APPDATA') + "\\project-time-saver\\blank_breakdown.xlsx"), "blank_breakdown.xlsx is missing"
+                    wb = load_workbook(os.getenv('APPDATA') + "\\project-time-saver\\blank_tally.xlsx")
+                    sheet = wb["Sheet1"]
+                    number_of_runs = sqlRunner.getNumberOfRuns(start_date, end_date)
+                    min_run = sqlRunner.getFirstRunNumber(start_date, end_date)
+                    max_run = sqlRunner.getLastRunNumber(start_date, end_date)
+                    generate_report.getEndPaidOnCall(sheet)
+                    generate_report.getStartFullTime(sheet)
+                    generate_report.getEndFullTime(sheet)
+                    generate_report.updateEmployeeNulls(sqlRunner, sheet)
+                    generate_report.fillTallySheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
+                    wb.close()
+                    wb = load_workbook(os.getenv('APPDATA') + "\\project-time-saver\\blank_breakdown.xlsx")
+                    generate_report.fillBreakdownSheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
+                    wb.close()
+                    additionalReturns = generate_report.checkForIssues(sqlRunner, min_run, max_run, number_of_runs, start_date, end_date)
+                    messages = additionalReturns + [f"The generated pay period is from {start_date} to {end_date}.",
+                    f"There were {number_of_runs} runs total this period.", f"This includes runs from run {min_run} to run {max_run}."]
+                    for message in messages:
+                        Logger.addNewGenerateMessage(message)
         except Exception as e:
+            traceback.print_exc()
             print(e)
-            return [str(e)]
-        return [True] + additionalReturns + [f"The generated pay period is from {start_date} to {end_date}.",
-            f"There were {number_of_runs} runs total this period.", f"This includes runs from run {min_run} to run {max_run}."]
+            Logger.addNewError("generation error", datetime.now(), str(e), test_log_file)
 
     """
     Resets the global variables. Should not be needed as this class
@@ -177,7 +188,7 @@ class generate_report:
                 sheet[f"D{i}"].value = 0
         sheet["E5"] = min_run
         sheet["G5"] = max_run
-        wb.save(getenv("APPDATA") + "\\project-time-saver\\tally.xlsx")
+        wb.save(os.getenv("APPDATA") + "\\project-time-saver\\tally.xlsx")
 
 
     """
@@ -210,7 +221,7 @@ class generate_report:
         sheet["I4"], sheet["I5"], sheet["I6"] = aMed, bMed, cMed
         sheet["C8"], sheet["C9"] = topFT, topPOC
         sheet["A2"] = f"Run {min_run} - Run {max_run}"
-        wb.save(getenv("APPDATA") + "\\project-time-saver\\breakdown.xlsx")
+        wb.save(os.getenv("APPDATA") + "\\project-time-saver\\breakdown.xlsx")
 
 
     """
@@ -398,7 +409,7 @@ class generate_report:
         case 2: False if not
     """
     def isWorkingHours(date_time):
-        return True if datetime.datetime.strptime(date_time[0], "%Y-%m-%d").weekday() < 5 \
+        return True if datetime.strptime(date_time[0], "%Y-%m-%d").weekday() < 5 \
             and (date_time[1] >= 500 and date_time[1] <= 1700) else False
 
 
@@ -438,6 +449,10 @@ class generate_report:
         runs = sqlRunner.getRunNumberOfAllPaidRunsForEmplyeeByEmployeeNumberBetweenDates(city_number, start_date, end_date)
         for run in runs:
             hour = sqlRunner.getRunTimeOfFireRunByRunNumber(run[0])
+            if len(hour) == 1:
+                hour = hour[0][0]
+            else:
+                hour = 0
             if hour is not None and hour != []:
                 total += hour
         return total

@@ -60,17 +60,19 @@ class sqlFunctions():
     it requires the Run number, date, and connection to the sql database
     """
 
-    def createRun(self, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift, Timestamp):
-        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift, timeStamp)
-                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\', {8}) """
+    def createRun(self, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift, Timestamp, fullCover):
+        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift, timeStamp, full_coverage)
+                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\', {8}, {9}) """
         cur = self.conn.cursor()
         sql = sql.format(runNumber, date, stopTime,
-                         endTime, runTime, Covered, Medrun, shift, Timestamp)
+                         endTime, runTime, Covered, Medrun, shift, Timestamp, fullCover)
         cur.execute(sql)
         return cur.lastrowid
 
-    def updateRun(self, runNumber, date, startTime, endTime, runTime, Covered, Medrun, shift, Timestamp):
-        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\', timeStamp = {Timestamp} WHERE number = {runNumber} AND date = \'{date}\';"""
+    def updateRun(self, runNumber, date, startTime, endTime, runTime, Covered, Medrun, shift, Timestamp, fullCover):
+        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, 
+                    Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\', timeStamp = 
+                    {Timestamp}, full_coverage = {fullCover} WHERE number = {runNumber} AND date = \'{date}\';"""
         cur = self.conn.cursor()
         cur.execute(statement)
         return cur.lastrowid
@@ -83,8 +85,8 @@ class sqlFunctions():
 
         return False if len(values) == 0 else True
 
-    def runNeedsUpdated(self, runNumber, date):
-        statement = f"""SELECT * FROM Run WHERE Date = \'{date}\' AND number = {runNumber};"""
+    def checkIfExists(self, runNumber, year):
+        statement = f"""SELECT * FROM Run WHERE Date >= \'{year}\' AND number = {runNumber};"""
         cur = self.conn.cursor()
         cur.execute(statement)
         values = cur.fetchall()
@@ -107,11 +109,11 @@ class sqlFunctions():
     it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
     """
 
-    def createResponded(self, empNumber, payRate, date, num):
-        sql = """INSERT INTO Responded(empNumber, runNumber, date, payRate)
-                VALUES({0},{1},\'{2}\',{3}) """
+    def createResponded(self, empNumber, payRate, date, num, type_of_response, full_time):
+        sql = """INSERT INTO Responded(empNumber, runNumber, date, payRate, type_of_response, full_time)
+                VALUES({0},{1},\'{2}\',{3}, '{4}', {5}) """
         cur = self.conn.cursor()
-        sql = sql.format(empNumber, num, date, payRate)
+        sql = sql.format(empNumber, num, date, payRate, type_of_response, full_time)
         cur.execute(sql)
         return cur.lastrowid
 
@@ -123,8 +125,8 @@ class sqlFunctions():
 
         return False if len(values) == 0 else True
 
-    def updateResponded(self, empNumber, payRate, date, rNum):
-        statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum};"""
+    def updateResponded(self, empNumber, payRate, date, rNum, type_of_response, full_time):
+        statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum} AND type_of_response = {type_of_response}, full_time = {full_time};"""
         cur = self.conn.cursor()
         cur.execute(statement)
         return cur.lastrowid
@@ -196,9 +198,7 @@ class sqlFunctions():
 
     def getSumOfHoursForEmployeeBetweenGivenDates(self, start_date, end_date, empNumber):
         cur = self.conn.cursor()
-        return cur.execute(f"""SELECT SUM(runTime) FROM Run WHERE number = 
-                    (SELECT runNumber FROM Responded WHERE type_of_response = 'P' AND empNumber = 
-                    {empNumber} AND date BETWEEN \'{start_date}\' AND \'{end_date}\') AND Medrun = 0;""").fetchall()[0][0]
+        return cur.execute(f"""SELECT SUM(runTime) FROM Run WHERE number = (SELECT runNumber FROM Responded WHERE type_of_response = 'P' AND empNumber = {empNumber} AND date BETWEEN \'{start_date}\' AND \'{end_date}\') AND Medrun = 0;""").fetchall()[0][0]
 
     """
     Get an ordered list of runs in a given range of dates.
@@ -403,9 +403,8 @@ class sqlFunctions():
 
     def getRunNumberOfAllPaidRunsForEmplyeeByEmployeeNumberBetweenDates(self, city_number, start_date, end_date):
         cur = self.conn.cursor()
-        return cur.execute(f"""SELECT runNumber FROM Responded WHERE type_of_response = 'P' AND empNumber = 
-            (SELECT number FROM Employee WHERE city_number = {city_number}) AND full_time = 0
-            AND date BETWEEN \'{start_date}\' AND \'{end_date}\';""").fetchall()
+        return cur.execute(f"""SELECT runNumber FROM Responded WHERE empNumber = (SELECT number FROM Employee WHERE city_number = 
+            {city_number}) AND type_of_response = 'P' AND date BETWEEN '{start_date}' AND '{end_date}';""").fetchall()
 
     """
     Gets the length of any given run that is a fire run.
@@ -418,7 +417,7 @@ class sqlFunctions():
 
     def getRunTimeOfFireRunByRunNumber(self, run_number):
         cur = self.conn.cursor()
-        return cur.execute(f"""SELECT runTime FROM Run WHERE number = {run_number} AND Medrun = 0""").fetchall()[0][0]
+        return cur.execute(f"""SELECT runTime FROM Run WHERE number = {run_number} AND Medrun = 0""").fetchall()
 
     """
     Gets the inter department number and the name of every employee
@@ -445,3 +444,27 @@ class sqlFunctions():
         cur.execute(
             f"""UPDATE Employee SET city_number = {city_number} WHERE number = {employee_number};""")
         self.conn.commit()
+
+    """
+    Returns the maximum run from the database in the current year.
+
+    inputs..
+        date: the first of the year as a string in the format Y-m-d 
+    """
+    def getMostRecentRun(self, date):
+        cur = self.conn.cursor()
+        return cur.execute(f"""SELECT MAX(number) FROM Run where date >= {date};""").fetchall()[0][0]
+
+    """
+    Returns if there are runs between two dates.
+
+    inputs..
+        start_date: the start of the period
+        end_date: the end of the period
+    returns..
+        True if there are runs between those dates
+        Falsd if there are not
+    """
+    def checkForRunsBetweenDates(self, start_date, end_date):
+        cur = self.conn.cursor()
+        return not len(cur.execute(f"""SELECT * FROM Run WHERE date BETWEEN '{start_date}' AND '{end_date}';""").fetchall()) == 0
