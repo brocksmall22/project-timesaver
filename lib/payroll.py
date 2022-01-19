@@ -3,12 +3,13 @@ import os
 from sqlite3.dbapi2 import Timestamp
 from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
+from .logger import Logger
 from .oneDriveConnect import oneDriveConnect
+import traceback
 
 
 class payroll:
 
-    returnArray = []
     endRange = 0
     Year = datetime.now().strftime("%Y") + "-1-1"
 
@@ -16,49 +17,53 @@ class payroll:
     loadWorkBooks(fileList)
     loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
     This requires the whole file list
-    It returns the retun array of the failed files or true if no files have failed
+
+    TODO: Fix error handling here. if SQL statement fails, causes error that looks like an I/O error
+    TODO: Add error for when no folder is set
     """
-    def loadWorkBooks():
+    def loadWorkBooks(fileList = [], test_log_location = ""):
         payroll.reset()
-        fileList = oneDriveConnect.getFiles()
+        Logger.setLastUpdate(datetime.now().strftime("%Y-%m-%d %H:%M"), file  = test_log_location)
+        if fileList == []:
+            fileList = oneDriveConnect.getFiles()
         for file in fileList:
             try:
-                wb = load_workbook(file)
-                payroll.readWorkBook(wb, file)
+                with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
+                    Timestamp = oneDriveConnect.getLastModifiedDate(file)
+                    fileRunNumber = oneDriveConnect.extensionStripper(file)
+                    if sqlRunner.newRunNeedsUpdated(fileRunNumber, Timestamp, payroll.Year) or not sqlRunner.checkIfExists(fileRunNumber, payroll.Year):
+                        wb = load_workbook(file)
+                        payroll.readWorkBook(wb, file, test_log_location)
             except Exception as e:
                 print(e)
-                payroll.returnArray.append(
-                    f"File {file} has error: Critical error, file cannot be read!")
-
-        if payroll.returnArray == []:
-            return [True]
-        else:
-            return payroll.returnArray
+                traceback.print_exc()
+                Logger.addNewError("I/O error", datetime.now(), f"File {file} has error: Critical error, file cannot be read!", file = test_log_location)
 
     """
     readWorkBook(wb, filename)
     reads an indiual work book then prints the resulting values from in the range of cells A21->F55
     It requires the Workbook and the Filename
     """
-    def readWorkBook(wb, filename):
+    def readWorkBook(wb, filename, test_log_location):
         Timestamp = oneDriveConnect.getLastModifiedDate(filename)
         try:
             with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
                 payroll.getRange(wb)
                 if not payroll.checkForErrors(wb):
-                    date, runNumber = payroll.getRunInfo(
+                    date, runNumber, needsUpdated= payroll.getRunInfo(
                         sqlRunner, wb, Timestamp)
-                    payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
+                    assert runNumber == int(oneDriveConnect.extensionStripper(filename)), "The file's name and the run number within do not match"
+                    if needsUpdated:
+                        payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
         except Exception as e:
             print(e)
-            payroll.returnArray.append(f"File {filename} has error: {e}")
+            Logger.addNewError("report format error", datetime.now(), f"File {filename} has error: {e}", file = test_log_location)
 
     """
     Resets the global variables for the next run of this class.
     """
     def reset():
         payroll.endRange = 0
-        payroll.returnArray = []
 
     """
     getRange(wb)
@@ -121,10 +126,10 @@ class payroll:
                     payRate = 0
                     full_time = 1
                 Name = wb["Pay"][i1[1].value.split("!")[1]].value
-                if i1[4].value is not None:
-                    type_of_response = "PNP"
-                elif i1[5].value is not None:
+                if i1[5].value is not None:
                     type_of_response = "P"
+                elif i1[4].value is not None:
+                    type_of_response = "PNP"
                 elif i1[6].value is not None:
                     type_of_response = "OD"
                 if sqlRunner.empNeedsUpdated(empNumber):
@@ -133,10 +138,10 @@ class payroll:
                     sqlRunner.createEmployee(Name, empNumber)
                 if sqlRunner.respondedNeedsUpdated(empNumber, date, runNumber):
                     sqlRunner.updateResponded(
-                        empNumber, payRate, date, runNumber)
+                        empNumber, payRate, date, runNumber, type_of_response, full_time)
                 else:
                     sqlRunner.createResponded(
-                        empNumber, payRate, date, runNumber)
+                        empNumber, payRate, date, runNumber, type_of_response, full_time)
 
     """
     getRunInfo(sqlRunner, wb)
@@ -163,11 +168,13 @@ class payroll:
         fullCover = payroll.getFullCover(sheet, shift)
         if sqlRunner.newRunNeedsUpdated(runNumber, Timestamp, payroll.Year):
             sqlRunner.updateRun(runNumber, date, startTime,
-                                endTime, runTime, stationCovered, medrun, shift, Timestamp)
-        else:
+                                endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover)
+            return date, runNumber, True
+        elif not sqlRunner.checkIfExists(runNumber, date):
             sqlRunner.createRun(runNumber, date, startTime,
-                                endTime, runTime, stationCovered, medrun, shift, Timestamp)
-        return date, runNumber
+                                endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover)
+            return date, runNumber, True
+        return date, runNumber, False
 
     """
     This function is responsible for determining if a run was fully

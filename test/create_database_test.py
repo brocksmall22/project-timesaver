@@ -3,6 +3,7 @@ import sqlite3
 import os
 
 import sys
+from unittest.case import expectedFailure
 sys.path.append(os.getcwd())
 from sqlite.check_database import check_database
 
@@ -37,50 +38,53 @@ class create_database_test(unittest.TestCase):
     Ensures that the database has all of the tables.
     """
     def test_database_has_all_tables(self):
+        expected_tables = ["Employee", "Responded", "Run"]
+        real_tables = []
         cur = create_database_test.conn.cursor()
-        count = 0
-        tables = cur.execute("""SELECT * FROM sqlite_master where type='table';""").fetchall()
-        for value in tables:
-            if "Employee" in value or "Run" in value or "Responded" in value:
-                count += 1
-        self.assertEqual(count, 3)
+        tables = cur.execute("""SELECT name FROM sqlite_schema where type='table';""").fetchall()
+        for table in tables:
+            real_tables.append(table[0])
+        self.assertTrue(all(expected in real_tables for expected in expected_tables))
+        self.assertTrue(all(real in expected_tables for real in real_tables))
 
     """
     Ensures that the Run table has all of its columns.
     """
     def test_run_columns(self):
+        expected_columns = ['number', 'date', 'startTime', 'stopTime', 'runTime', 'Covered', 'Medrun', 'shift', 'full_coverage', 'timeStamp']
+        real_columns = []
         cur = create_database_test.conn.cursor()
-        count = 0
         columns = cur.execute("""PRAGMA table_info(Run);""").fetchall()
-        for value in columns:
-            if "number" in value or "date" in value or "startTime" in value or "stopTime" in value\
-                    or "runTime" in value or "Covered" in value or "Medrun" in value or "shift" in value:
-                count += 1
-        self.assertEqual(count, 8)
+        for column in columns:
+            real_columns.append(column[1])
+        self.assertTrue(all(expected in real_columns for expected in expected_columns))
+        self.assertTrue(all(real in expected_columns for real in real_columns))
     
     """
     Ensures that the Responded table has all of its columns.
     """
     def test_responded_columns(self):
+        expected_columns = ['empNumber', 'runNumber', 'date', 'payRate', 'type_of_response', 'full_time']
+        real_columns = []
         cur = create_database_test.conn.cursor()
-        count = 0
         columns = cur.execute("""PRAGMA table_info(Responded);""").fetchall()
-        for value in columns:
-            if "empNumber" in value or "runNumber" in value or "date" in value or "payRate" in value:
-                count += 1
-        self.assertEqual(count, 4)
+        for column in columns:
+            real_columns.append(column[1])
+        self.assertTrue(all(expected in real_columns for expected in expected_columns))
+        self.assertTrue(all(real in expected_columns for real in real_columns))
 
     """
     Ensures that the Employee table has all of its columns.
     """
     def test_employee_columns(self):
+        expected_columns = ["name", "number", "city_number"]
+        real_columns = []
         cur = create_database_test.conn.cursor()
-        count = 0
         columns = cur.execute("""PRAGMA table_info(Employee);""").fetchall()
-        for value in columns:
-            if "name" in value or "number" in value or "city_number" in value:
-                count += 1
-        self.assertEqual(count, 3)
+        for column in columns:
+            real_columns.append(column[1])
+        self.assertTrue(all(expected in real_columns for expected in expected_columns))
+        self.assertTrue(all(real in expected_columns for real in real_columns))
 
     """
     Deletes the DB as a part of the setup method.
