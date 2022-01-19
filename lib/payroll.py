@@ -158,9 +158,8 @@ class payroll:
         startTime = sheet["B5"].value
         endTime = sheet["L5"].value
         shift = sheet["F3"].value
-        fsc = 0
-        if payroll.checkColorForFsc(sheet) or sheet["Q6"].value is not None:
-            fsc = 1 
+        fsc = 1 if payroll.checkColorForFsc(sheet)\
+            or sheet["Q6"].value is not None else 0
         if(sheet["F6"].value is not None):
             stationCovered = 1
         else:
@@ -195,7 +194,7 @@ class payroll:
         if type(color) == int:
             return False if color == 1 else True
         else:
-            return False if color[2:] == "FFFFFF" else True
+            return False if color == "00000000" else True
 
     """
     This function is responsible for determining if a run was fully
