@@ -133,6 +133,7 @@ class payroll:
                     type_of_response = "PNP"
                 elif i1[6].value is not None:
                     type_of_response = "OD"
+                print(f"Responder: {Name}; number: {empNumber}; type: {type_of_response}; full-time: {full_time}")
                 if sqlRunner.empNeedsUpdated(empNumber):
                     sqlRunner.updateEmp(Name, empNumber)
                 else:
@@ -169,6 +170,11 @@ class payroll:
         else:
             medrun = 0
         fullCover = payroll.getFullCover(sheet, shift)
+        print("\n\n\n\n")
+        print(f"Processing run: {runNumber} from date {date}")
+        print(f"Medrun: {medrun}; FSC: {fsc}; runTime: {runTime}")
+        print(f"Start: {startTime}; end: {endTime}; station covered: {stationCovered}")
+        print(f"shift: {shift}; fully covered: {fullCover}")
         if sqlRunner.newRunNeedsUpdated(runNumber, Timestamp, payroll.Year):
             sqlRunner.updateRun(runNumber, date, startTime,
                                 endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover, fsc)
