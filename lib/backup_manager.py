@@ -13,7 +13,7 @@ import hashlib
 # TODO get last modified date from onedrive check against local copy for backup update
 
 
-class backup:
+class backup_manager:
 
     database_file = ""
     filename = ""
@@ -21,17 +21,17 @@ class backup:
     def getLocalDB(database_path):
         if database_path == "":
             database_path = os.getenv("APPDATA") + "\\project-time-saver\\database.db"
-        backup.database_file = database_path
+        backup_manager.database_file = database_path
 
-        backup.filename = os.path.basename(backup.database_file)
-        return backup.database_file
+        backup_manager.filename = os.path.basename(backup_manager.database_file)
+        return backup_manager.database_file
 
     def uploadLocalDB(database, onedrive_path):
         if onedrive_path == "":
             onedrive_path = conf.get_BackupPath()
         shutil.copyfile(database, onedrive_path)
 
-        endPath = os.path.join(onedrive_path, backup.filename)
+        endPath = os.path.join(onedrive_path, backup_manager.filename)
 
         return endPath
 
@@ -45,7 +45,9 @@ class backup:
 
     def checksum(local_filePath, cloud_filePath):
 
-        if backup.generateHash(local_filePath) != backup.generateHash(cloud_filePath):
+        if backup_manager.generateHash(local_filePath) != backup_manager.generateHash(
+            cloud_filePath
+        ):
             return False
 
         return True
