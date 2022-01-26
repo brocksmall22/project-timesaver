@@ -1,3 +1,4 @@
+from msilib.schema import SelfReg
 from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
 from .logger import Logger
@@ -438,11 +439,8 @@ class generate_report:
         case 1: the number of runs in a given period
     """
     def getCount(sqlRunner, city_number, start_date, end_date):
-        total = 0
-        runNumbers = sqlRunner.getAllRunsNumbersEmployeeByCityNumberRespondedToBetweenDates(start_date, end_date, city_number)
-        for run in runNumbers:
-            total += 1 if sqlRunner.getMedRunBitFromRun(run[0]) == 0 and sqlRunner.getFscBitFromRun(run[0]) == 0 else 0
-        return total
+        numberOfRuns = int(sqlRunner.getCountOfAllPaidRunsByCityNumberBetweenDates(start_date, end_date, city_number) or 0)
+        return numberOfRuns
 
     """
     This method gets the number of hours a specific person
@@ -457,18 +455,9 @@ class generate_report:
         case 1: the number of hours a given employee worked
     """
     def getHours(sqlRunner, city_number, start_date, end_date):
-        total = 0
-        runs = sqlRunner.getRunNumberOfAllPaidRunsForEmplyeeByEmployeeNumberBetweenDates(city_number, start_date, end_date)
-        for run in runs:
-            hour = sqlRunner.getRunTimeOfFireRunByRunNumber(run[0])
-            if len(hour) == 1:
-                hour = hour[0][0]
-            else:
-                hour = 0
-            if hour is not None and hour != []:
-                total += hour
-        return total
-
+        hours = float(sqlRunner.getAllPaidHoursForEmployeeByCityNumberBetweenDates(city_number, start_date, end_date) or 0)
+        subhours = float(sqlRunner.getAllSubHoursForEmployeeByCityNumberBetweenDates(city_number, start_date, end_date) or 0)
+        return hours - subhours
     """
     This method updates the Employee table to ensure no employees have a NULL
     value in the city_number column. If they do they will not be paid.
