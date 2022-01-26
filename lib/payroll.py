@@ -57,6 +57,7 @@ class payroll:
                         payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
         except Exception as e:
             print(e)
+            traceback.print_exc()
             Logger.addNewError("report format error", datetime.now(), f"File {filename} has error: {e}", file = test_log_location)
 
     """
@@ -132,6 +133,7 @@ class payroll:
                     type_of_response = "PNP"
                 elif i1[6].value is not None:
                     type_of_response = "OD"
+                print(f"Responder: {Name}; number: {empNumber}; type: {type_of_response}; full-time: {full_time}")
                 if sqlRunner.empNeedsUpdated(empNumber):
                     sqlRunner.updateEmp(Name, empNumber)
                 else:
@@ -157,6 +159,8 @@ class payroll:
         startTime = sheet["B5"].value
         endTime = sheet["L5"].value
         shift = sheet["F3"].value
+        fsc = 1 if payroll.checkColorForFsc(sheet)\
+            or sheet["Q6"].value is not None else 0
         if(sheet["F6"].value is not None):
             stationCovered = 1
         else:
@@ -166,15 +170,37 @@ class payroll:
         else:
             medrun = 0
         fullCover = payroll.getFullCover(sheet, shift)
+        print("\n\n\n\n")
+        print(f"Processing run: {runNumber} from date {date}")
+        print(f"Medrun: {medrun}; FSC: {fsc}; runTime: {runTime}")
+        print(f"Start: {startTime}; end: {endTime}; station covered: {stationCovered}")
+        print(f"shift: {shift}; fully covered: {fullCover}")
         if sqlRunner.newRunNeedsUpdated(runNumber, Timestamp, payroll.Year):
             sqlRunner.updateRun(runNumber, date, startTime,
-                                endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover)
+                                endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover, fsc)
             return date, runNumber, True
         elif not sqlRunner.checkIfExists(runNumber, date):
             sqlRunner.createRun(runNumber, date, startTime,
-                                endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover)
+                                endTime, runTime, stationCovered, medrun, shift, Timestamp, fullCover, fsc)
             return date, runNumber, True
         return date, runNumber, False
+
+    """
+    This method is to check if the FSC cell is filled or not.
+    Checks for both color and legacy index.
+
+    inputs..
+        sheet: the sheet we are checking
+    outputs..
+        case 1: False if it is not filled
+        case 2: True if it is
+    """
+    def checkColorForFsc(sheet):
+        color = sheet["Q6"].fill.start_color.index
+        if type(color) == int:
+            return False if color == 1 else True
+        else:
+            return False if color == "00000000" else True
 
     """
     This function is responsible for determining if a run was fully
