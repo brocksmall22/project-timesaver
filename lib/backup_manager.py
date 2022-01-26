@@ -1,19 +1,13 @@
 from contextlib import nullcontext
+from fileinput import close
 from hmac import digest
-from config_manager import config_manager as conf
+from .config_manager import ConfigManager as conf
 import os
 import shutil
 import hashlib
 
-# TODO get database from local directory --DONE
-# TODO upload database to onedrive with the given config --DONE
-# TODO make checksum function --DONE
-# TODO Run checksum function against version stored on Local against onedrive to check stablity --DONE
-# TODO get database from onedrive
-# TODO get last modified date from onedrive check against local copy for backup update
 
-
-class backup_manager:
+class backupManager:
 
     database_file = ""
     filename = ""
@@ -21,17 +15,19 @@ class backup_manager:
     def getLocalDB(database_path):
         if database_path == "":
             database_path = os.getenv("APPDATA") + "\\project-time-saver\\database.db"
-        backup_manager.database_file = database_path
+        backupManager.database_file = database_path
 
-        backup_manager.filename = os.path.basename(backup_manager.database_file)
-        return backup_manager.database_file
+        backupManager.filename = os.path.basename(backupManager.database_file)
+
+        return backupManager.database_file
 
     def uploadLocalDB(database, onedrive_path):
         if onedrive_path == "":
             onedrive_path = conf.get_BackupPath()
-        shutil.copyfile(database, onedrive_path)
+        shutil.copy(database, onedrive_path)
 
-        endPath = os.path.join(onedrive_path, backup_manager.filename)
+        endPath = os.path.join(onedrive_path, backupManager.filename)
+        # os.close(database)
 
         return endPath
 
@@ -41,11 +37,12 @@ class backup_manager:
         file_content = file.read()
         md5_hash.update(file_content)
         digest = md5_hash.hexdigest()
+        file.close()
         return digest
 
     def checksum(local_filePath, cloud_filePath):
 
-        if backup_manager.generateHash(local_filePath) != backup_manager.generateHash(
+        if backupManager.generateHash(local_filePath) != backupManager.generateHash(
             cloud_filePath
         ):
             return False
