@@ -9,7 +9,7 @@ class ConfigManager:
     @staticmethod
     def createConfigIfNotExists(file=""):
         file = ConfigManager.configFile if file == "" else file
-        emptyConf = {"folder_path": "", "Backup_path": ""}
+        emptyConf = {"folder_path": "", "Backup_path": "", "blank_payroll_path": "", "blank_breakdown_path": ""}
         if not os.path.exists(file):
             with open(file, "w") as conf:
                 json.dump(emptyConf, conf)
@@ -51,5 +51,43 @@ class ConfigManager:
         with open(file, "r") as conf:
             contents = json.load(conf)
             contents["Backup_path"] = path
+        with open(file, "w+") as conf:
+            json.dump(contents, conf)
+
+    @staticmethod
+    def get_blankPayrollPath(file=""):
+        print("asdfhalskjfhlakjsdhfljahsdlfhalskfh")
+        file = ConfigManager.configFile if file == "" else file
+        ConfigManager.createConfigIfNotExists(file)
+        with open(file, "r") as conf:
+            return json.load(conf)["blank_payroll_path"]
+
+    ###Updates the blank payroll path value
+    @staticmethod
+    def set_blankPayrollPath(path, file=""):
+        print("565461654198165416541654164561464")
+        file = ConfigManager.configFile if file == "" else file
+        ConfigManager.createConfigIfNotExists(file)
+        with open(file, "r") as conf:
+            contents = json.load(conf)
+            contents["blank_payroll_path"] = path
+        with open(file, "w+") as conf:
+            json.dump(contents, conf)
+
+    @staticmethod
+    def get_blankBreakdownPath(file=""):
+        file = ConfigManager.configFile if file == "" else file
+        ConfigManager.createConfigIfNotExists(file)
+        with open(file, "r") as conf:
+            return json.load(conf)["blank_breakdown_path"]
+
+    ###Updates the blank breakdwon path value
+    @staticmethod
+    def set_blankBreakdownPath(path, file=""):
+        file = ConfigManager.configFile if file == "" else file
+        ConfigManager.createConfigIfNotExists(file)
+        with open(file, "r") as conf:
+            contents = json.load(conf)
+            contents["blank_breakdown_path"] = path
         with open(file, "w+") as conf:
             json.dump(contents, conf)

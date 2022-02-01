@@ -182,7 +182,7 @@ def clear_generation_messages():
 @app.route("/get_backup_folder", methods=["GET"])
 def get_backup_folder():
     """
-    This method gets the satabase backup folder location on a GET request.
+    This method gets the database backup folder location on a GET request.
 
     returns..
         the backup folder as stored in the config
@@ -202,4 +202,56 @@ def set_backup_folder():
     """
     oneDrivefolder = request.json
     ConfigManager.set_backupPath(oneDrivefolder["backupFolder"])
+    return jsonify(True)
+
+
+@app.route("/get_blank_payroll_path", methods=["GET"])
+def get_blank_payroll_path():
+    """
+    This method gets the blank payroll path on a GET request.
+
+    returns..
+        the blank payroll path as stored in the config
+    """
+    return jsonify({"blank_payroll_path": ConfigManager.get_blankPayrollPath()})
+
+
+@app.route("/set_blank_payroll_path", methods=["POST"])
+def set_blank_payroll_path():
+    """
+    This method sets the blank payroll path value in the config.
+
+    inputs..
+        (request): A json file containing the new value
+    returns..
+        True upon completion
+    """
+    path = request.json
+    ConfigManager.set_blankPayrollPath(path["blank_payroll_path"])
+    return jsonify(True)
+
+
+@app.route("/get_blank_breakdown_path", methods=["GET"])
+def get_blank_breakdown_path():
+    """
+    This method gets the blank breakdown path on a GET request.
+
+    returns..
+        the blank breakdown path as stored in the config
+    """
+    return jsonify({"blank_payroll_path": ConfigManager.get_blankBreakdownPath()})
+
+
+@app.route("/set_blank_breakdown_path", methods=["POST"])
+def set_blank_breakdown_path():
+    """
+    This method sets the blank breakdown path value in the config.
+
+    inputs..
+        (request): A json file containing the new value
+    returns..
+        True upon completion
+    """
+    path = request.json
+    ConfigManager.set_blankBreakdownPath(path["blank_payroll_path"])
     return jsonify(True)

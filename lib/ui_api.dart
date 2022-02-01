@@ -179,7 +179,7 @@ class API {
   Requests that the backend update the config value for db backup folder.
 
   inputs..
-    folderString: the new folder
+    backupFolder: the new folder
   returns..
     case 1: An empty string indicating success
     case 2: A string with an error
@@ -204,5 +204,61 @@ class API {
     Response response = await get(_url);
     Map retrunValue = jsonDecode(response.body);
     return retrunValue["backupFolder"];
+  }
+
+  /*
+  Requests that the backend update the config value for blank payroll path.
+
+  inputs..
+    blankPayroll: the new path
+  */
+  static updateBlankPayrollPath(String blankPayroll) async {
+    if (blankPayroll != "") {
+      Uri _url = Uri.parse('http://127.0.0.1:8080/set_blank_payroll_path');
+      String postJson = jsonEncode({"blank_payroll_path": blankPayroll});
+      Map<String, String> header = {"Content-Type": "application/json"};
+      await post(_url, headers: header, body: postJson);
+    }
+  }
+
+  /*
+  Calls to the backend to get the current blank payroll path value.
+
+  returns..
+    A string containing the current blank payroll path
+  */
+  static getBlankPayrollPath() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/get_blank_payroll_path');
+    Response response = await get(_url);
+    Map retrunValue = jsonDecode(response.body);
+    return retrunValue["blank_payroll_path"];
+  }
+
+  /*
+  Requests that the backend update the config value for blank breakdown path.
+
+  inputs..
+    blankBreakdown: the new path
+  */
+  static updateBlankBreakdownPath(String blankBreakdown) async {
+    if (blankBreakdown != "") {
+      Uri _url = Uri.parse('http://127.0.0.1:8080/set_blank_breakdown_path');
+      String postJson = jsonEncode({"blank_breakdown_path": blankBreakdown});
+      Map<String, String> header = {"Content-Type": "application/json"};
+      await post(_url, headers: header, body: postJson);
+    }
+  }
+
+  /*
+  Calls to the backend to get the current blank breakdown path value.
+
+  returns..
+    A string containing the current path
+  */
+  static getBlankBreakdownPath() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/get_blank_breakdown_path');
+    Response response = await get(_url);
+    Map retrunValue = jsonDecode(response.body);
+    return retrunValue["blank_breakdown_path"];
   }
 }

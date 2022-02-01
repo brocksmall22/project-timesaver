@@ -303,9 +303,11 @@ class _PayrollUIState extends State<PayrollUI> {
       switch (fileBeingSelected) {
         case "payroll":
           _blankPayroll = file;
+          API.updateBlankPayrollPath(file);
           break;
         case "breakdown":
           _blankBreakdown = file;
+          API.updateBlankBreakdownPath(file);
           break;
       }
     }
@@ -326,11 +328,17 @@ class _PayrollUIState extends State<PayrollUI> {
     String fileName = "";
     switch (fileToShow) {
       case "payroll":
+        API.getBlankPayrollPath().then((value) {
+          _blankPayroll = value;
+        });
         fileName = _blankPayroll;
         return fileName != ""
             ? "Selected: " + fileName.split("\\").last
             : "Press to select master payroll file";
       case "breakdown":
+        API.getBlankBreakdownPath().then((value) {
+          _blankBreakdown = value;
+        });
         fileName = _blankBreakdown;
         return fileName != ""
             ? "Selected: " + fileName.split("\\").last
