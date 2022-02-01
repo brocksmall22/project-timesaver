@@ -64,12 +64,14 @@ inputs..
 returns.. 
     True on completion
 """
-@app.route('/generate_report', methods=["GET", "POST"])
+@app.route('/generate_report', methods=["POST"])
 def generate_reports():
-    dates = request.json
-    startDate = dates["startDate"].split(" ")[0]
-    endDate = dates["endDate"].split(" ")[0]
-    grp.generate_report(startDate, endDate)
+    values = request.json
+    startDate = values["startDate"].split(" ")[0]
+    endDate = values["endDate"].split(" ")[0]
+    blank_payroll = values["payroll"]
+    blank_breakdown = values["breakdwon"]
+    grp.generate_report(startDate, endDate, blank_payroll, blank_breakdown)
     return jsonify(True)
 
 """
@@ -79,7 +81,7 @@ returns..
     the one drive folder as stored in the config
 """
 @app.route("/get_one_drive_folder", methods=["GET"])
-def get_one_drive_filder():
+def get_one_drive_folder():
     return jsonify({"oneDriveFolder": ConfigManager.get_folderPath()})
 
 """
@@ -174,4 +176,30 @@ returns..
 @app.route("/clear_generation_messages", methods = ["GET"])
 def clear_generation_messages():
     Logger.clearGenerateMessages()
+    return jsonify(True)
+
+
+@app.route("/get_backup_folder", methods=["GET"])
+def get_backup_folder():
+    """
+    This method gets the satabase backup folder location on a GET request.
+
+    returns..
+        the backup folder as stored in the config
+    """
+    return jsonify({"backupFolder": ConfigManager.get_folderPath()})
+
+
+@app.route("/set_backup_folder", methods=["POST"])
+def set_backup_folder():
+    """
+    This method sets the backup folder value in the config.
+
+    inputs..
+        (request): A json file containing the new value
+    returns..
+        True upon completion
+    """
+    oneDrivefolder = request.json
+    ConfigManager.set_backupPath(oneDrivefolder["backupFolder"])
     return jsonify(True)

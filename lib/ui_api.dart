@@ -59,10 +59,15 @@ class API {
       and the path of the files generated
     case 2: A list containing some errors
   */
-  static Future<void> generatePayrollFiles(List<String> dates) async {
+  static Future<void> generatePayrollFiles(
+      List<String> dates, String blank_payroll, String blank_breakdown) async {
     Uri _url = Uri.parse('http://127.0.0.1:8080/generate_report');
-    String filesAsJsonArray =
-        jsonEncode({"startDate": dates[0], "endDate": dates[1]});
+    String filesAsJsonArray = jsonEncode({
+      "startDate": dates[0],
+      "endDate": dates[1],
+      "payroll": blank_payroll,
+      "breakdown": blank_breakdown
+    });
     Map<String, String> header = {"Content-Type": "application/json"};
     await post(_url, headers: header, body: filesAsJsonArray);
   }
@@ -168,5 +173,36 @@ class API {
   static Future<void> clearGenerationMessages() async {
     Uri _url = Uri.parse('http://127.0.0.1:8080/clear_generation_messages');
     await get(_url);
+  }
+
+  /*
+  Requests that the backend update the config value for db backup folder.
+
+  inputs..
+    folderString: the new folder
+  returns..
+    case 1: An empty string indicating success
+    case 2: A string with an error
+  */
+  static updateBackupFolder(String backupFolder) async {
+    if (backupFolder != "") {
+      Uri _url = Uri.parse('http://127.0.0.1:8080/set_backup_folder');
+      String postJson = jsonEncode({"backupFolder": backupFolder});
+      Map<String, String> header = {"Content-Type": "application/json"};
+      await post(_url, headers: header, body: postJson);
+    }
+  }
+
+  /*
+  Calls to the backend to get the current db backup folder value.
+
+  returns..
+    A string containing the current folder
+  */
+  static getBackupFolder() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/get_backup_folder');
+    Response response = await get(_url);
+    Map retrunValue = jsonDecode(response.body);
+    return retrunValue["backupFolder"];
   }
 }

@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:project_time_saver/basic_actions.dart';
 import 'package:project_time_saver/basic_widgets.dart';
@@ -18,10 +18,6 @@ class _PayrollUIState extends State<PayrollUI> {
     _updateMostRecentRun();
     _databaseUpdateTime();
   }
-  //TODO: Allow the user to just select the blank sheets when generating as
-  // opposed to requiring a copies in a specific place
-  //TODO: Add error for when no folder is set
-
   //Layout of the page
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -36,6 +32,8 @@ class _PayrollUIState extends State<PayrollUI> {
                   height: 50,
                 ),
                 _getDate(context),
+                _getLocationOfBlankPayroll(context),
+                _getLocationOfBlankBreakdown(context),
                 _confirmationButtons(context),
               ],
             )
@@ -50,7 +48,9 @@ class _PayrollUIState extends State<PayrollUI> {
 
   DateTimeRange _dates =
       DateTimeRange(start: DateTime.now(), end: DateTime.now());
-  bool _hasDates = false;
+  String _blankPayroll = "";
+  String _blankBreakdown = "";
+  bool _readyToGenerate = false;
   String _lastUpdateDate = "";
   int _mostRecentRun = 0;
   bool _updating = false;
@@ -87,6 +87,26 @@ class _PayrollUIState extends State<PayrollUI> {
         },
       ));
 
+  //This button opens a FilePicker dialog to pick the blank payroll file.
+  Widget _getLocationOfBlankPayroll(BuildContext context) =>
+      BasicWidgets.pad(ElevatedButton.icon(
+        icon: const Icon(Icons.folder_outlined),
+        label: Text(_getFileName("payroll")),
+        onPressed: () async {
+          _pickFile("payroll");
+        },
+      ));
+
+  //This button opens a FilePicker dialog to pick the blank breakdown file.
+  Widget _getLocationOfBlankBreakdown(BuildContext context) =>
+      BasicWidgets.pad(ElevatedButton.icon(
+        icon: const Icon(Icons.folder_outlined),
+        label: Text(_getFileName("breakdown")),
+        onPressed: () async {
+          _pickFile("breakdown");
+        },
+      ));
+
   //This widget contains the cancel and the generate buttons.
   Widget _confirmationButtons(BuildContext context) => BasicWidgets.horizontal(
         [
@@ -97,7 +117,7 @@ class _PayrollUIState extends State<PayrollUI> {
 
   //This widget is the button that will request the API to generate the reports.
   Widget _generatePayroll(BuildContext context) => ElevatedButton(
-      onPressed: _hasDates ? () async => _submitToPython() : null,
+      onPressed: _readyToGenerate ? () async => _submitToPython() : null,
       child: const Text("Generate"));
 
   //This button will take you to the home page.
@@ -154,16 +174,20 @@ class _PayrollUIState extends State<PayrollUI> {
             end: DateTime.now()),
         firstDate: DateTime(DateTime.now().year - 1),
         lastDate: DateTime(DateTime.now().year + 1)))!;
-    _checkDates();
+    _checkIfReadyToGenerate();
     setState(() {});
   }
 
-  //This determines if valid dates were chosen (more than one day).
-  void _checkDates() {
-    if (_dates.duration.inDays == 0) {
-      _hasDates = false;
-    } else {
-      _hasDates = true;
+  //This determines if the program is in a valid state to generate the files.
+  void _checkIfReadyToGenerate() {
+    if (_blankPayroll == "" ||
+        _blankBreakdown == "" ||
+        _dates.duration.inDays == 0) {
+      _readyToGenerate = false;
+    } else if (_blankPayroll != "" &&
+        _blankBreakdown != "" &&
+        _dates.duration.inDays != 0) {
+      _readyToGenerate = true;
     }
   }
 
@@ -177,8 +201,10 @@ class _PayrollUIState extends State<PayrollUI> {
   */
   Future<void> _submitToPython() async {
     BasicWidgets.snack(context, "Generating, please wait...");
-    await API
-        .generatePayrollFiles([_dates.start.toString(), _dates.end.toString()]);
+    await API.generatePayrollFiles(
+        [_dates.start.toString(), _dates.end.toString()],
+        _blankPayroll,
+        _blankBreakdown);
     if (!await BasicActions.displayThenClearErrors(context)) {
       BasicWidgets.snack(context, "Payroll generated!", Colors.green);
       _passedGenerationAlert(context, await API.getGenerationMessages());
@@ -189,8 +215,6 @@ class _PayrollUIState extends State<PayrollUI> {
   }
 
   /*
-  TODO: Change output path.
-
   Draws an alert with information about the files as well as a way to open the
   generated files.
 
@@ -216,8 +240,8 @@ class _PayrollUIState extends State<PayrollUI> {
                     onPressed: () {
                       Process.run("explorer.exe", [
                         "/e," +
-                            Platform.environment["APPDATA"]! +
-                            "\\project-time-saver"
+                            Platform.environment["HOMEPATH"]! +
+                            "\\Documents"
                       ]);
                     },
                     child: const Text("Open files")),
@@ -260,5 +284,58 @@ class _PayrollUIState extends State<PayrollUI> {
     setState(() {
       _updating = false;
     });
+  }
+
+  /*
+  This widget is for picking the storage location of the blank files.
+
+  inputs..
+    fileBeingSelected: this string indicates whether the payroll file or the
+      montly breakdown file is being selected
+  */
+  void _pickFile(String fileBeingSelected) async {
+    String file = "";
+    FilePickerResult? result = await FilePicker.platform
+        .pickFiles(type: FileType.custom, allowedExtensions: ["xlsx"]);
+
+    if (result != null) {
+      file = result.files.single.path!;
+      switch (fileBeingSelected) {
+        case "payroll":
+          _blankPayroll = file;
+          break;
+        case "breakdown":
+          _blankBreakdown = file;
+          break;
+      }
+    }
+    _checkIfReadyToGenerate();
+    setState(() {});
+  }
+
+  /*
+  This widget is for setting the text inside the file selection buttons.
+
+  inputs..
+    fileToShow: this string indicates whether the payroll file or the
+      montly breakdown file is being selected to show\
+  returns..
+    A string for the inside of the buttons
+  */
+  String _getFileName(String fileToShow) {
+    String fileName = "";
+    switch (fileToShow) {
+      case "payroll":
+        fileName = _blankPayroll;
+        return fileName != ""
+            ? "Selected: " + fileName.split("\\").last
+            : "Press to select master payroll file";
+      case "breakdown":
+        fileName = _blankBreakdown;
+        return fileName != ""
+            ? "Selected: " + fileName.split("\\").last
+            : "Press to select master shift breakdown file";
+    }
+    return "";
   }
 }
