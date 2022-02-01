@@ -1,3 +1,4 @@
+from msilib.schema import SelfReg
 from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
 from .logger import Logger
@@ -209,12 +210,14 @@ class generate_report:
         aTotal, bTotal, cTotal = generate_report.getShiftTotals(sqlRunner, start_date, end_date)
         aCover, bCover, cCover = generate_report.getSiftCoverage(sqlRunner, start_date, end_date)
         aStation, bStation, cStation = generate_report.getStationCoverage(sqlRunner, start_date, end_date)
+        aFSC, bFSC, cFSC = generate_report.getFscCount(sqlRunner, start_date, end_date)
         aMed, bMed, cMed = generate_report.getMedRuns(sqlRunner, start_date, end_date)
         topFT = generate_report.getTopResponder(sqlRunner, start_date, end_date, ft = True)
         topPOC = generate_report.getTopResponder(sqlRunner, start_date, end_date, ft = False)
 
         sheet["B4"], sheet["B5"], sheet["B6"] = aWeekdayRuns, bWeekdayRuns, cWeekendRuns
         sheet["C4"], sheet["C5"], sheet["C6"] = aWeekendRuns, bWeekendRuns, cWeekendRuns
+        sheet["D4"], sheet["D5"], sheet["D6"] = aFSC, bFSC, cFSC
         sheet["E4"], sheet["E5"], sheet["E6"] = aTotal, bTotal, cTotal
         sheet["F4"], sheet["F5"], sheet["F6"] = aCover, bCover, cCover
         sheet["H4"], sheet["H5"], sheet["H6"] = aStation, bStation, cStation
@@ -284,6 +287,16 @@ class generate_report:
         a = int(sqlRunner.getCountShiftMedRunsBetweenDates("A", start_date, end_date))
         b = int(sqlRunner.getCountShiftMedRunsBetweenDates("B", start_date, end_date))
         c = int(sqlRunner.getCountShiftMedRunsBetweenDates("C", start_date, end_date))
+        return a, b, c
+
+    
+    """
+    
+    """
+    def getFscCount(sqlRunner, start_date, end_date):
+        a = int(sqlRunner.getCountShiftFscRunsBetweenDates("A", start_date, end_date))
+        b = int(sqlRunner.getCountShiftFscRunsBetweenDates("B", start_date, end_date))
+        c = int(sqlRunner.getCountShiftFscRunsBetweenDates("C", start_date, end_date))
         return a, b, c
 
 
@@ -426,11 +439,8 @@ class generate_report:
         case 1: the number of runs in a given period
     """
     def getCount(sqlRunner, city_number, start_date, end_date):
-        total = 0
-        runNumbers = sqlRunner.getAllRunsNumbersEmployeeByCityNumberRespondedToBetweenDates(start_date, end_date, city_number)
-        for run in runNumbers:
-            total += 1 if sqlRunner.getMedRunBitFromRun(run[0]) == 0 else 0
-        return total
+        numberOfRuns = int(sqlRunner.getCountOfAllPaidRunsByCityNumberBetweenDates(start_date, end_date, city_number) or 0)
+        return numberOfRuns
 
     """
     This method gets the number of hours a specific person
@@ -445,18 +455,9 @@ class generate_report:
         case 1: the number of hours a given employee worked
     """
     def getHours(sqlRunner, city_number, start_date, end_date):
-        total = 0
-        runs = sqlRunner.getRunNumberOfAllPaidRunsForEmplyeeByEmployeeNumberBetweenDates(city_number, start_date, end_date)
-        for run in runs:
-            hour = sqlRunner.getRunTimeOfFireRunByRunNumber(run[0])
-            if len(hour) == 1:
-                hour = hour[0][0]
-            else:
-                hour = 0
-            if hour is not None and hour != []:
-                total += hour
-        return total
-
+        hours = float(sqlRunner.getAllPaidHoursForEmployeeByCityNumberBetweenDates(city_number, start_date, end_date) or 0)
+        subhours = float(sqlRunner.getAllSubHoursForEmployeeByCityNumberBetweenDates(city_number, start_date, end_date) or 0)
+        return hours - subhours
     """
     This method updates the Employee table to ensure no employees have a NULL
     value in the city_number column. If they do they will not be paid.
