@@ -239,7 +239,7 @@ def get_blank_breakdown_path():
     returns..
         the blank breakdown path as stored in the config
     """
-    return jsonify({"blank_payroll_path": ConfigManager.get_blankBreakdownPath()})
+    return jsonify({"blank_breakdown_path": ConfigManager.get_blankBreakdownPath()})
 
 
 @app.route("/set_blank_breakdown_path", methods=["POST"])
@@ -253,5 +253,5 @@ def set_blank_breakdown_path():
         True upon completion
     """
     path = request.json
-    ConfigManager.set_blankBreakdownPath(path["blank_payroll_path"])
+    ConfigManager.set_blankBreakdownPath(path["blank_breakdown_path"])
     return jsonify(True)
