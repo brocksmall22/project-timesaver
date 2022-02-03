@@ -72,6 +72,7 @@ class backupManager:
         (database, local_path):takes the database folder itself. takes a filepath to the local database as a string used for testing.
     returns..
         The full filepath of the downloaded file
+        Database is already on current version. if the database does not need updated
     """
 
     def downloadCloudDB(database, local_path):
