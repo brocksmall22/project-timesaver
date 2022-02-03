@@ -2,6 +2,7 @@ from importlib.resources import path
 import unittest
 import os
 import sys
+from unittest import result
 
 from black import assert_equivalent
 
@@ -40,6 +41,12 @@ class backupManager_test(unittest.TestCase):
             bM.getLocalDB(path), os.getcwd() + "\\test\\resc\\HashingTests\\UploadTest"
         )
         known = os.getcwd() + "\\test\\resc\\HashingTests\\UploadTest\\Test1.txt"
+        self.assertEqual(result, known)
+
+    def test_downloadDatabase(self):
+        path = os.getcwd() + "\\test\\resc\\HashingTests\\UploadTest\\Test1.txt"
+        result = bM.downloadCloudDB(bM.getCloudDB(path), "\\test\\resc\\HashingTests")
+        known = "Database is already on current version."
         self.assertEqual(result, known)
 
 
