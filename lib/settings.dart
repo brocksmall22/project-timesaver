@@ -26,40 +26,68 @@ class _SettingsUIState extends State<SettingsUI> {
         body: Center(
           child: LayoutGrid(
             columnSizes: MediaQuery.of(context).size.width > _minWidth
+                //Horizontal column sizes
                 ? [
                     ((MediaQuery.of(context).size.width - 160) / 2).px,
                     160.px,
                     ((MediaQuery.of(context).size.width - 160) / 2).px
                   ]
+                //Vertical column sizes
                 : [
                     (MediaQuery.of(context).size.width / 2).px,
                     (MediaQuery.of(context).size.width / 2).px
                   ],
             rowSizes: MediaQuery.of(context).size.width > _minWidth
-                ? [75.px, 75.px]
-                : [50.px, 50.px, 50.px],
+                //Horizontal rows and sizes
+                ? [75.px, 75.px, 75.px]
+                //Vertical rows and sizes
+                : [50.px, 50.px, 50.px, 50.px, 50.px],
             children: MediaQuery.of(context).size.width > _minWidth
+                //Desktop (horizontal) layout
                 ? [
                     Align(
-                        child: _folderText(), alignment: Alignment.centerRight),
-                    Center(child: _getFolder()),
+                        child: _processedReportFolderText(),
+                        alignment: Alignment.centerRight),
+                    Center(child: _getFolder("OneDrive")),
                     Align(
-                        child: _seletedFolder(),
+                        child: _seletedFolder("OneDrive"),
+                        alignment: Alignment.centerLeft),
+                    Align(
+                        child: _backupFolderText(),
+                        alignment: Alignment.centerRight),
+                    Center(child: _getFolder("Backup")),
+                    Align(
+                        child: _seletedFolder("Backup"),
                         alignment: Alignment.centerLeft),
                     _navigationOptions().withGridPlacement(
-                        columnStart: 0, columnSpan: 3, rowStart: 1)
+                        columnStart: 0, columnSpan: 3, rowStart: 2)
                   ]
+                //Desktop (vertical) mobile-like layout
                 : [
                     Align(
-                        child: _folderText(), alignment: Alignment.centerRight),
-                    Align(child: _getFolder(), alignment: Alignment.centerLeft),
+                        child: _processedReportFolderText(),
+                        alignment: Alignment.centerRight),
                     Align(
-                            child: _seletedFolder(),
+                        child: _getFolder("OneDrive"),
+                        alignment: Alignment.centerLeft),
+                    Align(
+                            child: _seletedFolder("OneDrive"),
                             alignment: Alignment.topCenter)
                         .withGridPlacement(
                             columnStart: 0, columnSpan: 2, rowStart: 1),
+                    Align(
+                        child: _backupFolderText(),
+                        alignment: Alignment.centerRight),
+                    Align(
+                        child: _getFolder("Backup"),
+                        alignment: Alignment.centerLeft),
+                    Align(
+                            child: _seletedFolder("Backup"),
+                            alignment: Alignment.topCenter)
+                        .withGridPlacement(
+                            columnStart: 0, columnSpan: 2, rowStart: 3),
                     _navigationOptions().withGridPlacement(
-                        columnStart: 0, columnSpan: 2, rowStart: 2)
+                        columnStart: 0, columnSpan: 2, rowStart: 4)
                   ],
           ),
         ),
@@ -68,16 +96,26 @@ class _SettingsUIState extends State<SettingsUI> {
   // Variables
 
   String _oneDriveFolder = "";
+  String _backupFolder = "";
   String _currentOneDriveFolder = "";
-  final int _minWidth = 758;
+  String _currentBackupFolder = "";
+  final int _minWidth = 814;
 
   // Widgets
 
   // This widget returns the text label for the folder input. Has a tooltip.
-  Widget _folderText() => Tooltip(
+  Widget _processedReportFolderText() => Tooltip(
       message: "Current value: " + _currentOneDriveFolder,
       child: const Text(
         "OneDrive Proofed Runs Folder Name:",
+        style: TextStyle(fontSize: 18),
+      ));
+
+  // This widget returns the text label for the folder input. Has a tooltip.
+  Widget _backupFolderText() => Tooltip(
+      message: "Current value: " + _currentBackupFolder,
+      child: const Text(
+        "OneDrive Database Backup Folder Name:",
         style: TextStyle(fontSize: 18),
       ));
 
@@ -97,18 +135,27 @@ class _SettingsUIState extends State<SettingsUI> {
       onPressed: () => Navigator.pop(context), child: const Text("Cancel")));
 
   //This widget is a button that spawns a folder choosing window.
-  Widget _getFolder() => BasicWidgets.pad(ElevatedButton.icon(
-      onPressed: () async {
-        String? result = await FilePicker.platform.getDirectoryPath();
-        if (result != null) {
-          _oneDriveFolder = result;
-        }
-        setState(() {});
-      },
-      icon: const Icon(Icons.folder_open),
-      label: const Text("Select Folder")));
+  Widget _getFolder(String folderToUpdate) =>
+      BasicWidgets.pad(ElevatedButton.icon(
+          onPressed: () async {
+            String? result = await FilePicker.platform.getDirectoryPath();
+            if (result != null) {
+              switch (folderToUpdate) {
+                case "OneDrive":
+                  _oneDriveFolder = result;
+                  break;
+                case "Backup":
+                  _backupFolder = result;
+                  break;
+              }
+            }
+            setState(() {});
+          },
+          icon: const Icon(Icons.folder_open),
+          label: const Text("Select Folder")));
 
-  Widget _seletedFolder() => Text(_selectedFolderText());
+  Widget _seletedFolder(String folderToDisplay) =>
+      Text(_selectedFolderText(folderToDisplay));
 
   // Helper functions
 
@@ -117,11 +164,15 @@ class _SettingsUIState extends State<SettingsUI> {
     API.getOneDriveFolder().then((value) => setState(() {
           _currentOneDriveFolder = value;
         }));
+    API.getBackupFolder().then((value) => setState(() {
+          _currentBackupFolder = value;
+        }));
   }
 
   // This method updates the config values.
   void _submitToPython() async {
     await API.updateOneDriveFolder(_oneDriveFolder);
+    await API.updateBackupFolder(_backupFolder);
     if (!await BasicActions.displayThenClearErrors(context)) {
       BasicWidgets.snack(context, "Settings have been applied!", Colors.green);
     }
@@ -131,12 +182,23 @@ class _SettingsUIState extends State<SettingsUI> {
   /*
   This method makes the selected folder text.
 
+  inputs..
+    folderToDisplay: a string that says which folder tooltip to return
   returns..
     A string describing the selected folder
   */
-  String _selectedFolderText() {
-    return _oneDriveFolder != ""
-        ? "Currently selected folder is: " + _oneDriveFolder
-        : "";
+  String _selectedFolderText(String folderToDisplay) {
+    switch (folderToDisplay) {
+      case "OneDrive":
+        return _oneDriveFolder != ""
+            ? "Currently selected folder is: " + _oneDriveFolder
+            : "";
+      case "Backup":
+        return _backupFolder != ""
+            ? "Currently selected folder is: " + _backupFolder
+            : "";
+      default:
+        return "";
+    }
   }
 }

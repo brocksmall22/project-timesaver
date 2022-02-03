@@ -1,3 +1,4 @@
+from msilib.schema import SelfReg
 from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
 from .logger import Logger
@@ -6,12 +7,8 @@ import traceback
 from datetime import datetime
 
 class generate_report:
-    # TODO: Change the storage location of the generated files.
-    # TODO: Change the path where the blank tally and blank shift
-    # breakdowns are stored.
-    # TODO: Handle the F.S.C column in the breakdown once we know what it is
+    # TODO: Handle the F.S.C column in the breakdown once we know what it is - in progress
     # TODO: Fix bug where top responders are left not being filled correctly
-    # TODO: Add error for when no folder is set
     endPaidOnCall = 0
     startFullTime = 0
     endFullTime = 0
@@ -23,21 +20,24 @@ class generate_report:
     inputs..
         start_date: the first date as a string
         end_date: the last date as a string
+        blank_breakdown: the location of the blank monthly shift breakdown
+            sheet
+        blank_payroll: the location of the blank payroll tally
     returns..
         case 1: a list containing True in the first position followed be some
             strings with basic details about the report
-        case 2: an error message to be displayed to the user
+        case 2: Nothing and an error will be displayed to the user
     """
-    def generate_report(start_date, end_date, test_log_file = ""):
+    def generate_report(start_date: str, end_date: str, blank_payroll: str, blank_breakdown: str, test_log_file = ""):
         generate_report.reset()
         try:
             with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
                 if not sqlRunner.checkForRunsBetweenDates(start_date, end_date):
                     Logger.addNewError("generation error", datetime.now(), "There are no runs for the selected period.", test_log_file)
                 else:
-                    assert os.path.isfile(os.getenv('APPDATA') + "\\project-time-saver\\blank_tally.xlsx"), "blank_tally.xlsx is missing"
-                    assert os.path.isfile(os.getenv('APPDATA') + "\\project-time-saver\\blank_breakdown.xlsx"), "blank_breakdown.xlsx is missing"
-                    wb = load_workbook(os.getenv('APPDATA') + "\\project-time-saver\\blank_tally.xlsx")
+                    assert os.path.isfile(blank_payroll), "The selected file for the master payroll is not valid"
+                    assert os.path.isfile(blank_breakdown), "The selected file for the master monthly breakdown is not valid"
+                    wb = load_workbook(blank_payroll)
                     sheet = wb["Sheet1"]
                     number_of_runs = sqlRunner.getNumberOfRuns(start_date, end_date)
                     min_run = sqlRunner.getFirstRunNumber(start_date, end_date)
@@ -48,7 +48,7 @@ class generate_report:
                     generate_report.updateEmployeeNulls(sqlRunner, sheet)
                     generate_report.fillTallySheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
                     wb.close()
-                    wb = load_workbook(os.getenv('APPDATA') + "\\project-time-saver\\blank_breakdown.xlsx")
+                    wb = load_workbook(blank_breakdown)
                     generate_report.fillBreakdownSheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
                     wb.close()
                     additionalReturns = generate_report.checkForIssues(sqlRunner, min_run, max_run, number_of_runs, start_date, end_date)
@@ -60,6 +60,7 @@ class generate_report:
             traceback.print_exc()
             print(e)
             Logger.addNewError("generation error", datetime.now(), str(e), test_log_file)
+
 
     """
     Resets the global variables. Should not be needed as this class
@@ -188,7 +189,7 @@ class generate_report:
                 sheet[f"D{i}"].value = 0
         sheet["E5"] = min_run
         sheet["G5"] = max_run
-        wb.save(os.getenv("APPDATA") + "\\project-time-saver\\tally.xlsx")
+        wb.save(os.getenv("HOMEPATH") + "\\Documents\\generated_payroll.xlsx")
 
 
     """
@@ -223,7 +224,7 @@ class generate_report:
         sheet["I4"], sheet["I5"], sheet["I6"] = aMed, bMed, cMed
         sheet["C8"], sheet["C9"] = topFT, topPOC
         sheet["A2"] = f"Run {min_run} - Run {max_run}"
-        wb.save(os.getenv("APPDATA") + "\\project-time-saver\\breakdown.xlsx")
+        wb.save(os.getenv("HOMEPATH") + "\\Documents\\generated_monthly_shift_tally.xlsx")
 
 
     """
@@ -438,11 +439,8 @@ class generate_report:
         case 1: the number of runs in a given period
     """
     def getCount(sqlRunner, city_number, start_date, end_date):
-        total = 0
-        runNumbers = sqlRunner.getAllRunsNumbersEmployeeByCityNumberRespondedToBetweenDates(start_date, end_date, city_number)
-        for run in runNumbers:
-            total += 1 if sqlRunner.getMedRunBitFromRun(run[0]) == 0 and sqlRunner.getFscBitFromRun(run[0]) == 0 else 0
-        return total
+        numberOfRuns = int(sqlRunner.getCountOfAllPaidRunsByCityNumberBetweenDates(start_date, end_date, city_number) or 0)
+        return numberOfRuns
 
     """
     This method gets the number of hours a specific person
@@ -457,18 +455,9 @@ class generate_report:
         case 1: the number of hours a given employee worked
     """
     def getHours(sqlRunner, city_number, start_date, end_date):
-        total = 0
-        runs = sqlRunner.getRunNumberOfAllPaidRunsForEmplyeeByEmployeeNumberBetweenDates(city_number, start_date, end_date)
-        for run in runs:
-            hour = sqlRunner.getRunTimeOfFireRunByRunNumber(run[0])
-            if len(hour) == 1:
-                hour = hour[0][0]
-            else:
-                hour = 0
-            if hour is not None and hour != []:
-                total += hour
-        return total
-
+        hours = float(sqlRunner.getAllPaidHoursForEmployeeByCityNumberBetweenDates(city_number, start_date, end_date) or 0)
+        subhours = float(sqlRunner.getAllSubHoursForEmployeeByCityNumberBetweenDates(city_number, start_date, end_date) or 0)
+        return hours - subhours
     """
     This method updates the Employee table to ensure no employees have a NULL
     value in the city_number column. If they do they will not be paid.
