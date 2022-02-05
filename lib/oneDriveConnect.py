@@ -21,7 +21,7 @@ class oneDriveConnect:
         """
         if path == "":
             path = ConfigManager.get_folderPath()
-            if path == "": return None
+                
         for file in os.listdir(path):
             if file.endswith(".xlsx"):
                 oneDriveConnect.files.append(os.path.join(path, file))
