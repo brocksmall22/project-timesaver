@@ -43,11 +43,15 @@ class BasicActions {
           });
 
   /*
-  Draws an alert that informs the user of various conditions.
+  Draws an alert that informs the user of various conditions. This alert can
+  have a single customizable action button. Ideal for a "yes or no"/"are you
+  sure" style alert box.
 
   inputs..
     response: A list containing message strings. Each string goes on a new line.
     title: A string of the title for the alert box.
+    actionButtonText: the text of the actionable button
+    action: a callback of the action button's action
   */
   static void actionableAlertBox(BuildContext context, List<Widget> response,
           String title, String actionButtonText, VoidCallback action) =>

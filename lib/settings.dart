@@ -141,6 +141,7 @@ class _SettingsUIState extends State<SettingsUI> {
           icon: const Icon(Icons.folder_open),
           label: Text(_buttonText(folderToUpdate))));
 
+  //Adds a button to trigger a database backup
   Widget _backupDatabase() => BasicWidgets.pad(ElevatedButton(
       onPressed: () async {
         await API.triggerDatabaseBackup();
@@ -152,6 +153,7 @@ class _SettingsUIState extends State<SettingsUI> {
       },
       child: const Text("Backup the database")));
 
+  //Adds a button to trigger a restore on the database
   Widget _restoreDatabase() => BasicWidgets.pad(ElevatedButton(
         onPressed: () async {
           BasicActions.actionableAlertBox(
