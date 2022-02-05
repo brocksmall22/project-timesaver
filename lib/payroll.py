@@ -15,7 +15,7 @@ class payroll:
     Year = datetime.now().strftime("%Y") + "-1-1"
 
 
-    def loadWorkBooks(fileList = [], test_log_location = ""):
+    def loadWorkBooks(fileList = [], test_log_location = "") -> bool:
         """
         Loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
 
@@ -26,7 +26,11 @@ class payroll:
                 the program will automatically retrieve the needed files to update
             test_log_location (optional): a URI for the logfile location; optional as this is
                 reserved for testing purposes
+        returns..
+            True if all files were ingested without error
+            False if there were any errors
         """
+        success = True
         payroll.reset()
         Logger.setLastUpdate(datetime.now().strftime("%Y-%m-%d %H:%M"), 
                             file  = test_log_location)
@@ -50,6 +54,8 @@ class payroll:
                 Logger.addNewError("I/O error", datetime.now(), 
                                     f"File {file} has error: Critical error, file cannot be read!", 
                                     file = test_log_location)
+                success = False
+        return success
 
 
     def readWorkBook(wb, filename, test_log_location):

@@ -4,18 +4,21 @@ import os
 
 class ConfigManager:
     configFile = os.getenv("APPDATA") + "\\project-time-saver\\config.json"
+    defaultConfig = {"folder_path": "",
+                    "Backup_path": "",
+                    "blank_payroll_path": "",
+                    "blank_breakdown_path": ""}
 
     ##Detect if Configureation File is present
     @staticmethod
     def createConfigIfNotExists(file=""):
         file = ConfigManager.configFile if file == "" else file
-        emptyConf = {"folder_path": "", "Backup_path": "", "blank_payroll_path": "", "blank_breakdown_path": ""}
         if not os.path.exists(file):
             with open(file, "w") as conf:
-                json.dump(emptyConf, conf)
+                json.dump(ConfigManager.defaultConfig, conf)
         elif os.path.getsize(file) == 0:
             with open(file, "w+") as conf:
-                json.dump(emptyConf, conf)
+                json.dump(ConfigManager.defaultConfig, conf)
 
     ##Checks if the config file has been created, then returns the Folder Path
     @staticmethod
@@ -56,7 +59,6 @@ class ConfigManager:
 
     @staticmethod
     def get_blankPayrollPath(file=""):
-        print("asdfhalskjfhlakjsdhfljahsdlfhalskfh")
         file = ConfigManager.configFile if file == "" else file
         ConfigManager.createConfigIfNotExists(file)
         with open(file, "r") as conf:
@@ -65,7 +67,6 @@ class ConfigManager:
     ###Updates the blank payroll path value
     @staticmethod
     def set_blankPayrollPath(path, file=""):
-        print("565461654198165416541654164561464")
         file = ConfigManager.configFile if file == "" else file
         ConfigManager.createConfigIfNotExists(file)
         with open(file, "r") as conf:

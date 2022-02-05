@@ -28,15 +28,20 @@ class generate_report:
             strings with basic details about the report
         case 2: Nothing and an error will be displayed to the user
     """
-    def generate_report(start_date: str, end_date: str, blank_payroll: str, blank_breakdown: str, test_log_file = ""):
+    def generate_report(start_date: str, end_date: str, blank_payroll: str,
+                blank_breakdown: str, test_log_file = "") -> bool:
         generate_report.reset()
         try:
-            with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
+            with sqlFunctions(os.getenv('APPDATA') +
+                        "\\project-time-saver\\database.db") as sqlRunner:
                 if not sqlRunner.checkForRunsBetweenDates(start_date, end_date):
-                    Logger.addNewError("generation error", datetime.now(), "There are no runs for the selected period.", test_log_file)
+                    Logger.addNewError("generation error", datetime.now(), 
+                                "There are no runs for the selected period.", test_log_file)
                 else:
-                    assert os.path.isfile(blank_payroll), "The selected file for the master payroll is not valid"
-                    assert os.path.isfile(blank_breakdown), "The selected file for the master monthly breakdown is not valid"
+                    assert os.path.isfile(blank_payroll), \
+                                "The selected file for the master payroll is not valid"
+                    assert os.path.isfile(blank_breakdown), \
+                                "The selected file for the master monthly breakdown is not valid"
                     wb = load_workbook(blank_payroll)
                     sheet = wb["Sheet1"]
                     number_of_runs = sqlRunner.getNumberOfRuns(start_date, end_date)
@@ -51,15 +56,18 @@ class generate_report:
                     wb = load_workbook(blank_breakdown)
                     generate_report.fillBreakdownSheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
                     wb.close()
-                    additionalReturns = generate_report.checkForIssues(sqlRunner, min_run, max_run, number_of_runs, start_date, end_date)
+                    additionalReturns = generate_report.checkForIssues(sqlRunner, min_run, max_run,
+                                number_of_runs, start_date, end_date)
                     messages = additionalReturns + [f"The generated pay period is from {start_date} to {end_date}.",
-                    f"There were {number_of_runs} runs total this period.", f"This includes runs from run {min_run} to run {max_run}."]
+                                f"There were {number_of_runs} runs total this period.", f"This includes runs from run {min_run} to run {max_run}."]
                     for message in messages:
                         Logger.addNewGenerateMessage(message)
+            return True
         except Exception as e:
             traceback.print_exc()
             print(e)
             Logger.addNewError("generation error", datetime.now(), str(e), test_log_file)
+            return False
 
 
     """

@@ -25,28 +25,6 @@ class API {
   }
 
   /*
-  This function will send a POST containing file paths to the server. The server
-  is then expected to add those files to the database and return a pass/fail
-  response.
-
-  inputs.. 
-    files: A list of File (dart.io) objects.
-  returns.. 
-    case 1: A list containing either one value of true
-    case 2: A list of files that could not be added to the database
-  */
-  static Future<List> submitFilesToDatabase(List<File> files) async {
-    Uri _url = Uri.parse('http://127.0.0.1:8080/submit_reports');
-    List<String> filesAsStrings = files.map((e) => e.path).toList();
-    String filesAsJsonArray = jsonEncode(filesAsStrings);
-    Map<String, String> header = {"Content-Type": "application/json"};
-    Response response =
-        await post(_url, headers: header, body: filesAsJsonArray);
-    List returnValue = jsonDecode(response.body);
-    return returnValue;
-  }
-
-  /*
   This function will send a POST to the server containing a Json object with
   startDate and endDate values denoting the start and end of the pay period.
   The server is expected to respond with a list of information regarding the
@@ -60,13 +38,13 @@ class API {
     case 2: A list containing some errors
   */
   static Future<void> generatePayrollFiles(
-      List<String> dates, String blank_payroll, String blank_breakdown) async {
+      List<String> dates, String blankPayroll, String blankBreakdown) async {
     Uri _url = Uri.parse('http://127.0.0.1:8080/generate_report');
     String filesAsJsonArray = jsonEncode({
-      "startDate": dates[0],
-      "endDate": dates[1],
-      "payroll": blank_payroll,
-      "breakdown": blank_breakdown
+      "start_date": dates[0],
+      "end_date": dates[1],
+      "payroll": blankPayroll,
+      "breakdown": blankBreakdown
     });
     Map<String, String> header = {"Content-Type": "application/json"};
     await post(_url, headers: header, body: filesAsJsonArray);
@@ -82,7 +60,7 @@ class API {
     Uri _url = Uri.parse('http://127.0.0.1:8080/get_one_drive_folder');
     Response response = await get(_url);
     Map retrunValue = jsonDecode(response.body);
-    return retrunValue["oneDriveFolder"];
+    return retrunValue["one_drive_folder"];
   }
 
   /*
@@ -97,7 +75,7 @@ class API {
   static Future<void> updateOneDriveFolder(String folderString) async {
     if (folderString != "") {
       Uri _url = Uri.parse('http://127.0.0.1:8080/set_one_drive_folder');
-      String postJson = jsonEncode({"oneDriveFolder": folderString});
+      String postJson = jsonEncode({"one_drive_folder": folderString});
       Map<String, String> header = {"Content-Type": "application/json"};
       await post(_url, headers: header, body: postJson);
     }
@@ -126,7 +104,7 @@ class API {
     Uri _url = Uri.parse('http://127.0.0.1:8080/get_most_recent_run');
     Response response = await get(_url);
     Map returnValue = jsonDecode(response.body);
-    return returnValue["update"];
+    return returnValue["update"] == Null ? 0 : returnValue["update"];
   }
 
   /*
@@ -187,7 +165,7 @@ class API {
   static updateBackupFolder(String backupFolder) async {
     if (backupFolder != "") {
       Uri _url = Uri.parse('http://127.0.0.1:8080/set_backup_folder');
-      String postJson = jsonEncode({"backupFolder": backupFolder});
+      String postJson = jsonEncode({"backup_folder": backupFolder});
       Map<String, String> header = {"Content-Type": "application/json"};
       await post(_url, headers: header, body: postJson);
     }
@@ -199,11 +177,11 @@ class API {
   returns..
     A string containing the current folder
   */
-  static getBackupFolder() async {
+  static Future<String> getBackupFolder() async {
     Uri _url = Uri.parse('http://127.0.0.1:8080/get_backup_folder');
     Response response = await get(_url);
     Map retrunValue = jsonDecode(response.body);
-    return retrunValue["backupFolder"];
+    return retrunValue["backup_folder"];
   }
 
   /*
@@ -227,7 +205,7 @@ class API {
   returns..
     A string containing the current blank payroll path
   */
-  static getBlankPayrollPath() async {
+  static Future<String> getBlankPayrollPath() async {
     Uri _url = Uri.parse('http://127.0.0.1:8080/get_blank_payroll_path');
     Response response = await get(_url);
     Map retrunValue = jsonDecode(response.body);
@@ -255,10 +233,26 @@ class API {
   returns..
     A string containing the current path
   */
-  static getBlankBreakdownPath() async {
+  static Future<String> getBlankBreakdownPath() async {
     Uri _url = Uri.parse('http://127.0.0.1:8080/get_blank_breakdown_path');
     Response response = await get(_url);
     Map retrunValue = jsonDecode(response.body);
     return retrunValue["blank_breakdown_path"];
+  }
+
+  /*
+  Triggers the backend to backup the DB.
+  */
+  static Future<void> triggerDatabaseBackup() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/trigger_backup');
+    await get(_url);
+  }
+
+  /*
+  Triggers the backend to restore the DB.
+  */
+  static Future<void> triggerDatabaseURestore() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/trigger_restore');
+    await get(_url);
   }
 }

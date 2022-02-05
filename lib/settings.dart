@@ -28,9 +28,8 @@ class _SettingsUIState extends State<SettingsUI> {
             columnSizes: MediaQuery.of(context).size.width > _minWidth
                 //Horizontal column sizes
                 ? [
-                    ((MediaQuery.of(context).size.width - 160) / 2).px,
-                    160.px,
-                    ((MediaQuery.of(context).size.width - 160) / 2).px
+                    ((MediaQuery.of(context).size.width) / 2).px,
+                    ((MediaQuery.of(context).size.width) / 2).px
                   ]
                 //Vertical column sizes
                 : [
@@ -39,55 +38,53 @@ class _SettingsUIState extends State<SettingsUI> {
                   ],
             rowSizes: MediaQuery.of(context).size.width > _minWidth
                 //Horizontal rows and sizes
-                ? [75.px, 75.px, 75.px]
+                ? [50.px, 50.px, 50.px, 50.px]
                 //Vertical rows and sizes
-                : [50.px, 50.px, 50.px, 50.px, 50.px],
+                : [50.px, 50.px, 50.px, 50.px],
             children: MediaQuery.of(context).size.width > _minWidth
                 //Desktop (horizontal) layout
                 ? [
                     Align(
-                        child: _processedReportFolderText(),
-                        alignment: Alignment.centerRight),
-                    Center(child: _getFolder("OneDrive")),
-                    Align(
-                        child: _seletedFolder("OneDrive"),
-                        alignment: Alignment.centerLeft),
-                    Align(
-                        child: _backupFolderText(),
-                        alignment: Alignment.centerRight),
-                    Center(child: _getFolder("Backup")),
-                    Align(
-                        child: _seletedFolder("Backup"),
-                        alignment: Alignment.centerLeft),
-                    _navigationOptions().withGridPlacement(
-                        columnStart: 0, columnSpan: 3, rowStart: 2)
-                  ]
-                //Desktop (vertical) mobile-like layout
-                : [
-                    Align(
-                        child: _processedReportFolderText(),
+                        child: _oneDriveFolderText(),
                         alignment: Alignment.centerRight),
                     Align(
                         child: _getFolder("OneDrive"),
                         alignment: Alignment.centerLeft),
-                    Align(
-                            child: _seletedFolder("OneDrive"),
-                            alignment: Alignment.topCenter)
-                        .withGridPlacement(
-                            columnStart: 0, columnSpan: 2, rowStart: 1),
                     Align(
                         child: _backupFolderText(),
                         alignment: Alignment.centerRight),
                     Align(
                         child: _getFolder("Backup"),
                         alignment: Alignment.centerLeft),
-                    Align(
-                            child: _seletedFolder("Backup"),
-                            alignment: Alignment.topCenter)
+                    Center(
+                            child: BasicWidgets.horizontal(
+                                [_backupDatabase(), _restoreDatabase()]))
                         .withGridPlacement(
-                            columnStart: 0, columnSpan: 2, rowStart: 3),
-                    _navigationOptions().withGridPlacement(
-                        columnStart: 0, columnSpan: 2, rowStart: 4)
+                            columnStart: 0, columnSpan: 2, rowStart: 2),
+                    _bakcButton().withGridPlacement(
+                        columnStart: 0, columnSpan: 2, rowStart: 3)
+                  ]
+                //Desktop (vertical) mobile-like layout
+                : [
+                    Align(
+                        child: _oneDriveFolderText(),
+                        alignment: Alignment.centerRight),
+                    Align(
+                        child: _getFolder("OneDrive"),
+                        alignment: Alignment.centerLeft),
+                    Align(
+                        child: _backupFolderText(),
+                        alignment: Alignment.centerRight),
+                    Align(
+                        child: _getFolder("Backup"),
+                        alignment: Alignment.centerLeft),
+                    Center(
+                            child: BasicWidgets.horizontal(
+                                [_backupDatabase(), _restoreDatabase()]))
+                        .withGridPlacement(
+                            columnStart: 0, columnSpan: 2, rowStart: 2),
+                    _bakcButton().withGridPlacement(
+                        columnStart: 0, columnSpan: 2, rowStart: 3)
                   ],
           ),
         ),
@@ -97,42 +94,31 @@ class _SettingsUIState extends State<SettingsUI> {
 
   String _oneDriveFolder = "";
   String _backupFolder = "";
-  String _currentOneDriveFolder = "";
-  String _currentBackupFolder = "";
   final int _minWidth = 814;
 
   // Widgets
 
   // This widget returns the text label for the folder input. Has a tooltip.
-  Widget _processedReportFolderText() => Tooltip(
-      message: "Current value: " + _currentOneDriveFolder,
+  Widget _oneDriveFolderText() => Tooltip(
+      message: "Current value: " + _oneDriveFolder,
       child: const Text(
-        "OneDrive Proofed Runs Folder Name:",
+        "OneDrive Proofed Runs Folder:",
         style: TextStyle(fontSize: 18),
       ));
 
   // This widget returns the text label for the folder input. Has a tooltip.
   Widget _backupFolderText() => Tooltip(
-      message: "Current value: " + _currentBackupFolder,
+      message: "Current value: " + _backupFolder,
       child: const Text(
-        "OneDrive Database Backup Folder Name:",
+        "OneDrive Database Backup Folder:",
         style: TextStyle(fontSize: 18),
       ));
 
-  // This widget contains the save and close buttons in a horizontal layout.
-  Widget _navigationOptions() =>
-      BasicWidgets.horizontal([_cancelButton(), _saveButton()]);
-
-  // This widget calls the save methods and saves current strings to the config.
-  Widget _saveButton() => BasicWidgets.pad(ElevatedButton(
-      onPressed: () {
-        _submitToPython();
-      },
-      child: const Text("Save Changes")));
-
   // This widget will take you back home.
-  Widget _cancelButton() => BasicWidgets.pad(ElevatedButton(
-      onPressed: () => Navigator.pop(context), child: const Text("Cancel")));
+  Widget _bakcButton() => Center(
+      child: BasicWidgets.pad(ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"))));
 
   //This widget is a button that spawns a folder choosing window.
   Widget _getFolder(String folderToUpdate) =>
@@ -148,25 +134,62 @@ class _SettingsUIState extends State<SettingsUI> {
                   _backupFolder = result;
                   break;
               }
+              setState(() {});
+              _submitToPython();
             }
-            setState(() {});
           },
           icon: const Icon(Icons.folder_open),
-          label: const Text("Select Folder")));
+          label: Text(_buttonText(folderToUpdate))));
 
-  Widget _seletedFolder(String folderToDisplay) =>
-      Text(_selectedFolderText(folderToDisplay));
+  Widget _backupDatabase() => BasicWidgets.pad(ElevatedButton(
+      onPressed: () async {
+        await API.triggerDatabaseBackup();
+        bool errors = await BasicActions.displayThenClearErrors(context);
+        if (!errors) {
+          BasicWidgets.snack(
+              context, "Database successfully backed up!", Colors.green);
+        }
+      },
+      child: const Text("Backup the database")));
+
+  Widget _restoreDatabase() => BasicWidgets.pad(ElevatedButton(
+        onPressed: () async {
+          BasicActions.actionableAlertBox(
+              context,
+              [
+                const Text(
+                    "This action will delete the current copy of the database, this could result in data losss"),
+                const Text("Are you sure you wish to continue?")
+              ],
+              "Restore the backup database?",
+              "Yes", () async {
+            await API.triggerDatabaseURestore();
+            Navigator.of(context).pop();
+            bool errors = await BasicActions.displayThenClearErrors(context);
+            if (!errors) {
+              BasicWidgets.snack(
+                  context, "Database successfully restored!", Colors.green);
+            }
+          });
+        },
+        child: const Text("Restore the database"),
+        style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.resolveWith<Color?>(
+            (Set<MaterialState> states) {
+              if (states.contains(MaterialState.pressed)) return Colors.red;
+              return null; // Use the component's default.
+            },
+          ),
+        ),
+      ));
 
   // Helper functions
 
   // This method gets and sets the strings containing the current config values.
-  void _updateStrings() {
-    API.getOneDriveFolder().then((value) => setState(() {
-          _currentOneDriveFolder = value;
-        }));
-    API.getBackupFolder().then((value) => setState(() {
-          _currentBackupFolder = value;
-        }));
+  void _updateStrings() async {
+    _oneDriveFolder = await API.getOneDriveFolder();
+    _backupFolder = await API.getBackupFolder();
+    setState(() {});
   }
 
   // This method updates the config values.
@@ -187,18 +210,27 @@ class _SettingsUIState extends State<SettingsUI> {
   returns..
     A string describing the selected folder
   */
-  String _selectedFolderText(String folderToDisplay) {
+  String _buttonText(String folderToDisplay) {
+    String variable = "";
     switch (folderToDisplay) {
       case "OneDrive":
-        return _oneDriveFolder != ""
-            ? "Currently selected folder is: " + _oneDriveFolder
-            : "";
+        API.getOneDriveFolder().then((value) {
+          _oneDriveFolder = value;
+        });
+        variable = _oneDriveFolder;
+        return variable != ""
+            ? "Selected: " + variable.split("\\").last
+            : "Select Folder";
       case "Backup":
-        return _backupFolder != ""
-            ? "Currently selected folder is: " + _backupFolder
-            : "";
+        API.getBackupFolder().then((value) {
+          _backupFolder = value;
+        });
+        variable = _backupFolder;
+        return variable != ""
+            ? "Selected: " + variable.split("\\").last
+            : "Select Folder";
       default:
-        return "";
+        return "Select Folder";
     }
   }
 }
