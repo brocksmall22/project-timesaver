@@ -3,9 +3,9 @@ from .database_creation import creator
 
 class check_database:
     @staticmethod
-    def check():
-        if not os.path.exists(os.getenv('APPDATA') + "\\project-time-saver"):
-            os.makedirs(os.getenv('APPDATA') + "\\project-time-saver")
-            creator.create_db(os.getenv('APPDATA') + "\\project-time-saver\\database.db")
-        elif not os.path.exists(os.getenv('APPDATA') + "\\project-time-saver\\database.db"):
-            creator.create_db(os.getenv('APPDATA') + "\\project-time-saver\\database.db")
+    def check(path = os.getenv('APPDATA') + "\\project-time-saver", db_name = "\\database.db"):
+        if not os.path.exists(path):
+            os.makedirs(path)
+            creator.create_db(path + db_name)
+        elif not os.path.exists(path + db_name):
+            creator.create_db(path + db_name)

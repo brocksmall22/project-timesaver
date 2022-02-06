@@ -30,6 +30,7 @@ class generate_report:
     """
     def generate_report(start_date: str, end_date: str, blank_payroll: str,
                 blank_breakdown: str, test_log_file = "") -> bool:
+        success = True
         generate_report.reset()
         try:
             with sqlFunctions(os.getenv('APPDATA') +
@@ -60,14 +61,15 @@ class generate_report:
                                 number_of_runs, start_date, end_date)
                     messages = additionalReturns + [f"The generated pay period is from {start_date} to {end_date}.",
                                 f"There were {number_of_runs} runs total this period.", f"This includes runs from run {min_run} to run {max_run}."]
+                    print(messages)
                     for message in messages:
                         Logger.addNewGenerateMessage(message)
-            return True
         except Exception as e:
             traceback.print_exc()
             print(e)
             Logger.addNewError("generation error", datetime.now(), str(e), test_log_file)
-            return False
+            success = False
+        return success
 
 
     """

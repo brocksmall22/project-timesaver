@@ -113,10 +113,11 @@ def generate_reports():
         startDate = values["start_date"].split(" ")[0]
         endDate = values["end_date"].split(" ")[0]
         blank_payroll = values["payroll"]
-        blank_breakdown = values["breakdwon"]
+        blank_breakdown = values["breakdown"]
         success = grp.generate_report(startDate, endDate,
                     blank_payroll, blank_breakdown)
-    except Exception:
+    except Exception as e:
+        print(e)
         return Response(status = 400)
     return Response(status = 200) if success else Response(status = 500)
 
