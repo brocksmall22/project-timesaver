@@ -160,8 +160,8 @@ class _SettingsUIState extends State<SettingsUI> {
               context,
               [
                 const Text(
-                    "This action will delete the current copy of the database, this could result in data losss"),
-                const Text("Are you sure you wish to continue?")
+                    "This action will overwrite the current copy of the database with the most recent backup, this could result in data loss."),
+                const Text("\nAre you sure you wish to continue?")
               ],
               "Restore the backup database?",
               "Yes", () async {
@@ -179,6 +179,9 @@ class _SettingsUIState extends State<SettingsUI> {
           backgroundColor: MaterialStateProperty.resolveWith<Color?>(
             (Set<MaterialState> states) {
               if (states.contains(MaterialState.pressed)) return Colors.red;
+              if (states.contains(MaterialState.hovered)) {
+                return Colors.red[300];
+              }
               return null; // Use the component's default.
             },
           ),

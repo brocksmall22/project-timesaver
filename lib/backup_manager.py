@@ -48,8 +48,6 @@ class backupManager:
             Logger.addNewError("Misconfiguration", datetime.now(),
                         "Backup cannot be completed: no backup destination is configured!")
             return ""
-        print(database)
-        print(onedrive_path)
         shutil.copy(database, onedrive_path)
 
         endPath = os.path.join(onedrive_path, backupManager.filename)
