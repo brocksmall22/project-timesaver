@@ -15,7 +15,9 @@ class payroll:
     Year = datetime.now().strftime("%Y") + "-1-1"
 
 
-    def loadWorkBooks(fileList = [], test_log_location = "") -> bool:
+    def loadWorkBooks(fileList = [],
+                      test_log_location = "",
+                      database = os.getenv('APPDATA') + "\\project-time-saver\\database.db") -> bool:
         """
         Loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
 
@@ -42,12 +44,13 @@ class payroll:
                                     file = test_log_location)
         for file in fileList:
             try:
-                with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
+                with sqlFunctions(database) as sqlRunner:
                     Timestamp = oneDriveConnect.getLastModifiedDate(file)
                     fileRunNumber = oneDriveConnect.extensionStripper(file)
-                    if sqlRunner.newRunNeedsUpdated(fileRunNumber, Timestamp, payroll.Year) or not sqlRunner.checkIfExists(fileRunNumber, payroll.Year):
+                    if sqlRunner.newRunNeedsUpdated(fileRunNumber, Timestamp, payroll.Year) \
+                                or not sqlRunner.checkIfExists(fileRunNumber, payroll.Year):
                         wb = load_workbook(file)
-                        payroll.readWorkBook(wb, file, test_log_location)
+                        payroll.readWorkBook(wb, file, test_log_location, database)
             except Exception as e:
                 print(e)
                 traceback.print_exc()
@@ -58,7 +61,7 @@ class payroll:
         return success
 
 
-    def readWorkBook(wb, filename, test_log_location):
+    def readWorkBook(wb, filename, test_log_location, database = os.getenv('APPDATA') + "\\project-time-saver\\database.db"):
         """
         readWorkBook(wb, filename)
         reads an indiual work book then prints the resulting values from in the range of cells A21->F55
@@ -66,7 +69,7 @@ class payroll:
         """
         Timestamp = oneDriveConnect.getLastModifiedDate(filename)
         try:
-            with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
+            with sqlFunctions(database) as sqlRunner:
                 payroll.getRange(wb)
                 if not payroll.checkForErrors(wb):
                     date, runNumber, needsUpdated= payroll.getRunInfo(

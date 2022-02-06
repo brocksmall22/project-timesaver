@@ -140,10 +140,5 @@ class backupManager:
         False upon non matching hashes
     """
     def checksum(local_filePath, cloud_filePath):
-
-        if backupManager.generateHash(local_filePath) != backupManager.generateHash(
-            cloud_filePath
-        ):
-            return False
-
-        return True
+        return backupManager.generateHash(local_filePath) \
+            == backupManager.generateHash(cloud_filePath)

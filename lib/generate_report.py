@@ -1,5 +1,7 @@
 from msilib.schema import SelfReg
 from openpyxl import load_workbook
+
+from lib.payroll import payroll
 from .sqlFunctions import sqlFunctions
 from .logger import Logger
 import os
@@ -28,13 +30,18 @@ class generate_report:
             strings with basic details about the report
         case 2: Nothing and an error will be displayed to the user
     """
-    def generate_report(start_date: str, end_date: str, blank_payroll: str,
-                blank_breakdown: str, test_log_file = "") -> bool:
+    def generate_report(start_date: str,
+                        end_date: str, 
+                        blank_payroll: str,
+                        blank_breakdown: str, 
+                        test_log_file = "", 
+                        database = os.getenv('APPDATA') + "\\project-time-saver\\database.db",
+                        payroll_save_path = os.getenv("HOMEPATH") + "\\Documents\\generated_payroll.xlsx",
+                        breakdown_save_path = os.getenv("HOMEPATH") + "\\Documents\\generated_monthly_shift_tally.xlsx") -> bool:
         success = True
         generate_report.reset()
         try:
-            with sqlFunctions(os.getenv('APPDATA') +
-                        "\\project-time-saver\\database.db") as sqlRunner:
+            with sqlFunctions(database) as sqlRunner:
                 if not sqlRunner.checkForRunsBetweenDates(start_date, end_date):
                     Logger.addNewError("generation error", datetime.now(), 
                                 "There are no runs for the selected period.", test_log_file)
@@ -52,16 +59,15 @@ class generate_report:
                     generate_report.getStartFullTime(sheet)
                     generate_report.getEndFullTime(sheet)
                     generate_report.updateEmployeeNulls(sqlRunner, sheet)
-                    generate_report.fillTallySheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
+                    generate_report.fillPayrollSheet(sqlRunner, wb, start_date, end_date, min_run, max_run, save_path = payroll_save_path)
                     wb.close()
                     wb = load_workbook(blank_breakdown)
-                    generate_report.fillBreakdownSheet(sqlRunner, wb, start_date, end_date, min_run, max_run)
+                    generate_report.fillBreakdownSheet(sqlRunner, wb, start_date, end_date, min_run, max_run, save_path = breakdown_save_path)
                     wb.close()
                     additionalReturns = generate_report.checkForIssues(sqlRunner, min_run, max_run,
                                 number_of_runs, start_date, end_date)
                     messages = additionalReturns + [f"The generated pay period is from {start_date} to {end_date}.",
                                 f"There were {number_of_runs} runs total this period.", f"This includes runs from run {min_run} to run {max_run}."]
-                    print(messages)
                     for message in messages:
                         Logger.addNewGenerateMessage(message)
         except Exception as e:
@@ -176,7 +182,8 @@ class generate_report:
         start_date: the first date as a string
         end_date: the last date as a string
     """
-    def fillTallySheet(sqlRunner, wb, start_date, end_date, min_run, max_run):
+    def fillPayrollSheet(sqlRunner, wb, start_date, end_date, min_run, max_run, 
+                save_path = os.getenv("HOMEPATH") + "\\Documents\\generated_payroll.xlsx"):
         sheet = wb["Sheet1"]
         for i in range(8, generate_report.endPaidOnCall + 1):
             city_number = sheet[f"A{i}"].value
@@ -199,7 +206,7 @@ class generate_report:
                 sheet[f"D{i}"].value = 0
         sheet["E5"] = min_run
         sheet["G5"] = max_run
-        wb.save(os.getenv("HOMEPATH") + "\\Documents\\generated_payroll.xlsx")
+        wb.save(save_path)
 
 
     """
@@ -213,7 +220,8 @@ class generate_report:
         min_run: the first run of the period
         max_run: the last run of the period
     """
-    def fillBreakdownSheet(sqlRunner, wb, start_date, end_date, min_run, max_run):
+    def fillBreakdownSheet(sqlRunner, wb, start_date, end_date, min_run, max_run,
+                save_path = os.getenv("HOMEPATH") + "\\Documents\\generated_monthly_shift_tally.xlsx"):
         sheet = wb["Sheet1"]
         aWeekdayRuns, bWeekdayRuns, cWeekendRuns = generate_report.getWorkingHourRuns(sqlRunner, start_date, end_date)
         aWeekendRuns, bWeekendRuns, cWeekendRuns = generate_report.getWeekendAndEveningRuns(sqlRunner, start_date, end_date)
@@ -234,7 +242,7 @@ class generate_report:
         sheet["I4"], sheet["I5"], sheet["I6"] = aMed, bMed, cMed
         sheet["C8"], sheet["C9"] = topFT, topPOC
         sheet["A2"] = f"Run {min_run} - Run {max_run}"
-        wb.save(os.getenv("HOMEPATH") + "\\Documents\\generated_monthly_shift_tally.xlsx")
+        wb.save(save_path)
 
 
     """
