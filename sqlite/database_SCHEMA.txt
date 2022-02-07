@@ -1,0 +1,27 @@
+RunReportDB Schema
+
+Table 
+
+Employee
+-------------------
+Name - String
+Number - SmallINT - key
+cityNumber -SmallINT
+-------------------
+
+Run
+-------------------
+Number - tinyINT - key
+Date - Date - key
+startTime - SmallINT 
+stopTime - SmallINT
+runTime - tinyINT
+-------------------
+
+Responded
+-------------------
+EmpNumber - String - foreign key ref Employee.Number
+RunNumber - tinyINT - foreign key ref Run.Number
+Date - Date - foreign key ref Rune.Date
+PayRate - Float
+-------------------
