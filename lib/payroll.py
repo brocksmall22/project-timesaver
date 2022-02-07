@@ -15,7 +15,9 @@ class payroll:
     Year = datetime.now().strftime("%Y") + "-1-1"
 
 
-    def loadWorkBooks(fileList = [], test_log_location = ""):
+    def loadWorkBooks(fileList = [],
+                      test_log_location = "",
+                      database = os.getenv('APPDATA') + "\\project-time-saver\\database.db") -> bool:
         """
         Loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
 
@@ -26,7 +28,11 @@ class payroll:
                 the program will automatically retrieve the needed files to update
             test_log_location (optional): a URI for the logfile location; optional as this is
                 reserved for testing purposes
+        returns..
+            True if all files were ingested without error
+            False if there were any errors
         """
+        success = True
         payroll.reset()
         Logger.setLastUpdate(datetime.now().strftime("%Y-%m-%d %H:%M"), 
                             file  = test_log_location)
@@ -38,21 +44,24 @@ class payroll:
                                     file = test_log_location)
         for file in fileList:
             try:
-                with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
+                with sqlFunctions(database) as sqlRunner:
                     Timestamp = oneDriveConnect.getLastModifiedDate(file)
                     fileRunNumber = oneDriveConnect.extensionStripper(file)
-                    if sqlRunner.newRunNeedsUpdated(fileRunNumber, Timestamp, payroll.Year) or not sqlRunner.checkIfExists(fileRunNumber, payroll.Year):
+                    if sqlRunner.newRunNeedsUpdated(fileRunNumber, Timestamp, payroll.Year) \
+                                or not sqlRunner.checkIfExists(fileRunNumber, payroll.Year):
                         wb = load_workbook(file)
-                        payroll.readWorkBook(wb, file, test_log_location)
+                        payroll.readWorkBook(wb, file, test_log_location, database)
             except Exception as e:
                 print(e)
                 traceback.print_exc()
                 Logger.addNewError("I/O error", datetime.now(), 
                                     f"File {file} has error: Critical error, file cannot be read!", 
                                     file = test_log_location)
+                success = False
+        return success
 
 
-    def readWorkBook(wb, filename, test_log_location):
+    def readWorkBook(wb, filename, test_log_location, database = os.getenv('APPDATA') + "\\project-time-saver\\database.db"):
         """
         readWorkBook(wb, filename)
         reads an indiual work book then prints the resulting values from in the range of cells A21->F55
@@ -60,7 +69,7 @@ class payroll:
         """
         Timestamp = oneDriveConnect.getLastModifiedDate(filename)
         try:
-            with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
+            with sqlFunctions(database) as sqlRunner:
                 payroll.getRange(wb)
                 if not payroll.checkForErrors(wb):
                     date, runNumber, needsUpdated= payroll.getRunInfo(

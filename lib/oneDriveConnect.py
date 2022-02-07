@@ -1,4 +1,5 @@
 import os
+from tkinter import W
 from .config_manager import ConfigManager
 
 
@@ -21,7 +22,9 @@ class oneDriveConnect:
         """
         if path == "":
             path = ConfigManager.get_folderPath()
-            if path == "": return None
+        if path == "":
+            return None
+                
         for file in os.listdir(path):
             if file.endswith(".xlsx"):
                 oneDriveConnect.files.append(os.path.join(path, file))
