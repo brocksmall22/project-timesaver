@@ -16,8 +16,9 @@ class backupManager:
 
 
     """
+    getLocalDB(database_path)
     This method gets the local database file
-
+    
     inputs..
         (database_path): takes a filepath as a string to the database used for testing.
     returns..
@@ -34,6 +35,7 @@ class backupManager:
 
 
     """
+    uploadLocalDB(database, onedrive_path)
     This method uploads the database to the onedrive
 
     inputs..
@@ -61,6 +63,7 @@ class backupManager:
 
 
     """
+    getCloudDB(database_path)
     This method gets the cloud database file.
 
     inputs..
@@ -79,6 +82,7 @@ class backupManager:
 
 
     """
+    downloadCloudDB(database, local_path)
     This method checks to see if the two databases are diffrent if diffrent then downloads the database
 
     inputs..
@@ -98,10 +102,20 @@ class backupManager:
             return ""
         if local_path == "":
             local_path = os.getenv("APPDATA") + "\\project-time-saver\\database.db"
-        if (
-            backupManager.checksum(local_path, conf.get_backupPath() + "//database.db")
-            == True
-        ):
+            if (
+                backupManager.checksum(
+                    local_path, conf.get_backupPath() + "\\database.db"
+                )
+                == True
+            ):
+                return "Database is already on current version."
+            shutil.copy(database, local_path)
+
+            endPath = os.path.join(local_path, backupManager.filename)
+
+            return endPath
+
+        if backupManager.checksum(database, local_path) == True:
             return "Database is already on current version."
 
         shutil.copy(database, local_path)
@@ -112,6 +126,7 @@ class backupManager:
 
 
     """
+    generateHash(filepath)
     This method generates the Hash of files contents
 
     inputs..
@@ -130,6 +145,7 @@ class backupManager:
 
 
     """
+    checksum(local_filePath, cloud_filePath)
     This method runs the generate function on two files and checks the hashes
 
     inputs..
