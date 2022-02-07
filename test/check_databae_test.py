@@ -40,7 +40,15 @@ class check_database_test(unittest.TestCase):
         before = os.path.getmtime(os.getenv('APPDATA') + "\\project-time-saver\\database.db")
         check_database.check()
         after = os.path.getmtime(os.getenv('APPDATA') + "\\project-time-saver\\database.db")
-        self.assertEqual(before, after)         
+        self.assertEqual(before, after)        
+
+    """
+    Checks to ensure a DB can be created with another name.
+    """
+    def test_create_db_by_other_name(self):
+        check_database.check(db_name = "\\database_test.db")
+        self.assertTrue(os.path.exists(os.getenv("APPDATA") + "\\project-time-saver\\database_test.db"))
+        os.unlink(os.getenv("APPDATA") + "\\project-time-saver\\database_test.db") 
 
     """
     Deletes the DB file.

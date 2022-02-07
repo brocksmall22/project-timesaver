@@ -17,9 +17,9 @@ class config_manager_test(unittest.TestCase):
     Makse sure a new json can be created.
     """
     def test_create_file(self):
-        ConfigManager.createConfigIfNotExists(os.getcwd() + "\\test\\resc\\test.json")
-        self.assertTrue(os.path.isfile(os.getcwd() + "\\test\\resc\\test.json"))
-        with open(os.getcwd() + "\\test\\resc\\test.json", "r") as testFile:
+        ConfigManager.createConfigIfNotExists(os.getcwd() + "\\resc\\test.json")
+        self.assertTrue(os.path.isfile(os.getcwd() + "\\resc\\test.json"))
+        with open(os.getcwd() + "\\resc\\test.json", "r") as testFile:
             contents = json.load(testFile)
             self.assertTrue(all (k in contents for k in ["folder_path"]))
         self.removeFile()
@@ -28,8 +28,8 @@ class config_manager_test(unittest.TestCase):
     Makes sure that the folder can be set.
     """
     def test_set_folder(self):
-        ConfigManager.set_folderPath("C:\\some\\path", file = os.getcwd() + "\\test\\resc\\test.json")
-        with open(os.getcwd() + "\\test\\resc\\test.json", "r") as testFile:
+        ConfigManager.set_folderPath("C:\\some\\path", file = os.getcwd() + "\\resc\\test.json")
+        with open(os.getcwd() + "\\resc\\test.json", "r") as testFile:
             contents = json.load(testFile)
             self.assertEqual(contents["folder_path"], "C:\\some\\path")
         self.removeFile()
@@ -38,8 +38,8 @@ class config_manager_test(unittest.TestCase):
     Makes sure that the folder can be gotten.
     """
     def test_get_folder(self):
-        ConfigManager.set_folderPath("C:\\some\\path", file = os.getcwd() + "\\test\\resc\\test.json")
-        contents = ConfigManager.get_folderPath(os.getcwd() + "\\test\\resc\\test.json")
+        ConfigManager.set_folderPath("C:\\some\\path", file = os.getcwd() + "\\resc\\test.json")
+        contents = ConfigManager.get_folderPath(os.getcwd() + "\\resc\\test.json")
         self.assertEqual(contents, "C:\\some\\path")
         self.removeFile()
         
@@ -47,7 +47,7 @@ class config_manager_test(unittest.TestCase):
     Removes the test log json.
     """
     def removeFile(self):
-        os.remove(os.getcwd() + "\\test\\resc\\test.json")
+        os.remove(os.getcwd() + "\\resc\\test.json")
 
 
 if __name__ == "__main__":
