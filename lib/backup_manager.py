@@ -82,10 +82,20 @@ class backupManager:
     def downloadCloudDB(database, local_path):
         if local_path == "":
             local_path = os.getenv("APPDATA") + "\\project-time-saver\\database.db"
-        if (
-            backupManager.checksum(local_path, conf.get_backupPath() + "//database.db")
-            == True
-        ):
+            if (
+                backupManager.checksum(
+                    local_path, conf.get_backupPath() + "\\database.db"
+                )
+                == True
+            ):
+                return "Database is already on current version."
+            shutil.copy(database, local_path)
+
+            endPath = os.path.join(local_path, backupManager.filename)
+
+            return endPath
+
+        if backupManager.checksum(database, local_path) == True:
             return "Database is already on current version."
 
         shutil.copy(database, local_path)

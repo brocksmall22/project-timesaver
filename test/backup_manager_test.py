@@ -45,7 +45,9 @@ class backupManager_test(unittest.TestCase):
 
     def test_downloadDatabase(self):
         path = os.getcwd() + "\\test\\resc\\HashingTests\\UploadTest\\Test1.txt"
-        result = bM.downloadCloudDB(bM.getCloudDB(path), "\\test\\resc\\HashingTests")
+        result = bM.downloadCloudDB(
+            bM.getCloudDB(path), os.getcwd() + "\\test\\resc\\HashingTests\\Test1.txt"
+        )
         known = "Database is already on current version."
         self.assertEqual(result, known)
 
