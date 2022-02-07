@@ -1,218 +1,272 @@
-from io import RawIOBase
+from datetime import datetime
 import os
+from pydoc import ispackage
+from sqlite3.dbapi2 import Timestamp
 from openpyxl import load_workbook
-import sqlite3
-from sqlite3 import Error
+from .sqlFunctions import sqlFunctions
+from .logger import Logger
+from .oneDriveConnect import oneDriveConnect
+import traceback
+
 
 class payroll:
 
-    database = r"C://sqlite/RunReportDB"
-    returnArray = []
     endRange = 0
-
-    
-    # This is here for testing purposes
-    def getfilelist(fileString):
-        fileList = fileString.split(" ")
-        return fileList
+    Year = datetime.now().strftime("%Y") + "-1-1"
 
 
-    # loops Through the fileList array and runs the readWorkBook on each file
-    def loadWorkBooks(fileList):
+    def loadWorkBooks(fileList = [], test_log_location = ""):
+        """
+        loadWorkBooks(fileList)
+        loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
+        This requires the whole file list
+
+        TODO: Fix error handling here. if SQL statement fails, causes error that looks like an I/O error
+        TODO: Add error for when no folder is set
+        """
+        payroll.reset()
+        Logger.setLastUpdate(datetime.now().strftime("%Y-%m-%d %H:%M"), file  = test_log_location)
+        if fileList == []:
+            fileList = oneDriveConnect.getFiles()
         for file in fileList:
-            print(file)
-            wb = load_workbook(file)
+            try:
+                with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
+                    Timestamp = oneDriveConnect.getLastModifiedDate(file)
+                    fileRunNumber = oneDriveConnect.extensionStripper(file)
+                    if sqlRunner.newRunNeedsUpdated(fileRunNumber, Timestamp, payroll.Year) or not sqlRunner.checkIfExists(fileRunNumber, payroll.Year):
+                        wb = load_workbook(file)
+                        payroll.readWorkBook(wb, file, test_log_location)
+            except Exception as e:
+                print(e)
+                traceback.print_exc()
+                Logger.addNewError("I/O error", datetime.now(), f"File {file} has error: Critical error, file cannot be read!", file = test_log_location)
 
-            payroll.readWorkBook(wb, file)
 
-        if len(payroll.returnArray) == 0:
-            return [True]
-        else:
-            return payroll.returnArray
-
-
-    # reads an indiual work book then prints the resulting values from in the range of cells A21->F55
-    # issues with
-    def readWorkBook(wb, filename):
-        conn = payroll.create_connection(os.getenv('APPDATA') + "\\project-time-saver\\database.db")
+    def readWorkBook(wb, filename, test_log_location):
+        """
+        readWorkBook(wb, filename)
+        reads an indiual work book then prints the resulting values from in the range of cells A21->F55
+        It requires the Workbook and the Filename
+        """
+        Timestamp = oneDriveConnect.getLastModifiedDate(filename)
         try:
-
-            payroll.getRange(wb)
-
-            date, rNum = payroll.getRunInfo(conn, wb)
-
-            payroll.getEmpinfo(conn, wb, date, rNum)
+            with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
+                payroll.getRange(wb)
+                if not payroll.checkForErrors(wb):
+                    date, runNumber, needsUpdated= payroll.getRunInfo(
+                        sqlRunner, wb, Timestamp)
+                    assert runNumber == int(oneDriveConnect.extensionStripper(filename)), "The file's name and the run number within do not match"
+                    if needsUpdated:
+                        payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
         except Exception as e:
             print(e)
-            payroll.returnArray.append(filename)
+            traceback.print_exc()
+            Logger.addNewError("report format error", datetime.now(), f"File {filename} has error: {e}", file = test_log_location)
 
-        conn.close
+
+    def reset():
+        """
+        Resets the global variables for the next run of this class.
+        """
+        payroll.endRange = 0
 
 
-    # Gets the final A cell with an employee number
     def getRange(wb):
+        """
+        This function loops through the work book file to determine
+        the row containing the last employee.
+
+        inputs..
+            wb: the workbook being processed
+        """
         end = False
         sheet = wb.active
         if payroll.endRange == 0:
             payroll.endRange = 21
             while (not end):
-                if sheet[f"H{payroll.endRange + 1}"].value != None:
+                if sheet[f"L{payroll.endRange + 1}"].value != "=":
                     payroll.endRange = payroll.endRange + 1
                 else:
                     end = True
 
 
-    # this gets and returns the pay rate and employee number for those on run
-    def getEmpinfo(conn, wb, date, rNum):
+    def checkForErrors(wb):
+        """
+        This method stops execution and raises an error if there is a detectable issue
+        with a run sheet.
+
+        inputs..
+            wb: the workbook of the current run sheet
+        """
         sheet = wb.active
         for i1 in sheet[f"A21:h{payroll.endRange}"]:
+            if i1[4].value is not None or i1[5].value is not None or i1[6].value is not None:
+                if i1[0].value in [None, '']:
+                    raise Exception("Employee number cannot be empty!")
+                if i1[1].value in [None, '']:
+                    raise Exception("Employee name cannot be empty!")
+                if sheet["D3"].value in [None, '']:
+                    raise Exception("Date cannot be empty!")
+        if sheet["B3"].value in [None, '']:
+            raise Exception("Run number cannot be empty!")
+        if sheet["B8"].value in [None, '']:
+            raise Exception("Run time cannot be empty!")
+        if sheet["B5"].value in [None, '']:
+            raise Exception("Reported cannot be empty!")
+        if sheet["L5"].value in [None, '']:
+            raise Exception("10-8 cannot be empty!")
+        if sheet["F3"].value in [None, '']:
+            raise Exception("Shift cannot be empty!")
 
-            if i1[5].value == 1:
 
+    def getEmpinfo(sqlRunner, wb, date, runNumber):
+        """
+        getEmpinfo(sqlRunner, wb, date, rNum)
+        This gets the Employee information from the wb file then
+        it runs the employee and Responded SQL insertions.
+
+        inputs..
+            sqlRunner: the sql class object
+            wb: the workbook being processed
+            date: the date of the run
+            rNum: the number of the run
+        """
+        sheet = wb.active
+        for i1 in sheet[f"A21:O{payroll.endRange}"]:
+            if i1[4].value is not None or i1[5].value is not None or i1[6].value is not None:
                 empNumber = wb["Pay"][i1[0].value.split("!")[1]].value
-                print("Emp Num: " + str(empNumber))
-                payRate = wb["Pay"][i1[7].value.split("!")[1]].value
-                print("PayRate: " + str(payRate))
+                if i1[7].value is not None:
+                    payRate = wb["Pay"][i1[7].value.split("!")[1]].value
+                    full_time = 0
+                else:
+                    payRate = 0
+                    full_time = 1
                 Name = wb["Pay"][i1[1].value.split("!")[1]].value
-                print("Name: "+Name)
-                if payroll.empNeedsUpdated(conn, empNumber):
-                    payroll.updateEmp(conn, Name, empNumber)
+                if i1[4].value is not None:
+                    type_of_response = "PNP"
+                elif i1[6].value is not None:
+                    type_of_response = "OD"
+                elif i1[5].value is not None:
+                    type_of_response = "P"
+                subhours = int(i1[14].value) if i1[14].value is not None else 0
+                print(f"Responder: {Name}; number: {empNumber}; type: {type_of_response}; full-time: {full_time}")
+                if sqlRunner.empNeedsUpdated(empNumber):
+                    sqlRunner.updateEmp(Name, empNumber)
                 else:
-                     payroll.create_employee(conn, Name, empNumber)
-                if payroll.respondedNeedsUpdated(conn, empNumber, date, rNum):
-                    payroll.updateResponded(conn, empNumber, payRate, date, rNum)
+                    sqlRunner.createEmployee(Name, empNumber)
+                if sqlRunner.respondedNeedsUpdated(empNumber, date, runNumber):
+                    sqlRunner.updateResponded(
+                        empNumber, payRate, date, runNumber, type_of_response, full_time, subhours)
                 else:
-                    payroll.create_responded(conn, empNumber, payRate, date, rNum)
+                    sqlRunner.createResponded(
+                        empNumber, payRate, date, runNumber, type_of_response, full_time, subhours)
 
 
-    def respondedNeedsUpdated(conn, empNumber, date, rNum):
-        statement = f"""SELECT * FROM Responded WHERE Date = \'{date}\' AND empNumber = {empNumber} AND runNumber = {rNum};"""
-        cur = conn.cursor()
-        cur.execute(statement)
-        values = cur.fetchall()
+    def getRunInfo(sqlRunner, wb, Timestamp):
+        """
+        This gets the Run info from the sheet and runs the SQL import statements.
 
-        return False if len(values) == 0 else True
-
-
-    def updateResponded(conn, empNumber, payRate, date, rNum):
-        statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' AND runNumber = {rNum};"""
-        cur = conn.cursor()
-        cur.execute(statement)
-        conn.commit()
-        return cur.lastrowid
-
-
-    # this is no longer needed only here for reference at this time
-    def getPayRate(wb):
+        inputs..
+            sqlRunner: the sql class object
+            wb: the workbook we are processing
+        returns:
+            case 1: the run, date, and run number of the workbook
+        """
         sheet = wb.active
-        for i1 in sheet[f"F21:H{payroll.endRange}"]:
-
-            if i1[0].value == 1:
-
-                returnSting = wb["Pay"][i1[2].value.split("!")[1]].value
-                print("PayRate: " + str(returnSting))
-
-
-    # gets all run info from the specific cells
-    def getRunInfo(conn, wb):
-        sheet = wb.active
-        date = str(sheet["D3"].value).split(" ")[0]
-        num = sheet["B3"].value
+        date = sheet["D3"].value.strftime("%Y-%m-%d")
+        runNumber = sheet["B3"].value
         runTime = sheet["B8"].value
         startTime = sheet["B5"].value
         endTime = sheet["L5"].value
-        returnString = (
-            "RunNumber: {0} \nDate: \'{1}\' \nRunTime: {2} \nStartTime: {3} \nEndtime: {4}"
-        )
-        if payroll.runNeedsUpdated(conn, num, date):
-            payroll.updateRun(conn, num, date, startTime, endTime, runTime)
+        shift = sheet["F3"].value
+        fsc = 1 if payroll.checkForFill(sheet, "Q6") else 0
+        stationCovered = 1 if payroll.checkForFill(sheet, "F6") else 0
+        medrun = 1 if sheet == wb["MED RUN"] else 0
+        fullCover = payroll.getFullCover(sheet, shift)
+        paid = payroll.isPaid(sheet, fsc, medrun)
+        print("\n\n\n\n")
+        print(f"Processing run: {runNumber} from date {date}")
+        print(f"Medrun: {medrun}; FSC: {fsc}; runTime: {runTime}")
+        print(f"Start: {startTime}; end: {endTime}; station covered: {stationCovered}")
+        print(f"shift: {shift}; fully covered: {fullCover}, paid: {paid}")
+        if sqlRunner.newRunNeedsUpdated(runNumber, Timestamp, payroll.Year):
+            sqlRunner.updateRun(runNumber, date, startTime, endTime, runTime, 
+                                stationCovered, medrun, shift, Timestamp, 
+                                fullCover, fsc, paid)
+            return date, runNumber, True
+        elif not sqlRunner.checkIfExists(runNumber, date):
+            sqlRunner.createRun(runNumber, date, startTime, endTime, runTime, 
+                                stationCovered, medrun, shift, Timestamp, 
+                                fullCover, fsc, paid)
+            return date, runNumber, True
+        return date, runNumber, False
+
+
+    def checkForFill(sheet, cell: str) -> bool:
+        """
+        This method is to check if the given cell is filled or not.
+        Checks for color, legacy index, and any text/number value.
+
+        inputs..
+            sheet: the sheet we are checking
+        outputs..
+            case 1: False if it is not filled
+            case 2: True if it is
+        """
+        color = sheet[cell].fill.start_color.index
+        if type(color) == int:
+            return False if color == 1 else True
         else:
-            payroll.create_run(conn, num, date, startTime, endTime, runTime)
-            print(returnString.format(num, date, runTime, startTime, endTime))
-        return date, num
+            return False if color == "00000000" and\
+                sheet[cell].value == None else True
 
 
-    def runNeedsUpdated(conn, num, date):
-        statement = f"""SELECT * FROM Run WHERE Date = \'{date}\' AND number = {num};"""
-        cur = conn.cursor()
-        cur.execute(statement)
-        values = cur.fetchall()
+    def isPaid(sheet, fsc, medrun):
+        """
+        This method is for determining if a run is paid or not. Some FSC runs are paid,
+        others are not, so this method sorts them out.
 
-        return False if len(values) == 0 else True
-
-
-    def updateRun(conn, num, date, startTime, endTime, runTime):
-        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime} WHERE number = {num} AND date = \'{date}\';"""
-        cur = conn.cursor()
-        cur.execute(statement)
-        conn.commit()
-        return cur.lastrowid
-
-
-    # database connection
-    def create_connection(db_file):
-        conn = None
-        try:
-            conn = sqlite3.connect(db_file)
-            return conn
-        except Error as e:
-            print(e)
-        return conn
+        inputs..
+            sheet: the sheet we are checking
+            fsc: the bit that determines if it is a FSC run
+            medrun: the bit that determines if it is a medrun
+        outputs..
+            case 1: 0 if it is not paid
+            case 2: 1 if it is paid
+        """
+        if medrun == 1:
+            return 0
+        if fsc == 1 and sheet["D5"].value != None:
+            return 1
+        if fsc == 1:
+            for i1 in sheet[f"E21:G{payroll.endRange}"]:
+                if i1[0] not in [None, ""] or i1[1] not in [None, ""]:
+                    return 0
+            return 1
+        if fsc == 0 and medrun == 0:
+            return 1
 
 
-    # inserting rows to different tables
-    def create_employee(conn, name, empNumber):
-        sql = f""" INSERT INTO Employee(name,number)
-                VALUES(\'{name}\',{empNumber}) """
-        cur = conn.cursor()
-        cur.execute(sql)
-        conn.commit()
-        return cur.lastrowid
+    def getFullCover(sheet, shift) -> int:
+        """
+        This function is responsible for determining if a run was fully
+        covered by its respective shift.
 
-
-    def create_run(conn, num, date, sTime, eTime, rTime):
-        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime)
-                VALUES({0},\'{1}\',{2},{3},{4}) """
-        cur = conn.cursor()
-        sql = sql.format(num, date, sTime, eTime, rTime)
-        print(sql)
-        cur.execute(sql)
-        conn.commit()
-        return cur.lastrowid
-
-
-    def create_responded(conn, empNumber, payRate, date, num):
-        sql = """ INSERT INTO Responded(empNumber, runNumber, date, payRate)
-                VALUES({0},{1},\'{2}\',{3}) """
-        cur = conn.cursor()
-        sql = sql.format(empNumber, num, date, payRate)
-        print(sql)
-        cur.execute(sql)
-        conn.commit()
-        return cur.lastrowid
-
-    def empNeedsUpdated(conn, empNumber):
-        statement = f"""SELECT * FROM Employee WHERE number = {empNumber};"""
-        cur = conn.cursor()
-        cur.execute(statement)
-        values = cur.fetchall()
-
-        return False if len(values) == 0 else True
-
-    def updateEmp(conn, name ,empNumber):
-        statement = f"""UPDATE Employee SET name = \'{name}\' WHERE number = {empNumber};"""
-        cur = conn.cursor()
-        cur.execute(statement)
-        conn.commit()
-        return cur.lastrowid
-
-    # ----------------------------------------------------------
-    # this main is purely for testing and will be removed later
-    def main():
-        print("ENTER .XLSX FILE PATH:")
-        payroll.loadWorkBooks(payroll.getfilelist(input()))
-
-
-    if __name__ == "__main__":
-        main()
-    # ----------------------------------------------------------
+        inputs..
+            sheet: the current run sheet
+            shift: the shift of the run
+        returns..
+            case 1: interger 1 if the run is fully covered
+            case 2: interger 0 if the run is not fully covered
+        """
+        fullCover = False
+        lastShift = None
+        for i in range(21, payroll.endRange + 1):
+            if sheet[f"L{i}"].value is not None:
+                lastShift = sheet[f"L{i}"].value
+            if lastShift == shift and (sheet[f"E{i}"].value is not None or sheet[f"F{i}"].value is not None):
+                fullCover = True
+            elif lastShift == shift and sheet[f"A{i}"].value not in [000, 0000, "000", "0000"]:
+                fullCover = False
+                break
+        return int(fullCover)

@@ -1,12 +1,26 @@
+import os
 from flask import Flask, jsonify, request
 from datetime import datetime
-import json
+
+from flask.config import Config
+from .logger import Logger
+
+from lib.sqlFunctions import sqlFunctions
+from .generate_report import generate_report as grp
 from .payroll import payroll
 import sqlite.check_database as cdb
-
 from flask.wrappers import Request
+from .config_manager import ConfigManager
+from flask_apscheduler import APScheduler
 
 app = Flask(__name__)
+scheduler = APScheduler()
+scheduler.init_app(app)
+scheduler.start()
+
+INTERVAL_TASK_ID = 'interval-task-id'
+
+scheduler.add_job(id=INTERVAL_TASK_ID, func=payroll.loadWorkBooks, trigger='interval', minutes=30)
 
 """
 This method will run before the first request to the server. It ensures that the DB exists and is ready for use.
@@ -39,26 +53,6 @@ returns..
 def verify_awake():
     return jsonify({"result": True})
 
-
-"""
-This is the function responsible for accepting a request from the UI that
-contains a list of file paths and forwarding that to the backend to insert
-the information into the database.
-
-inputs..
-    (request): A post request containing a Json array of strings
-returns..
-    case 1: A Json array containing true (in the case of sucessful inserts)
-    case 2: A list of files that failed to be insterted
-"""
-@app.route('/submit_reports', methods=["GET", "POST"])
-def submit_reports():
-    files = request.json
-
-    results = payroll.loadWorkBooks(files)
-
-    return jsonify(results)
-
 """
 This is the function responsible for accepting a request from the UI
 to tell the backend the user wishes to generate the pay reports.
@@ -68,29 +62,116 @@ inputs..
         startDate and endDate that express the start and end of the
         pay period as strings
 returns.. 
-    case 1: A Json array that either contains a True value
-        and several strings
-    case 2: A Json array that contains one or more strings in
-        the event that the files could not be generated
+    True on completion
 """
 @app.route('/generate_report', methods=["GET", "POST"])
 def generate_reports():
     dates = request.json
-    startDate = datetime.strptime(dates["startDate"].split(" ")[0], "%Y-%m-%d")
-    endDate = datetime.strptime(dates["endDate"].split(" ")[0], "%Y-%m-%d")
+    startDate = dates["startDate"].split(" ")[0]
+    endDate = dates["endDate"].split(" ")[0]
+    grp.generate_report(startDate, endDate)
+    return jsonify(True)
 
-    #TODO: Interface with generating method
-    #results = BlakesClass.nameOfGenerationMethod(startDate, endDate)
+"""
+This method gets the one drive folder location on a GET request.
 
-    """
-    Remove this line when the above work is implementd.
-    You can test the flutter by changing what is in this list.
-    True is the case when it works, a list of strings (specifically)
-    File locations for when it fails. Just comment the one you don't
-    want then restart the server.
-    """
-    results = [True, "There were 86 total runs this period.", "This report includes runs 367 to 453.",
-        "This report ranges from startDate to endDate", "directory of the files"]
-    #results = ["Some error message!"]
+returns..
+    the one drive folder as stored in the config
+"""
+@app.route("/get_one_drive_folder", methods=["GET"])
+def get_one_drive_filder():
+    return jsonify({"oneDriveFolder": ConfigManager.get_folderPath()})
 
-    return jsonify(results)
+"""
+This method sets the one drive folder value in the config.
+
+inputs..
+    (request): A json file containing the new value
+returns..
+    True upon completion
+"""
+@app.route("/set_one_drive_folder", methods=["POST"])
+def set_one_drive_folder():
+    oneDrivefolder = request.json
+    ConfigManager.set_folderPath(oneDrivefolder["oneDriveFolder"])
+    return jsonify(True)
+
+"""
+This method gets the value of the most recent sync operation on the DB.
+
+returns..
+    A json containing the most recent value
+"""
+@app.route("/get_most_recent_db_update", methods=["GET"])
+def get_most_recent_db_update():
+    with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sql:
+        return jsonify({"update": Logger.getLastUpdate()})
+
+"""
+This method gets the number of the most revent run.
+
+returns..
+    A json containing the number of the most recent run
+"""
+@app.route("/get_most_recent_run", methods=["GET"])
+def get_most_recent_run():
+    with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sql:
+        stored = sql.getMostRecentRun(datetime.now().strftime("%Y")+"-01-01")
+        if stored == "0" or stored == 0:
+            stored = "No runs stored"
+        return jsonify({"update": stored})
+
+"""
+This method is responsible for triggering an update to the DB.
+
+returns..
+    True on completion
+"""
+@app.route("/trigger_update", methods = ["GET"])
+def trigger_update():
+    scheduler.pause_job(id=INTERVAL_TASK_ID)
+    payroll.loadWorkBooks()
+    scheduler.resume_job(id=INTERVAL_TASK_ID)
+    return jsonify(True)
+
+"""
+This method is responsible for getting all of the logged errors.
+
+returns..
+    A json array containing error json objects
+"""
+@app.route("/get_errors", methods = ["GET"])
+def get_errors():
+    return jsonify(Logger.getErrors())
+
+"""
+This method is responsible for triggering a clear errors call.
+
+returns..
+    True upon completion
+"""
+@app.route("/clear_errors", methods = ["GET"])
+def clear_errors():
+    Logger.clearErrors()
+    return jsonify(True)
+
+"""
+This method is responsible for getting the generation messages.
+
+returns..
+    A json array containing a list of strings
+"""
+@app.route("/get_generation_messages", methods = ["GET"])
+def get_generation_messages():
+    return jsonify(Logger.getGenerateMessages())
+
+"""
+This method is responsible for clearing the saved generation messages.
+
+returns..
+    True upon completion
+"""
+@app.route("/clear_generation_messages", methods = ["GET"])
+def clear_generation_messages():
+    Logger.clearGenerateMessages()
+    return jsonify(True)

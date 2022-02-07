@@ -1,7 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:project_time_saver/basic_actions.dart';
 import 'package:project_time_saver/basic_widgets.dart';
 import 'package:intl/intl.dart';
-import 'package:project_time_saver/file.dart';
 import 'package:project_time_saver/ui_api.dart';
 
 class PayrollUI extends StatefulWidget {
@@ -12,9 +14,13 @@ class PayrollUI extends StatefulWidget {
 }
 
 class _PayrollUIState extends State<PayrollUI> {
-  //TODO: Remove the redamentary file picking info and button when we have
-  //OneDrive integration
-  //TODO: Resolve remaining function specific tasks
+  _PayrollUIState() {
+    _updateMostRecentRun();
+    _databaseUpdateTime();
+  }
+  //TODO: Allow the user to just select the blank sheets when generating as
+  // opposed to requiring a copies in a specific place
+  //TODO: Add error for when no folder is set
 
   //Layout of the page
   @override
@@ -22,37 +28,55 @@ class _PayrollUIState extends State<PayrollUI> {
       appBar: AppBar(
         title: const Text("Payroll Generator"),
       ),
-      body: BasicWidgets.vertical(
-        [
-          //TODO: Remove the next three widgets when OneDrive functionality is
-          //added
-          const Text(
-              "Don't forget to ensure all run reports have been processed!"),
-          _gotToFileUpload(context),
-          const SizedBox(
-            height: 50,
-          ),
-          _getDate(context),
-          _confirmationButtons(context),
-        ],
-      ));
+      body: _updating == false
+          ? BasicWidgets.vertical(
+              [
+                _currentDatabaseContents(),
+                const SizedBox(
+                  height: 50,
+                ),
+                _getDate(context),
+                _confirmationButtons(context),
+              ],
+            )
+          : Center(
+              child: BasicWidgets.vertical([
+              BasicWidgets.pad(
+                  const Text("Updating... This may take a while.")),
+              BasicWidgets.pad(const CircularProgressIndicator())
+            ])));
 
   //Variables:
 
   DateTimeRange _dates =
       DateTimeRange(start: DateTime.now(), end: DateTime.now());
   bool _hasDates = false;
+  String _lastUpdateDate = "";
+  int _mostRecentRun = 0;
+  bool _updating = false;
 
   //Widgets:
 
   /*
-  TODO: Remove this widget when OneDrive is integrated
-
-  This widget is a button that will take you to the file submission page.
+  This widget is a combination of the text describing the database and the
+  button to update the DB.
   */
-  Widget _gotToFileUpload(BuildContext context) =>
-      BasicWidgets.mainNavigationButton(
-          context, "Upload reports", const FileUploader());
+  Widget _currentDatabaseContents() => BasicWidgets.horizontal(
+      [_databaseContentsText(), _databaseUpdateButton()]);
+
+  //This widget is the text describing the database.
+  Widget _databaseContentsText() =>
+      BasicWidgets.pad(Text("The most recent update to the database was on: " +
+          _lastUpdateDate +
+          "\nThe most recent run is: " +
+          _mostRecentRun.toString()));
+
+  //This widget is the button that updates the database.
+  Widget _databaseUpdateButton() => BasicWidgets.pad(ElevatedButton(
+      onPressed: () async {
+        _updateTheDatabase();
+      },
+      child: const Text("Update Now")));
 
   //This button opens a DateRangePicker dialog to pick the start and end dates.
   Widget _getDate(BuildContext context) => BasicWidgets.pad(ElevatedButton.icon(
@@ -151,24 +175,21 @@ class _PayrollUIState extends State<PayrollUI> {
     case 1: True if the server could generate the files
     case 2: False if the files could not be generated
   */
-  Future<bool> _submitToPython() async {
+  Future<void> _submitToPython() async {
     BasicWidgets.snack(context, "Generating, please wait...");
-    var response = await API
+    await API
         .generatePayrollFiles([_dates.start.toString(), _dates.end.toString()]);
-    if (response[0] == true) {
+    if (!await BasicActions.displayThenClearErrors(context)) {
       BasicWidgets.snack(context, "Payroll generated!", Colors.green);
-      _passedGenerationAlert(
-          context, response.getRange(1, response.length).toList());
-      return true;
+      _passedGenerationAlert(context, await API.getGenerationMessages());
+      await API.clearGenerationMessages();
     } else {
       BasicWidgets.snack(context, "Error generating payroll!", Colors.red);
-      _failedGenerationAlert(context, response);
-      return false;
     }
   }
 
   /*
-  TODO: Add the folder opening functionality.
+  TODO: Change output path.
 
   Draws an alert with information about the files as well as a way to open the
   generated files.
@@ -184,8 +205,8 @@ class _PayrollUIState extends State<PayrollUI> {
             return AlertDialog(
               title: const Text("Reports were sucessfully generated!"),
               content: SizedBox(
-                width: 100,
-                height: 75,
+                width: 250,
+                height: 150,
                 child: ListView(
                   children: response.map((e) => Text(e)).toList(),
                 ),
@@ -193,8 +214,11 @@ class _PayrollUIState extends State<PayrollUI> {
               actions: [
                 TextButton(
                     onPressed: () {
-                      //TODO: Add the ability to open the files
-                      Navigator.of(context).pop();
+                      Process.run("explorer.exe", [
+                        "/e," +
+                            Platform.environment["APPDATA"]! +
+                            "\\project-time-saver"
+                      ]);
                     },
                     child: const Text("Open files")),
                 TextButton(
@@ -205,30 +229,36 @@ class _PayrollUIState extends State<PayrollUI> {
           });
 
   /*
-  Draws an alert that informs the user about a failed attempt to make the
-  reports.
-
-  inputs..
-    response: A list containing error messages strings
+  This metod is responsible for getting the time of the last database update for
+  the db text.
   */
-  void _failedGenerationAlert(BuildContext context, List response) =>
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text("Reports could not be generated!"),
-              content: SizedBox(
-                width: 100,
-                height: 75,
-                child: ListView(
-                  children: response.map((e) => Text(e)).toList(),
-                ),
-              ),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text("Close"))
-              ],
-            );
-          });
+  void _databaseUpdateTime() async {
+    String stored = await API.getMostRecentDatabaseUpdate();
+    _lastUpdateDate = stored.isNotEmpty ? stored : "Unknown";
+    setState(() {});
+  }
+
+  //This method gets the most recent run for the DB text.
+  void _updateMostRecentRun() async {
+    _mostRecentRun = await API.getMostRecentRun();
+    setState(() {});
+  }
+
+  /*
+  This method is responsible for triggering the database update. While the
+  process in running, it will display a loading screen. It displays an error
+  message if any errors arise.
+  */
+  void _updateTheDatabase() async {
+    setState(() {
+      _updating = true;
+    });
+    await API.triggerDatabaseUpdate();
+    _updateMostRecentRun();
+    _databaseUpdateTime();
+    BasicActions.displayThenClearErrors(context);
+    setState(() {
+      _updating = false;
+    });
+  }
 }
