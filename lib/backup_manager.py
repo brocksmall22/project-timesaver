@@ -14,16 +14,17 @@ class backupManager:
     database_file = ""
     filename = ""
 
-
     """
+    getLocalDB(database_path)
     This method gets the local database file
-
+    
     inputs..
         (database_path): takes a filepath as a string to the database used for testing.
     returns..
         The database file
     """
-    def getLocalDB(database_path = ""):
+
+    def getLocalDB(database_path=""):
         if database_path == "":
             database_path = os.getenv("APPDATA") + "\\project-time-saver\\database.db"
         backupManager.database_file = database_path
@@ -32,8 +33,8 @@ class backupManager:
 
         return backupManager.database_file
 
-
     """
+    uploadLocalDB(database, onedrive_path)
     This method uploads the database to the onedrive
 
     inputs..
@@ -41,26 +42,33 @@ class backupManager:
     returns..
         The full filepath of the uploaded folder
     """
-    def uploadLocalDB(database, onedrive_path = ""):
+
+    def uploadLocalDB(database, onedrive_path=""):
         if onedrive_path == "":
             onedrive_path = conf.get_backupPath()
         if onedrive_path == "":
-            Logger.addNewError("Misconfiguration", datetime.now(),
-                        "Backup cannot be completed: no backup destination is configured!")
+            Logger.addNewError(
+                "Misconfiguration",
+                datetime.now(),
+                "Backup cannot be completed: no backup destination is configured!",
+            )
             return ""
         shutil.copy(database, onedrive_path)
 
         endPath = os.path.join(onedrive_path, backupManager.filename)
 
         if not backupManager.checksum(database, endPath):
-            Logger.addNewError("Checksum mismatch", datetime.now(),
-                        "Backup failed, the backed up copy does not match the origional. Try again.")
+            Logger.addNewError(
+                "Checksum mismatch",
+                datetime.now(),
+                "Backup failed, the backed up copy does not match the origional. Try again.",
+            )
             os.unlink(endPath)
             return ""
         return endPath
 
-
     """
+    getCloudDB(database_path)
     This method gets the cloud database file.
 
     inputs..
@@ -68,7 +76,8 @@ class backupManager:
     returns..
         The database file
     """
-    def getCloudDB(database_path = ""):
+
+    def getCloudDB(database_path=""):
         if database_path == "":
             database_path = conf.get_backupPath() + "//database.db"
         backupManager.database_file = database_path
@@ -77,8 +86,8 @@ class backupManager:
 
         return backupManager.database_file
 
-
     """
+    downloadCloudDB(database, local_path)
     This method checks to see if the two databases are diffrent if diffrent then downloads the database
 
     inputs..
@@ -87,21 +96,38 @@ class backupManager:
         The full filepath of the downloaded file
         Database is already on current version. if the database does not need updated
     """
-    def downloadCloudDB(database, local_path = ""):
+
+    def downloadCloudDB(database, local_path=""):
         if database == "\\database.db":
-            Logger.addNewError("Misconfiguration", datetime.now(),
-                        "Backup file cannot be restored: no backup destination is configured!")
+            Logger.addNewError(
+                "Misconfiguration",
+                datetime.now(),
+                "Backup file cannot be restored: no backup destination is configured!",
+            )
             return ""
         if not os.path.isfile(database):
-            Logger.addNewError("I/O Error", datetime.now(),
-                        "Backup file cannot be restored: no backup is detected in the configured location!")
+            Logger.addNewError(
+                "I/O Error",
+                datetime.now(),
+                "Backup file cannot be restored: no backup is detected in the configured location!",
+            )
             return ""
         if local_path == "":
             local_path = os.getenv("APPDATA") + "\\project-time-saver\\database.db"
-        if (
-            backupManager.checksum(local_path, conf.get_backupPath() + "//database.db")
-            == True
-        ):
+            if (
+                backupManager.checksum(
+                    local_path, conf.get_backupPath() + "\\database.db"
+                )
+                == True
+            ):
+                return "Database is already on current version."
+            shutil.copy(database, local_path)
+
+            endPath = os.path.join(local_path, backupManager.filename)
+
+            return endPath
+
+        if backupManager.checksum(database, local_path) == True:
             return "Database is already on current version."
 
         shutil.copy(database, local_path)
@@ -110,8 +136,8 @@ class backupManager:
 
         return endPath
 
-
     """
+    generateHash(filepath)
     This method generates the Hash of files contents
 
     inputs..
@@ -119,6 +145,7 @@ class backupManager:
     returns..
         The hash hexdigest upon completion
     """
+
     def generateHash(filepath):
         md5_hash = hashlib.md5()
         file = open(filepath, "rb")
@@ -128,8 +155,8 @@ class backupManager:
         file.close()
         return digest
 
-
     """
+    checksum(local_filePath, cloud_filePath)
     This method runs the generate function on two files and checks the hashes
 
     inputs..
@@ -139,6 +166,8 @@ class backupManager:
 
         False upon non matching hashes
     """
+
     def checksum(local_filePath, cloud_filePath):
-        return backupManager.generateHash(local_filePath) \
-            == backupManager.generateHash(cloud_filePath)
+        return backupManager.generateHash(local_filePath) == backupManager.generateHash(
+            cloud_filePath
+        )

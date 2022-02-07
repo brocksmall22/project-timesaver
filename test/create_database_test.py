@@ -9,9 +9,6 @@ from sqlite.check_database import check_database
 
 """
 This test suite ensures the DB is correctly created.
-
-WARNING: These tests will delete the DB, so back up the DB
-if need be!
 """
 class create_database_test(unittest.TestCase):
     conn = None
@@ -23,9 +20,9 @@ class create_database_test(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         create_database_test.delete_db()
-        check_database.check()
+        check_database.check(db_name = "\\database_test.db")
         create_database_test.conn = sqlite3.connect(
-            os.getenv('APPDATA') + "\\project-time-saver\\database.db")
+            os.getenv('APPDATA') + "\\project-time-saver\\database_test.db")
 
     """
     Closes the connection to the DB once the tests are done.
@@ -90,8 +87,8 @@ class create_database_test(unittest.TestCase):
     Deletes the DB as a part of the setup method.
     """
     def delete_db():
-        if os.path.exists(os.getenv('APPDATA') + "\\project-time-saver\\database.db"):
-            os.remove(os.getenv('APPDATA') + "\\project-time-saver\\database.db")
+        if os.path.exists(os.getenv('APPDATA') + "\\project-time-saver\\database_test.db"):
+            os.remove(os.getenv('APPDATA') + "\\project-time-saver\\database_test.db")
 
 if __name__ == '__main__':
     unittest.main()
