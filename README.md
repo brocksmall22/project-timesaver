@@ -575,3 +575,63 @@ This method will take a name from the run reports and compare it to
         case 2: False if they aren't the same person
 
 def match_names(name, fname, lname):
+
+## Documentation for Backup_manager.py
+
+    """
+    getLocalDB(database_path)
+    This method gets the local database file
+    
+    inputs..
+        (database_path): takes a filepath as a string to the database used for testing.
+    returns..
+        The database file
+    """
+    """
+    uploadLocalDB(database, onedrive_path)
+    This method uploads the database to the onedrive
+
+    inputs..
+        (database, onedrive_path):takes the database folder itself. takes a filepath to the one drive folder as a string used for testing.
+    returns..
+        The full filepath of the uploaded folder
+    """
+    """
+    getCloudDB(database_path)
+    This method gets the cloud database file.
+
+    inputs..
+        (database_path): takes a filepath as a string to the database used for testing.
+    returns..
+        The database file
+    """
+    """
+    downloadCloudDB(database, local_path)
+    This method checks to see if the two databases are diffrent if diffrent then downloads the database
+
+    inputs..
+        (database, local_path):takes the database folder itself. takes a filepath to the local database as a string used for testing.
+    returns..
+        The full filepath of the downloaded file
+        Database is already on current version. if the database does not need updated
+    """
+    """
+    generateHash(filepath)
+    This method generates the Hash of files contents
+
+    inputs..
+        (filepath): takes a filepath as a string.
+    returns..
+        The hash hexdigest upon completion
+    """
+    """
+    checksum(local_filePath, cloud_filePath)
+    This method runs the generate function on two files and checks the hashes
+
+    inputs..
+        (local_filePath, cloud_filePath): these are the paths to the local file path and cloud filepath.
+    returns..
+        True upon Matching Hashes 
+
+        False upon non matching hashes
+    """
