@@ -42,7 +42,46 @@ class config_manager_test(unittest.TestCase):
         contents = ConfigManager.get_folderPath(os.getcwd() + "\\resc\\test.json")
         self.assertEqual(contents, "C:\\some\\path")
         self.removeFile()
-        
+
+    def test_set_backup_path(self):
+        ConfigManager.set_folderPath("C:\\some\\path", file = os.getcwd() + "\\resc\\test.json")
+        with open(os.getcwd() + "\\resc\\test.json", "r") as testFile:
+            contents = json.load(testFile)
+            self.assertEqual(contents["folder_path"], "C:\\some\\path")
+        self.removeFile()
+
+    def test_get_backup_path(self):
+        ConfigManager.set_folderPath("C:\\some\\path", file = os.getcwd() + "\\resc\\test.json")
+        contents = ConfigManager.get_folderPath(os.getcwd() + "\\resc\\test.json")
+        self.assertEqual(contents, "C:\\some\\path")
+        self.removeFile()
+
+    def test_set_breakdown_path(self):
+        ConfigManager.set_folderPath("C:\\some\\path", file = os.getcwd() + "\\resc\\test.json")
+        with open(os.getcwd() + "\\resc\\test.json", "r") as testFile:
+            contents = json.load(testFile)
+            self.assertEqual(contents["folder_path"], "C:\\some\\path")
+        self.removeFile()
+
+    def test_get_breakdown_path(self):
+        ConfigManager.set_folderPath("C:\\some\\path", file = os.getcwd() + "\\resc\\test.json")
+        contents = ConfigManager.get_folderPath(os.getcwd() + "\\resc\\test.json")
+        self.assertEqual(contents, "C:\\some\\path")
+        self.removeFile()
+
+    def test_set_payroll_path(self):
+         ConfigManager.set_folderPath("C:\\some\\path", file = os.getcwd() + "\\resc\\test.json")
+         with open(os.getcwd() + "\\resc\\test.json", "r") as testFile:
+             contents = json.load(testFile)
+             self.assertEqual(contents["folder_path"], "C:\\some\\path")
+         self.removeFile()
+
+    def test_payroll_path(self):
+        ConfigManager.set_folderPath("C:\\some\\path", file = os.getcwd() + "\\resc\\test.json")
+        contents = ConfigManager.get_folderPath(os.getcwd() + "\\resc\\test.json")
+        self.assertEqual(contents, "C:\\some\\path")
+        self.removeFile()
+
     """
     Removes the test log json.
     """
