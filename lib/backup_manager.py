@@ -12,8 +12,9 @@ class backupManager:
     database_file = ""
     filename = ""
     """
+    getLocalDB(database_path)
     This method gets the local database file
-
+    
     inputs..
         (database_path): takes a filepath as a string to the database used for testing.
     returns..
@@ -30,6 +31,7 @@ class backupManager:
         return backupManager.database_file
 
     """
+    uploadLocalDB(database, onedrive_path)
     This method uploads the database to the onedrive
 
     inputs..
@@ -48,6 +50,7 @@ class backupManager:
         return endPath
 
     """
+    getCloudDB(database_path)
     This method gets the cloud database file.
 
     inputs..
@@ -66,6 +69,7 @@ class backupManager:
         return backupManager.database_file
 
     """
+    downloadCloudDB(database, local_path)
     This method checks to see if the two databases are diffrent if diffrent then downloads the database
 
     inputs..
@@ -91,6 +95,7 @@ class backupManager:
         return endPath
 
     """
+    generateHash(filepath)
     This method generates the Hash of files contents
 
     inputs..
@@ -109,6 +114,7 @@ class backupManager:
         return digest
 
     """
+    checksum(local_filePath, cloud_filePath)
     This method runs the generate function on two files and checks the hashes
 
     inputs..
