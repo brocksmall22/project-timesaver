@@ -65,10 +65,20 @@ This class contains all of the UI elements and front-end logic for the payroll p
 >
 > This is an ovveride method that is responsible for actually generating the page.
 
-> **Widget _gotToFileUpload(BuildContext context)**
+> **Widget _currentDatabaseContents()**
 >
-> This widget will take you to the file submission page. It is slated to be removed in
-> the next iteration.
+> This widget is a combination of the text describing the database and the
+  button to update the DB.
+
+> **Widget _databaseContentsText()**
+>
+>This widget is the text describing the database.
+
+> **Widget _databaseUpdateButton()**
+>
+> This widget is the button that updates the database.
+
+
 
 > **Widget _getDate(BuildContext context)**
 >
@@ -127,12 +137,24 @@ This class contains all of the UI elements and front-end logic for the payroll p
 >>    *response:* A list containing true followed by strings with information about
 >>      the reports.
 
-> **void _failedGenerationAlert(BuildContext context, List response)**
->  Draws an alert that informs the user about a failed attempt to make the
->  reports.
+>   **void _databaseUpdateTime() async**
 >
->  **inputs..**
->>    *response:* A list containing error messages strings
+>  This metod is responsible for getting the time of the last database update for
+  the db text.
+
+> **void _updateMostRecentRun() async**
+>
+>This method gets the most recent run for the DB text.
+
+> **void _updateTheDatabase() async**
+>
+>This method is responsible for triggering the database update. While the
+  process is running, it will display a loading screen. It displays an error
+  message if any errors arise.
+
+
+
+> **
 
 ## Documentation for file.dart
 
@@ -143,13 +165,21 @@ This class loads in all of the necessary elements.
 **class _FileUploaderState extends State<FileUploader>**
  
 This class contains the entire layout of the file submission page. It contains a
-button that will opena file chooser dialogue, a button to submit, and a ListView
+button that will open a file chooser dialogue, a button to submit, and a ListView
 of Cards that display which files have been selected for uploading. Each card
 has a delete button to remove it from the list of files to submit.
 
 > **Widget build(BuildContext context)**
 >
 > This is the override widget that contains all of the UI for this page.
+
+> **Widget _getLayout()**
+>
+>This widget determines which layout to use.
+>
+ >> returns..
+    case 1: The main layout of the page
+    case 2: A circular progress indicator when reports are being processed
 
 > **Widget _getFile(BuildContext context)**
 >
@@ -254,6 +284,59 @@ This is the class that contains everything we need for connecting to the Flask s
 >>
 >>   *case 2:* A list containing some errors
 
+> **static Future<String> getOneDriveFolder() async**
+>
+>Calls to the backend to get the current config folder value.
+>  returns..
+>    A string containing the current folder
+
+> **static Future<void> updateOneDriveFolder(String folderString) async**
+>
+>Requests that the backend update the config value for one drive
+> folder.
+>>  inputs..
+    folder String:
+     the new folder
+  returns..
+    case 1: An empty string indicating success
+    case 2: A string with an error
+
+> **static Future<String> getMostRecentDatabaseUpdate() async**
+>
+>Gets the most recent update to the DB from the backend.
+  returns..
+    The last update from the log
+
+> **static Future<int> getMostRecentRun() async**
+>
+>Gets the most recent run in the DB from the backend.
+  returns..
+    The most recent run
+
+> **static Future<void> triggerDatabaseUpdate() async**
+>
+>Triggers the backend to update the DB.
+
+> **static Future<List> getErrors() async**
+>
+>Gets the errors logged from the backend.
+  returns..
+    A list of map objects describing the errors.
+
+> **static Future<void> clearErrors() async**
+>
+>Triggers the backend to clear all of the errors logged.
+
+> **static Future<List> getGenerationMessages() async**
+>
+>Gets the success messages for generating the reports from the log.
+  returns..
+    A list of strings
+
+> **static Future<void> clearGenerationMessages() async**
+>
+>Triggers the backend to clear out the generation messages
+
 ## Documentation for the basic_widgets.dart file:
 
 **class BasicWidgets**
@@ -329,309 +412,391 @@ This class contains some methods that were frequently reused.
 > **inputs..** 
 >>   *page:* a class that contains a new page
 
+> **static void generalAlertBox**
+>
+>Draws an alert that informs the user of various conditions.
+  inputs..
+    response: A list containing message strings. Each string goes on a new line.
+    title: A string of the title for the alert box.
+
+> **static Future<bool> displayThenClearErrors(BuildContext context) async**
+>
+>This method gets all the errors from the log, displays them if there are any,
+  and returns if there are any.
+  returns..
+    case 1: true if there are errors
+    case 2: false if there are not errors
+
 ## Documentation from the  payroll.py file for the backend
 
 ### This is all for the looping through of the excel workbooks
 
-loadWorkBooks(fileList)
-loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
-This requires the whole file list
-It returns the retun array of the failed files or true if no files have failed
+> **loadWorkBooks(fileList)**
+>
+>loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
+>This requires the whole file list
+>It returns the retun array of the failed files or true if no files have failed
 
-readWorkBook(wb, filename)
-reads an indiual work book then prints the resulting values from in the range of cells A21->F55
-It requires the Workbook and the Filename
+> **readWorkBook(wb, filename)**
+>
+>reads an indiual work book then prints the resulting values from in the range of cells A21->F55
+>It requires the Workbook and the Filename
 
-getRange(wb)
-this function loops through the work book file
-it requires the work book file
+> **getRange(wb)**
+>
+>This function loops through the work book file
+>It requires the work book file
 
-getEmpinfo(conn, wb, date, rNum)
-This gets the Employee information from the wb file then it runs the employee and Responded SQL insertions
-It requires the SQL connection workbookFile and the Date and RunNumber from the getRunInfo
+> **checkForErrors(wb)**
+>
+>This method stops execution and raises an error if there is a detectable issue
+>    with a run sheet.
+>    *inputs..*
+>>
+>>       wb: the workbook of the current run sheet
 
-getRunInfo(conn, wb)
-This gets the Run info from the sheet and runs the SQL import statements
-it requires the SQL connection and the workbook file
-It retuns the Run Date and Number
+
+
+> **getEmpinfo(conn, wb, date, rNum)**
+>
+>This gets the Employee information from the wb file then it runs the employee and Responded SQL insertions
+>It requires the SQL connection workbookFile and the Date and RunNumber from the getRunInfo
+
+> **getRunInfo(conn, wb)**
+>
+>This gets the Run info from the sheet and runs the SQL import statements
+>it requires the SQL connection and the workbook file
+>It retuns the Run Date and Number
+
+ > **getFullCover(sheet, shift)**
+ >This function is responsible for determining if a run was fully
+ >   covered by its respective shift.
+ >   *inputs..*
+ >
+ >>       sheet: the current run sheet
+ >>       shift: the shift of the run
+ >   *returns..*
+ >
+ >>       case 1: interger 1 if the run is fully covered
+ >>       case 2: interger 0 if the run is not fully covered
 
 ### This is for the SQL insertions and updates for the backend
 
 #### This contains all of the SQL functions related to Runs
 
-```
--------------------------------------------------------------------------------------------------------
-createRun(conn, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift)
-this is the general insertion of runs into the data base.
-it requires the runNumber, Date, StartTime, EndTime, Runtime,Bool for station covered, bool for Medrun, and the connextion to the sql database
--------------------------------------------------------------------------------------------------------
-updateRun(conn, num, date, startTime, endTime, runTime)
-this updates the run given that it has alredy been insterted into the database and has differing information then therun alredy has
-it requires the runNumber, Date, StartTime, EndTime, Runtime,Bool for station covered, bool for Medrun, and the connextion to the sql database
--------------------------------------------------------------------------------------------------------
-runNeedsUpdated(conn, num, date)
-this checks the runs alredy in the database against the given information to see if the run needs to be updatded
-it requires the Run number, date, and connection to the sql database
-```
+
+
+> **createRun(conn, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift)**
+>
+>this is the general insertion of runs into the data base.
+>it requires the runNumber, Date, StartTime, EndTime, Runtime,Bool for station covered, bool for Medrun, and the connextion to the sql database
+
+> **updateRun(conn, num, date, startTime, endTime, runTime)**
+>
+>this updates the run given that it has alredy been insterted into the database and has differing information then therun alredy has
+>it requires the runNumber, Date, StartTime, EndTime, Runtime,Bool for station covered, bool for Medrun, and the connextion to the sql database
+
+> **runNeedsUpdated(conn, num, date)**
+>
+>this checks the runs alredy in the database against the given information to see if the run needs to be updatded
+>it requires the Run number, date, and connection to the sql database
+
 
 #### This Contains all of the SQL functions related to the Responded tabel
 
-```
--------------------------------------------------------------------------------------------------------
-createResponded(conn, empNumber, payRate, date, num)
-this is the general insertion for the Responded Table
-it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
--------------------------------------------------------------------------------------------------------
-respondedNeedsUpdated(conn, empNumber, date, rNum)
-this is to check the responded table against the given information to see if the responded table needs to be updated 
-it requires the SQL Connection as well as Employee number, date of the run, and the run number
--------------------------------------------------------------------------------------------------------
-updateResponded(conn, empNumber, payRate, date, rNum)
-this is to update the responded table
-it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
-```
+
+> **createResponded(conn, empNumber, payRate, date, num)**
+>
+>this is the general insertion for the Responded Table
+>it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
+
+> **respondedNeedsUpdated(conn, empNumber, date, rNum)**
+>
+>this is to check the responded table against the given information to see if the responded table needs to be updated 
+>it requires the SQL Connection as well as Employee number, date of the run, and the run number
+
+> **updateResponded(conn, empNumber, payRate, date, rNum)**
+>this is to update the responded table
+>it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
+
 
 #### This Contains all of the SQL functions related to the Employee tabel
 
-```
--------------------------------------------------------------------------------------------------------
-createEmployee(conn, name, empNumber)
-This is the insertion for the Employee table
-It requires the SQL connection as well as the name, and employee number
--------------------------------------------------------------------------------------------------------
-empNeedsUpdated(conn, empNumber)
-this checks the Employee table against the given information to see if it needs to be updated
-it rquires the SQL connection as well as the Employee number
--------------------------------------------------------------------------------------------------------
-updateEmp(conn, name ,empNumber)
-this updates the employee table given the new information
-it requires the SQL connection as well as the Employee Name and Number
-```
- The documentation for all .py files is provided below.
-
-1. api.py
-2. generate_report.py
-
-## api.py
-This function is for the UI to determine if the server is running. If the server
-sees any call to this address, it will return a signal signifying the sercer is alive.
-If the UI recieves a socket error, that means the server is not running and needs
-to be started.
-
-inputs..
-    (request) Any request on this address
-returns.. 
-    case 1: A Json object signifying the server is alive
-
-def verify_awake():
 
 
-This is the function responsible for accepting a request from the UI that
-contains a list of file paths and forwarding that to the backend to insert
-the information into the database.
+> **createEmployee(conn, name, empNumber)**
+>
+>This is the insertion for the Employee table
+>It requires the SQL connection as well as the name, and employee number
 
-inputs..
-    (request): A post request containing a Json array of strings
-returns..
-    case 1: A Json array containing true (in the case of sucessful inserts)
-    case 2: A list of files that failed to be insterted
+> **empNeedsUpdated(conn, empNumber)**
+>
+>this checks the Employee table against the given information to see if it needs to be updated
+>it rquires the SQL connection as well as the Employee number
 
-def submit_reports():
-
-
-This is the function responsible for accepting a request from the UI
-to tell the backend the user wishes to generate the pay reports.
-
-inputs..
-    (request): A Json object containing two key value pairs
-        startDate and endDate that express the start and end of the
-        pay period as strings
-returns.. 
-    case 1: A Json array that either contains a True value
-        and several strings
-    case 2: A Json array that contains one or more strings in
-        the event that the files could not be generated
-
-def generate_reports():
+> **updateEmp(conn, name ,empNumber)**
+>
+>this updates the employee table given the new information
+>it requires the SQL connection as well as the Employee Name and Number
 
 
-## generate_report.py
-This function is responsible for being called from the API, running all the
-    generation steps, and returning a confirmation or fail message.
-    inputs..
-        start_date: the first date as a string
-        end_date: the last date as a string
-    returns..
-        case 1: a list containing True in the first position followed be some
-            strings with basic details about the report
-        case 2: an error message to be displayed to the user
+## Documentation for the api.py file:
 
-def generate_report(start_date, end_date):
-
-
-This method gets the number of runs for a given period.
-    inputs..
-        conn: the connection to the SQL
-        start_date: the first date as a string
-        end_date: the last date as a string
-    returns..
-        case 1: the number of runs
-
-def get_number_of_runs(conn, start_date, end_date):
+> **def verify_awake():**
+>
+>This function is for the UI to determine if the server is running. If the server
+>sees any call to this address, it will return a signal signifying the sercer is alive.
+>If the UI recieves a socket error, that means the server is not running and needs
+>to be started.
+>
+> *inputs..*
+>>    (request) Any request on this address
+> *returns..* 
+>>    case 1: A Json object signifying the server is alive
 
 
-This method gets the lowest run number for a given period.
-    inputs..
-        conn: the connection to the SQL
-        start_date: the first date as a string
-        end_date: the last date as a string
-    returns..
-        case 1: the first run
-
-def get_first_run_number(conn, start_date, end_date):
-
-
-This method gets the highest run number for a given period.
-    inputs..
-        conn: the connection to the SQL
-        start_date: the first date as a string
-        end_date: the last date as a string
-    returns..
-        case 1: the last run
-
-def get_last_run_number(conn, start_date, end_date):
+> **def submit_reports():**
+>
+>This is the function responsible for accepting a request from the UI that
+>contains a list of file paths and forwarding that to the backend to insert
+>the information into the database.
+>
+> *inputs..*
+>>    (request): A post request containing a Json array of strings
+> *returns..*
+>>    case 1: A Json array containing true (in the case of sucessful inserts)
+>>    case 2: A list of files that failed to be insterted
 
 
- This method actually fills and saves a copy of the master copy of the tally sheet.
-    inputs..
-        conn: the connection to the SQL
-        wb: the xlsx workbook we are working with
-        start_date: the first date as a string
-        end_date: the last date as a string
+> **def generate_reports():**
+>
+>This is the function responsible for accepting a request from the UI
+>to tell the backend the user wishes to generate the pay reports.
+>
+> *inputs..*
+>>    (request): A Json object containing two key value pairs
+>>        startDate and endDate that express the start and end of the
+>>        pay period as strings
+> *returns..* 
+>>    case 1: A Json array that either contains a True value
+>>        and several strings
+>>    case 2: A Json array that contains one or more strings in
+>>        the event that the files could not be generated
 
-def fill_sheet(conn, wb, start_date, end_date):
+## Documentation for generate_report.py file:
 
-
-This method gets the number of runs a specific person
-    responded to in a given period.
-    inputs..
-        conn: the connection to the SQL
-        city_number: the city assigned employee ID
-        start_date: the first date as a string
-        end_date: the last date as a string
-    returns..
-        case 1: the number of runs in a given period
-
-def get_count(conn, city_number, start_date, end_date):
-
-
-This method gets the number of hours a specific person
-    worked on runs in a given period.
-    inputs..
-        conn: the connection to the SQL
-        city_number: the city assigned employee ID
-        start_date: the first date as a string
-        end_date: the last date as a string
-    returns..
-        case 1: the number of hours a given employee worked
-
-def get_hours(conn, city_number, start_date, end_date):
+> **def generate_report(start_date, end_date):**
+>
+>This function is responsible for being called from the API, running all the
+>    generation steps, and returning a confirmation or fail message.
+>    *inputs..*
+>>        start_date: the first date as a string
+>>        end_date: the last date as a string
+>    *returns..*
+>>        case 1: a list containing True in the first position followed be some
+>>            strings with basic details about the report
+>>        case 2: an error message to be displayed to the user
 
 
-This method updates the Employee table to ensure no employees have a NULL
-    value in the city_number column. If they do they will not be paid.
-    inputs..
-        conn: the connection to the SQL
-        sheet: the sheet for the tally xlsx
-
-def update_employee_nulls(conn, sheet):
-
-
-This method actually inserts the city IDs for update_employee_nulls
-    inputs..
-        conn: the connection to the SQL
-        nullEmps: a list of employee rows that have null city_number values 
-        sheet: the sheet for the tally xlsx
-
-def insert_city_ids(conn, nullEmps, sheet):
+> **def get_number_of_runs(conn, start_date, end_date):**
+>
+>This method gets the number of runs for a given period.
+>    *inputs..*
+>>        conn: the connection to the SQL
+>>        start_date: the first date as a string
+>>        end_date: the last date as a string
+>    *returns..*
+>>        case 1: the number of runs
 
 
-This method gets the final row that we are concerned with editing.
-    inputs..
-        sheet: the sheet for the tally xlsx
+> **def get_first_run_number(conn, start_date, end_date):**
+>This method gets the lowest run number for a given period.
+>    inputs..
+>>        conn: the connection to the SQL
+>>        start_date: the first date as a string
+>>        end_date: the last date as a string
+>    *returns..*
+>>        case 1: the first run
 
-def getRange(sheet):
+
+> **def get_last_run_number(conn, start_date, end_date):**
+>
+>This method gets the highest run number for a given period.
+>    *inputs..*
+>>        conn: the connection to the SQL
+>>        start_date: the first date as a string
+>>        end_date: the last date as a string
+>    *returns..*
+>>        case 1: the last run
 
 
-This method will take a name from the run reports and compare it to
-    a name in the tally xlsx in order to determine if they are the same
-    person.
-    inputs..
-        name: the name from the run report/responded table
-        fname: the first name from the tally
-        lname: the last name from the tally
-    returns..
-        case 1: True if they are the same person
-        case 2: False if they aren't the same person
+> **def fill_sheet(conn, wb, start_date, end_date):**
+>
+> This method actually fills and saves a copy of the master copy of the tally sheet.
+>    *inputs..*
+>>        conn: the connection to the SQL
+>>        wb: the xlsx workbook we are working with
+>>        start_date: the first date as a string
+ >>       end_date: the last date as a string
 
-def match_names(name, fname, lname):
+
+> **def get_count(conn, city_number, start_date, end_date):**
+>
+>This method gets the number of runs a specific person
+>    responded to in a given period.
+>    *inputs..*
+>>        conn: the connection to the SQL
+>>        city_number: the city assigned employee ID
+>>        start_date: the first date as a string
+>>        end_date: the last date as a string
+>    *returns..*
+>>        case 1: the number of runs in a given period
+
+
+> **def get_hours(conn, city_number, start_date, end_date):**
+>
+>This method gets the number of hours a specific person
+>    worked on runs in a given period.
+>    *inputs..*
+>>        conn: the connection to the SQL
+>>        city_number: the city assigned employee ID
+>>        start_date: the first date as a string
+>>        end_date: the last date as a string
+>    *returns..*
+>>        case 1: the number of hours a given employee worked
+
+
+> **def update_employee_nulls(conn, sheet):**
+>
+>This method updates the Employee table to ensure no employees have a NULL
+>    value in the city_number column. If they do they will not be paid.
+>    *inputs..*
+>>        conn: the connection to the SQL
+>>        sheet: the sheet for the tally xlsx
+
+
+> **def insert_city_ids(conn, nullEmps, sheet):**
+>
+>This method actually inserts the city IDs for update_employee_nulls
+>    *inputs..*
+>>        conn: the connection to the SQL
+>>        nullEmps: a list of employee rows that have null city_number values 
+>>        sheet: the sheet for the tally xlsx
+
+> **def getRange(sheet):**
+>
+>This method gets the final row that we are concerned with editing.
+>    *inputs..*
+>>        sheet: the sheet for the tally xlsx
+
+
+> **def match_names(name, fname, lname):**
+>
+>This method will take a name from the run reports and compare it to
+>    a name in the tally xlsx in order to determine if they are the same
+>    person.
+>    *inputs..*
+>>        name: the name from the run report/responded table
+>>        fname: the first name from the tally
+>>        lname: the last name from the tally
+>    *returns..*
+>>        case 1: True if they are the same person
+>>        case 2: False if they aren't the same person
+
+
+## Documentation for logger.py file:
+> **createLogIfNotExists(file = "")**
+>
+>Detect if log file is present
+
+> **def getLastUpdate(file = "")**
+>
+>Checks if the config file has been created, then returns the last update
+
+> **def setLastUpdate(newUpdate, file = "")**
+>
+>Updates the last update value
+
+> **getErrors(file = "")**
+>
+>Gets the logged errors
+
+> **addNewError(type: str, datetime: datetime, message: str, file = "")**
+>
+>Adds a new error to the log
+
+> **clearErrors(file = "")**
+>
+>Removes all logged errors
+
+> **getGenerateMessages(file = "")**
+>
+>Gets the generation messages
+
+> **addNewGenerateMessage(newMessage, file = "")**
+>
+>Adds a new generation message
+
+> **clearGenerateMessages(file = "")**
+>
+>Resets the generation messages
 
 ## Documentation for Backup_manager.py
 
-    """
-    getLocalDB(database_path)
-    This method gets the local database file
     
-    inputs..
-        (database_path): takes a filepath as a string to the database used for testing.
-    returns..
-        The database file
-    """
-    """
-    uploadLocalDB(database, onedrive_path)
-    This method uploads the database to the onedrive
+>    **getLocalDB(database_path)**
+>    This method gets the local database file
+>    
+>    *inputs..*
+>>        (database_path): takes a filepath as a string to the database used for testing.
+>    *returns..*
+>>        The database file
+   
+    
+>    **uploadLocalDB(database, onedrive_path)**
+>    This method uploads the database to the onedrive
+>
+>    *inputs..*
+>>        (database, onedrive_path):takes the database folder itself. takes a filepath to the one drive folder as a string used for testing.
+>    *returns..*
+>>        The full filepath of the uploaded folder
+    
 
-    inputs..
-        (database, onedrive_path):takes the database folder itself. takes a filepath to the one drive folder as a string used for testing.
-    returns..
-        The full filepath of the uploaded folder
-    """
-    """
-    getCloudDB(database_path)
-    This method gets the cloud database file.
+>    *getCloudDB(database_path)*
+>    This method gets the cloud database file.
+>
+>    *inputs..*
+>>        (database_path): takes a filepath as a string to the database used for testing.
+>    *returns..*
+>>        The database file
 
-    inputs..
-        (database_path): takes a filepath as a string to the database used for testing.
-    returns..
-        The database file
-    """
-    """
-    downloadCloudDB(database, local_path)
-    This method checks to see if the two databases are diffrent if diffrent then downloads the database
 
-    inputs..
-        (database, local_path):takes the database folder itself. takes a filepath to the local database as a string used for testing.
-    returns..
-        The full filepath of the downloaded file
-        Database is already on current version. if the database does not need updated
-    """
-    """
-    generateHash(filepath)
-    This method generates the Hash of files contents
+>    **downloadCloudDB(database, local_path)**
+>    This method checks to see if the two databases are diffrent if diffrent then downloads the database
+>
+>    *inputs..*
+>>        (database, local_path):takes the database folder itself. takes a filepath to the local database as a string used for testing.
+>    *returns..*
+>>        The full filepath of the downloaded file
+>>        Database is already on current version. if the database does not need updated
 
-    inputs..
-        (filepath): takes a filepath as a string.
-    returns..
-        The hash hexdigest upon completion
-    """
-    """
-    checksum(local_filePath, cloud_filePath)
-    This method runs the generate function on two files and checks the hashes
 
-    inputs..
-        (local_filePath, cloud_filePath): these are the paths to the local file path and cloud filepath.
-    returns..
-        True upon Matching Hashes 
+>    **generateHash(filepath)**
+>    This method generates the Hash of files contents
+>
+>    *inputs..*
+>>        (filepath): takes a filepath as a string.
+>    *returns..*
+>        The hash hexdigest upon completion
 
-        False upon non matching hashes
-    """
+
+>    **checksum(local_filePath, cloud_filePath)**
+>    This method runs the generate function on two files and checks the hashes
+>
+>    *inputs..*
+>>        (local_filePath, cloud_filePath): these are the paths to the local file path and cloud filepath.
+>    *returns..*
+>>        True upon Matching Hashes 
+>>
+>>        False upon non matching hashes
+>>
