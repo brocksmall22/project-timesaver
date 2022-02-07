@@ -15,34 +15,53 @@ class payroll:
     Year = datetime.now().strftime("%Y") + "-1-1"
 
 
-    def loadWorkBooks(fileList = [], test_log_location = ""):
+    def loadWorkBooks(fileList = [],
+                      test_log_location = "",
+                      database = os.getenv('APPDATA') + "\\project-time-saver\\database.db") -> bool:
         """
-        loadWorkBooks(fileList)
-        loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
-        This requires the whole file list
+        Loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
 
         TODO: Fix error handling here. if SQL statement fails, causes error that looks like an I/O error
-        TODO: Add error for when no folder is set
+
+        inputs..
+            fileList (optional): a list of files you wish to process; optional as in production
+                the program will automatically retrieve the needed files to update
+            test_log_location (optional): a URI for the logfile location; optional as this is
+                reserved for testing purposes
+        returns..
+            True if all files were ingested without error
+            False if there were any errors
         """
+        success = True
         payroll.reset()
-        Logger.setLastUpdate(datetime.now().strftime("%Y-%m-%d %H:%M"), file  = test_log_location)
+        Logger.setLastUpdate(datetime.now().strftime("%Y-%m-%d %H:%M"), 
+                            file  = test_log_location)
         if fileList == []:
             fileList = oneDriveConnect.getFiles()
+            if fileList == None:
+                Logger.addNewError("Configuration error", datetime.now(), 
+                                    "Misconfiguration: no path is set for folder containing proofread run reports.", 
+                                    file = test_log_location)
         for file in fileList:
             try:
-                with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
+                with sqlFunctions(database) as sqlRunner:
                     Timestamp = oneDriveConnect.getLastModifiedDate(file)
                     fileRunNumber = oneDriveConnect.extensionStripper(file)
-                    if sqlRunner.newRunNeedsUpdated(fileRunNumber, Timestamp, payroll.Year) or not sqlRunner.checkIfExists(fileRunNumber, payroll.Year):
+                    if sqlRunner.newRunNeedsUpdated(fileRunNumber, Timestamp, payroll.Year) \
+                                or not sqlRunner.checkIfExists(fileRunNumber, payroll.Year):
                         wb = load_workbook(file)
-                        payroll.readWorkBook(wb, file, test_log_location)
+                        payroll.readWorkBook(wb, file, test_log_location, database)
             except Exception as e:
                 print(e)
                 traceback.print_exc()
-                Logger.addNewError("I/O error", datetime.now(), f"File {file} has error: Critical error, file cannot be read!", file = test_log_location)
+                Logger.addNewError("I/O error", datetime.now(), 
+                                    f"File {file} has error: Critical error, file cannot be read!", 
+                                    file = test_log_location)
+                success = False
+        return success
 
 
-    def readWorkBook(wb, filename, test_log_location):
+    def readWorkBook(wb, filename, test_log_location, database = os.getenv('APPDATA') + "\\project-time-saver\\database.db"):
         """
         readWorkBook(wb, filename)
         reads an indiual work book then prints the resulting values from in the range of cells A21->F55
@@ -50,7 +69,7 @@ class payroll:
         """
         Timestamp = oneDriveConnect.getLastModifiedDate(filename)
         try:
-            with sqlFunctions(os.getenv('APPDATA') + "\\project-time-saver\\database.db") as sqlRunner:
+            with sqlFunctions(database) as sqlRunner:
                 payroll.getRange(wb)
                 if not payroll.checkForErrors(wb):
                     date, runNumber, needsUpdated= payroll.getRunInfo(
@@ -149,7 +168,6 @@ class payroll:
                 elif i1[5].value is not None:
                     type_of_response = "P"
                 subhours = int(i1[14].value) if i1[14].value is not None else 0
-                print(f"Responder: {Name}; number: {empNumber}; type: {type_of_response}; full-time: {full_time}")
                 if sqlRunner.empNeedsUpdated(empNumber):
                     sqlRunner.updateEmp(Name, empNumber)
                 else:
@@ -184,11 +202,6 @@ class payroll:
         medrun = 1 if sheet == wb["MED RUN"] else 0
         fullCover = payroll.getFullCover(sheet, shift)
         paid = payroll.isPaid(sheet, fsc, medrun)
-        print("\n\n\n\n")
-        print(f"Processing run: {runNumber} from date {date}")
-        print(f"Medrun: {medrun}; FSC: {fsc}; runTime: {runTime}")
-        print(f"Start: {startTime}; end: {endTime}; station covered: {stationCovered}")
-        print(f"shift: {shift}; fully covered: {fullCover}, paid: {paid}")
         if sqlRunner.newRunNeedsUpdated(runNumber, Timestamp, payroll.Year):
             sqlRunner.updateRun(runNumber, date, startTime, endTime, runTime, 
                                 stationCovered, medrun, shift, Timestamp, 
@@ -221,7 +234,7 @@ class payroll:
                 sheet[cell].value == None else True
 
 
-    def isPaid(sheet, fsc, medrun):
+    def isPaid(sheet, fsc: int, medrun: int) -> int:
         """
         This method is for determining if a run is paid or not. Some FSC runs are paid,
         others are not, so this method sorts them out.
