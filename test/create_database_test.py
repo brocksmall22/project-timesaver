@@ -51,7 +51,7 @@ class create_database_test(unittest.TestCase):
     Ensures that the Run table has all of its columns.
     """
     def test_run_columns(self):
-        expected_columns = ['number', 'date', 'startTime', 'stopTime', 'runTime', 'Covered', 'Medrun', 'shift', 'full_coverage', 'timeStamp']
+        expected_columns = ['number', 'date', 'startTime', 'stopTime', 'runTime', 'fsc', 'Covered', 'Medrun', 'shift', 'full_coverage', 'paidRun', 'timeStamp']
         real_columns = []
         cur = create_database_test.conn.cursor()
         columns = cur.execute("""PRAGMA table_info(Run);""").fetchall()
@@ -64,7 +64,7 @@ class create_database_test(unittest.TestCase):
     Ensures that the Responded table has all of its columns.
     """
     def test_responded_columns(self):
-        expected_columns = ['empNumber', 'runNumber', 'date', 'payRate', 'type_of_response', 'full_time']
+        expected_columns = ['empNumber', 'runNumber', 'date', 'payRate', 'type_of_response', 'full_time', 'subhours']
         real_columns = []
         cur = create_database_test.conn.cursor()
         columns = cur.execute("""PRAGMA table_info(Responded);""").fetchall()
