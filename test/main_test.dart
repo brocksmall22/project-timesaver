@@ -10,12 +10,6 @@ void main() {
     expect(elevatedButton, findsOneWidget);
   });
 
-  testWidgets("Test for submit button", (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
-    var elevatedButton = find.widgetWithText(ElevatedButton, "Upload reports");
-    expect(elevatedButton, findsOneWidget);
-  });
-
   testWidgets("Test NIFRS button", (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
     var elevatedButton = find.widgetWithText(ElevatedButton, "Generate NIFRS");
