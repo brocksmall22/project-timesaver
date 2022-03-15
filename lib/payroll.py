@@ -11,7 +11,6 @@ import traceback
 
 class payroll:
 
-    endRange = 0
     Year = datetime.now().strftime("%Y") + "-1-1"
 
 
@@ -33,7 +32,6 @@ class payroll:
             False if there were any errors
         """
         success = True
-        payroll.reset()
         Logger.setLastUpdate(datetime.now().strftime("%Y-%m-%d %H:%M"), 
                             file  = test_log_location)
         if fileList == []:
@@ -82,32 +80,6 @@ class payroll:
             Logger.addNewError("report format error", datetime.now(), f"File {filename} has error: {e}", file = test_log_location)
 
 
-    def reset():
-        """
-        Resets the global variables for the next run of this class.
-        """
-        payroll.endRange = 0
-
-
-    def getRange(wb):
-        """
-        This function loops through the work book file to determine
-        the row containing the last employee.
-
-        inputs..
-            wb: the workbook being processed
-        """
-        end = False
-        sheet = wb.active
-        if payroll.endRange == 0:
-            payroll.endRange = 21
-            while (not end):
-                if sheet[f"L{payroll.endRange + 1}"].value != "=":
-                    payroll.endRange = payroll.endRange + 1
-                else:
-                    end = True
-
-
     def getEmpinfo(sqlRunner, reportReader, date, runNumber):
         """
         This gets the Employee information from the run report then
@@ -145,18 +117,6 @@ class payroll:
         returns:
             case 1: the run, date, and run number of the workbook
         """
-        sheet = wb.active
-        date = sheet["D3"].value.strftime("%Y-%m-%d")
-        runNumber = sheet["B3"].value
-        runTime = sheet["B8"].value
-        startTime = sheet["B5"].value
-        endTime = sheet["L5"].value
-        shift = sheet["F3"].value
-        fsc = 1 if payroll.checkForFill(sheet, "Q6") else 0
-        stationCovered = 1 if payroll.checkForFill(sheet, "F6") else 0
-        medrun = 1 if sheet == wb["MED RUN"] else 0
-        fullCover = payroll.getFullCover(sheet, shift)
-        paid = payroll.isPaid(sheet, fsc, medrun)
         if sqlRunner.newRunNeedsUpdated(runNumber, Timestamp, payroll.Year):
             sqlRunner.updateRun(runNumber, date, startTime, endTime, runTime, 
                                 stationCovered, medrun, shift, Timestamp, 
@@ -168,73 +128,3 @@ class payroll:
                                 fullCover, fsc, paid)
             return date, runNumber, True
         return date, runNumber, False
-
-
-    def checkForFill(sheet, cell: str) -> bool:
-        """
-        This method is to check if the given cell is filled or not.
-        Checks for color, legacy index, and any text/number value.
-
-        inputs..
-            sheet: the sheet we are checking
-        outputs..
-            case 1: False if it is not filled
-            case 2: True if it is
-        """
-        color = sheet[cell].fill.start_color.index
-        if type(color) == int:
-            return False if color == 1 else True
-        else:
-            return False if color == "00000000" and\
-                sheet[cell].value == None else True
-
-
-    def isPaid(sheet, fsc: int, medrun: int) -> int:
-        """
-        This method is for determining if a run is paid or not. Some FSC runs are paid,
-        others are not, so this method sorts them out.
-
-        inputs..
-            sheet: the sheet we are checking
-            fsc: the bit that determines if it is a FSC run
-            medrun: the bit that determines if it is a medrun
-        outputs..
-            case 1: 0 if it is not paid
-            case 2: 1 if it is paid
-        """
-        if medrun == 1:
-            return 0
-        if fsc == 1 and sheet["D5"].value != None:
-            return 1
-        if fsc == 1:
-            for i1 in sheet[f"E21:G{payroll.endRange}"]:
-                if i1[0] not in [None, ""] or i1[1] not in [None, ""]:
-                    return 0
-            return 1
-        if fsc == 0 and medrun == 0:
-            return 1
-
-
-    def getFullCover(sheet, shift) -> int:
-        """
-        This function is responsible for determining if a run was fully
-        covered by its respective shift.
-
-        inputs..
-            sheet: the current run sheet
-            shift: the shift of the run
-        returns..
-            case 1: interger 1 if the run is fully covered
-            case 2: interger 0 if the run is not fully covered
-        """
-        fullCover = False
-        lastShift = None
-        for i in range(21, payroll.endRange + 1):
-            if sheet[f"L{i}"].value is not None:
-                lastShift = sheet[f"L{i}"].value
-            if lastShift == shift and (sheet[f"E{i}"].value is not None or sheet[f"F{i}"].value is not None):
-                fullCover = True
-            elif lastShift == shift and sheet[f"A{i}"].value not in [000, 0000, "000", "0000"]:
-                fullCover = False
-                break
-        return int(fullCover)

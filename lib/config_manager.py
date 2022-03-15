@@ -3,6 +3,75 @@ import os
 
 
 class ConfigManager:
+    """
+    The config file contains several keys and should look like the following:
+    {
+        "folder_path": "C:\path\to\oneDrive\folder",
+        "backup_path": "C:\path\to\the\backup\folder\in\the\oneDrive",
+        "blank_payroll_path": "C:\path/to/the/master/copy/of/payroll",
+        "blank_breakdown_path": "C:\path/to/the/master/copy/of/breakdown",
+        "cell_locations": [
+            {
+                "start_date": "",
+                "end_date": "",
+                "incident_number": "",
+                "date": "",
+                "shift": "",
+                "OIC": "",
+                "SO": "",
+                "filer": "",
+                "reported": "",
+                "paged": "",
+                "1076": "",
+                "1023": "",
+                "UC": "",
+                "1009": "",
+                "station_covered": "",
+                "weekend": "",
+                "working_hours": "",
+                "off_hours": "",
+                "shift_covered": "",
+                "run_time": "",
+                "start_row": "",
+                "apparatus_cells": {
+                    "app_name": "app_cell",
+                    "other_app_name": "other_app_cell",
+                    .
+                    .
+                    .
+                },
+                "mutual_aid": {
+                    "man_given": {
+                        "township": "cell",
+                        "township2": "cell2"'
+                        .
+                        .
+                        .
+                    },
+                    "app_given": {},
+                    "man_recv": {},
+                    "app_recv": {}
+                },
+                "run_type": {
+                    "type1", "cell1",
+                    "type2":, "cell2",
+                    .
+                    .
+                    .
+                },
+                "townshop": {
+                    "city": {
+                        "townshipname": "cell",
+                        .
+                        .
+                        .
+                    },
+                    "county": {}
+                }
+            }
+        ]
+    }
+    """
     configFile = os.getenv("APPDATA") + "\\project-time-saver\\config.json"
     defaultConfig = {"folder_path": "",
                     "Backup_path": "",

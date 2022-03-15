@@ -50,8 +50,6 @@ class report_reader:
 
     def checkForErrors(self):
         """
-        TODO: Revisit this to change all of the sheet cell direct locations with
-            locations from the configuration.
         This method stops execution and raises an error if there is a detectable issue
         with a run sheet.
         """
@@ -64,15 +62,15 @@ class report_reader:
                     raise Exception("Employee name cannot be empty!")
                 if sheet["D3"].value in [None, '']:
                     raise Exception("Date cannot be empty!")
-        if sheet["B3"].value in [None, '']:
+        if sheet[self.cell["incident_number"]].value in [None, '']:
             raise Exception("Run number cannot be empty!")
-        if sheet["B8"].value in [None, '']:
+        if sheet[self.cell["run_time"]].value in [None, '']:
             raise Exception("Run time cannot be empty!")
-        if sheet["B5"].value in [None, '']:
+        if sheet[self.cell["reported"]].value in [None, '']:
             raise Exception("Reported cannot be empty!")
-        if sheet["L5"].value in [None, '']:
+        if sheet[self.cell["1008"]].value in [None, '']:
             raise Exception("10-8 cannot be empty!")
-        if sheet["F3"].value in [None, '']:
+        if sheet[self.cell["shift"]].value in [None, '']:
             raise Exception("Shift cannot be empty!")
 
 
@@ -126,3 +124,112 @@ class report_reader:
             returnList.append({"number": empNumber, "payRate": payRate, "fullTime": full_time,
                     "name": Name, "responseType": type_of_response, "subhours": subhours})
         return returnList
+
+
+    def getRunInfo(self):
+        """
+        TODO: Rewrite this DOC
+        TODO: Finish making this version agnostic
+        This gets the Run info from the sheet and runs the SQL import statements.
+
+        inputs..
+            sqlRunner: the sql class object
+            wb: the workbook we are processing
+        returns:
+            case 1: the run, date, and run number of the workbook
+        """
+        sheet = self.run.active
+        date = sheet[self.cell["date"]].value.strftime("%Y-%m-%d")
+        runNumber = sheet[self.cell["incident_number"]].value
+        runTime = sheet[self.cell["run_time"]].value
+        startTime = sheet[self.cell["reported"]].value
+        endTime = sheet[self.cell["1008"]].value
+        shift = sheet[self.cell["shift"]].value
+        fsc = 1 if self.checkForFill(sheet, self.cell["run_type"]["FSC"]) else 0
+        stationCovered = 1 if self.checkForFill(sheet, self.cell["station_covered"]) else 0
+        medrun = 1 if sheet == self.run["MED RUN"] else 0
+        # TODO: Make a check here to see if there is a full cover box
+        fullCover = self.getFullCover(sheet, shift)
+        paid = self.isPaid(sheet, fsc, medrun)
+        return {"runNumber": runNumber, "date": date, "startTime": startTime, "endTime": endTime, "runTime": runTime, "stationCovered": stationCovered, "": }
+        if sqlRunner.newRunNeedsUpdated(runNumber, Timestamp, payroll.Year):
+            sqlRunner.updateRun(runNumber, date, startTime, endTime, runTime, 
+                                stationCovered, medrun, shift, Timestamp, 
+                                fullCover, fsc, paid)
+            return date, runNumber, True
+        elif not sqlRunner.checkIfExists(runNumber, date):
+            sqlRunner.createRun(runNumber, date, startTime, endTime, runTime, 
+                                stationCovered, medrun, shift, Timestamp, 
+                                fullCover, fsc, paid)
+            return date, runNumber, True
+        return date, runNumber, False
+
+
+    def checkForFill(sheet, cell: str) -> bool:
+        """
+        This method is to check if the given cell is filled or not.
+        Checks for color, legacy index, and any text/number value.
+
+        inputs..
+            sheet: the sheet we are checking
+        outputs..
+            case 1: False if it is not filled
+            case 2: True if it is
+        """
+        color = sheet[cell].fill.start_color.index
+        if type(color) == int:
+            return False if color == 1 else True
+        else:
+            return False if color == "00000000" and\
+                sheet[cell].value == None else True
+
+
+    def getFullCover(sheet, shift) -> int:
+        """
+        This function is responsible for determining if a run was fully
+        covered by its respective shift.
+
+        inputs..
+            sheet: the current run sheet
+            shift: the shift of the run
+        returns..
+            case 1: interger 1 if the run is fully covered
+            case 2: interger 0 if the run is not fully covered
+        """
+        fullCover = False
+        lastShift = None
+        for i in range(21, payroll.endRange + 1):
+            if sheet[f"L{i}"].value is not None:
+                lastShift = sheet[f"L{i}"].value
+            if lastShift == shift and (sheet[f"E{i}"].value is not None or sheet[f"F{i}"].value is not None):
+                fullCover = True
+            elif lastShift == shift and sheet[f"A{i}"].value not in [000, 0000, "000", "0000"]:
+                fullCover = False
+                break
+        return int(fullCover)
+
+
+    def isPaid(sheet, fsc: int, medrun: int) -> int:
+        """
+        This method is for determining if a run is paid or not. Some FSC runs are paid,
+        others are not, so this method sorts them out.
+
+        inputs..
+            sheet: the sheet we are checking
+            fsc: the bit that determines if it is a FSC run
+            medrun: the bit that determines if it is a medrun
+        outputs..
+            case 1: 0 if it is not paid
+            case 2: 1 if it is paid
+        """
+        if medrun == 1:
+            return 0
+        if fsc == 1 and sheet["D5"].value != None:
+            return 1
+        if fsc == 1:
+            for i1 in sheet[f"E21:G{payroll.endRange}"]:
+                if i1[0] not in [None, ""] or i1[1] not in [None, ""]:
+                    return 0
+            return 1
+        if fsc == 0 and medrun == 0:
+            return 1
