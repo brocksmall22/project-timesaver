@@ -71,12 +71,11 @@ class payroll:
         try:
             with sqlFunctions(database) as sqlRunner:
                 payroll.getRange(wb)
-                if not payroll.checkForErrors(wb):
-                    date, runNumber, needsUpdated= payroll.getRunInfo(
-                        sqlRunner, wb, Timestamp)
-                    assert runNumber == int(oneDriveConnect.extensionStripper(filename)), "The file's name and the run number within do not match"
-                    if needsUpdated:
-                        payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
+                date, runNumber, needsUpdated= payroll.getRunInfo(
+                    sqlRunner, wb, Timestamp)
+                assert runNumber == int(oneDriveConnect.extensionStripper(filename)), "The file's name and the run number within do not match"
+                if needsUpdated:
+                    payroll.getEmpinfo(sqlRunner, wb, date, runNumber)
         except Exception as e:
             print(e)
             traceback.print_exc()
@@ -109,75 +108,31 @@ class payroll:
                     end = True
 
 
-    def checkForErrors(wb):
+    def getEmpinfo(sqlRunner, reportReader, date, runNumber):
         """
-        This method stops execution and raises an error if there is a detectable issue
-        with a run sheet.
-
-        inputs..
-            wb: the workbook of the current run sheet
-        """
-        sheet = wb.active
-        for i1 in sheet[f"A21:h{payroll.endRange}"]:
-            if i1[4].value is not None or i1[5].value is not None or i1[6].value is not None:
-                if i1[0].value in [None, '']:
-                    raise Exception("Employee number cannot be empty!")
-                if i1[1].value in [None, '']:
-                    raise Exception("Employee name cannot be empty!")
-                if sheet["D3"].value in [None, '']:
-                    raise Exception("Date cannot be empty!")
-        if sheet["B3"].value in [None, '']:
-            raise Exception("Run number cannot be empty!")
-        if sheet["B8"].value in [None, '']:
-            raise Exception("Run time cannot be empty!")
-        if sheet["B5"].value in [None, '']:
-            raise Exception("Reported cannot be empty!")
-        if sheet["L5"].value in [None, '']:
-            raise Exception("10-8 cannot be empty!")
-        if sheet["F3"].value in [None, '']:
-            raise Exception("Shift cannot be empty!")
-
-
-    def getEmpinfo(sqlRunner, wb, date, runNumber):
-        """
-        getEmpinfo(sqlRunner, wb, date, rNum)
-        This gets the Employee information from the wb file then
+        This gets the Employee information from the run report then
         it runs the employee and Responded SQL insertions.
 
         inputs..
             sqlRunner: the sql class object
-            wb: the workbook being processed
+            reportReader: the object for getting information
+                out of a run
             date: the date of the run
             rNum: the number of the run
         """
-        sheet = wb.active
-        for i1 in sheet[f"A21:O{payroll.endRange}"]:
-            if i1[4].value is not None or i1[5].value is not None or i1[6].value is not None:
-                empNumber = wb["Pay"][i1[0].value.split("!")[1]].value
-                if i1[7].value is not None:
-                    payRate = wb["Pay"][i1[7].value.split("!")[1]].value
-                    full_time = 0
+        for empInfo in reportReader.getEmployeesInRun():
+                if sqlRunner.empNeedsUpdated(empInfo["number"]):
+                    sqlRunner.updateEmp(empInfo["name"], empInfo["number"])
                 else:
-                    payRate = 0
-                    full_time = 1
-                Name = wb["Pay"][i1[1].value.split("!")[1]].value
-                if i1[4].value is not None:
-                    type_of_response = "PNP"
-                elif i1[6].value is not None:
-                    type_of_response = "OD"
-                elif i1[5].value is not None:
-                    type_of_response = "P"
-                subhours = int(i1[14].value) if i1[14].value is not None else 0
-                if sqlRunner.empNeedsUpdated(empNumber):
-                    sqlRunner.updateEmp(Name, empNumber)
-                else:
-                    sqlRunner.createEmployee(Name, empNumber)
-                if sqlRunner.respondedNeedsUpdated(empNumber, date, runNumber):
+                    sqlRunner.createEmployee(empInfo["name"], empInfo["number"])
+                if sqlRunner.respondedNeedsUpdated(empInfo["number"], date, runNumber):
                     sqlRunner.updateResponded(
-                        empNumber, payRate, date, runNumber, type_of_response, full_time, subhours)
+                        empInfo["number"], empInfo["payRate"], date, runNumber,
+                        empInfo["responseType"], empInfo["fullTime"], empInfo["subhours"])
                 else:
                     sqlRunner.createResponded(
-                        empNumber, payRate, date, runNumber, type_of_response, full_time, subhours)
+                        empInfo["number"], empInfo["payRate"], date, runNumber,
+                        empInfo["responseType"], empInfo["fullTime"], empInfo["subhours"])
 
 
     def getRunInfo(sqlRunner, wb, Timestamp):
