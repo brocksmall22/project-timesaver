@@ -3,11 +3,81 @@ import os
 
 
 class ConfigManager:
+    """
+    The config file contains several keys and should look like the following:
+    {
+        "folder_path": "C:\path\to\oneDrive\folder",
+        "backup_path": "C:\path\to\the\backup\folder\in\the\oneDrive",
+        "blank_payroll_path": "C:\path/to/the/master/copy/of/payroll",
+        "blank_breakdown_path": "C:\path/to/the/master/copy/of/breakdown",
+        "cell_locations": [
+            {
+                "start_date": "",
+                "end_date": "",
+                "incident_number": "",
+                "date": "",
+                "shift": "",
+                "OIC": "",
+                "SO": "",
+                "filer": "",
+                "reported": "",
+                "paged": "",
+                "1076": "",
+                "1023": "",
+                "UC": "",
+                "1009": "",
+                "station_covered": "",
+                "weekend": "",
+                "working_hours": "",
+                "off_hours": "",
+                "shift_covered": "",
+                "run_time": "",
+                "start_row": "",
+                "apparatus_cells": {
+                    "app_name": "app_cell",
+                    "other_app_name": "other_app_cell",
+                    .
+                    .
+                    .
+                },
+                "mutual_aid": {
+                    "man_given": {
+                        "township": "cell",
+                        "township2": "cell2"'
+                        .
+                        .
+                        .
+                    },
+                    "app_given": {},
+                    "man_recv": {},
+                    "app_recv": {}
+                },
+                "run_type": {
+                    "type1", "cell1",
+                    "type2":, "cell2",
+                    .
+                    .
+                    .
+                },
+                "townshop": {
+                    "city": {
+                        "townshipname": "cell",
+                        .
+                        .
+                        .
+                    },
+                    "county": {}
+                }
+            }
+        ]
+    }
+    """
     configFile = os.getenv("APPDATA") + "\\project-time-saver\\config.json"
     defaultConfig = {"folder_path": "",
                     "Backup_path": "",
                     "blank_payroll_path": "",
-                    "blank_breakdown_path": ""}
+                    "blank_breakdown_path": "",
+                    "cell_locations": []}
 
     ##Detect if Configureation File is present
     @staticmethod
@@ -85,6 +155,45 @@ class ConfigManager:
     ###Updates the blank breakdwon path value
     @staticmethod
     def set_blankBreakdownPath(path, file=""):
+        file = ConfigManager.configFile if file == "" else file
+        ConfigManager.createConfigIfNotExists(file)
+        with open(file, "r") as conf:
+            contents = json.load(conf)
+            contents["blank_breakdown_path"] = path
+        with open(file, "w+") as conf:
+            json.dump(contents, conf)
+
+    @staticmethod
+    def get_cellLocations(date, file=""):
+        """
+        TODO: Make sure this can handle a datetime object.
+
+        This method is responsible for fetching the layout of a given run
+        report.
+
+        inputs..
+            date: the date of the current run report in question
+            file: an optional file path to the configuration file
+        returns..
+            A dictonary of the layour or None if none exists
+        """
+        file = ConfigManager.configFile if file == "" else file
+        ConfigManager.createConfigIfNotExists(file)
+        with open(file, "r") as conf:
+            configs = json.load(conf)["blank_breakdown_path"]
+            for config in configs:
+                if config["start_date"] <= date and (config["end_date"] >= date
+                        or config["end_date"] == None):
+                    return config
+            return None
+
+    ###Updates the blank breakdwon path value
+    @staticmethod
+    def set_cellLocations(path, file=""):
+        """
+        TODO: Write this documentation
+        TODO: Implement the logic of setting a configuration
+        """
         file = ConfigManager.configFile if file == "" else file
         ConfigManager.createConfigIfNotExists(file)
         with open(file, "r") as conf:
