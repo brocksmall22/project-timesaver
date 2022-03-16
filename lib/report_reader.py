@@ -1,6 +1,4 @@
 from openpyxl import load_workbook
-
-from lib.payroll import payroll
 from .config_manager import ConfigManager
 
 class report_reader:
@@ -11,7 +9,38 @@ class report_reader:
         will be thrown.
         """
         self.run = load_workbook(filePath)
-        self.cells = ConfigManager.get_cellLocations(self.run.getDate())
+        #self.cells = ConfigManager.get_cellLocations(self.run.getDate())\
+        self.cells = {
+            "incident_number": "B3",
+            "date": "D3",
+            "shift": "F3",
+            "OIC": "H3",
+            "SO": "J3",
+            "filer": "L3",
+            "reported": "B5",
+            "paged": "D5",
+            "1076": "F5",
+            "1023": "H5",
+            "UC": "J5",
+            "1008": "L5",
+            "station_covered": "F6",
+            "weekend": "F4",
+            "working_hours": "",
+            "off_hours": "",
+            "shift_covered": "",
+            "run_time": "B8",
+            "first_employee_row": "21",
+            "run_type": {
+                "Fire": "O3",
+                "Invest": "O4",
+                "Med": "O5",
+                "Hazmat": "O6",
+                "Rescue": "Q3",
+                "CO": "Q4",
+                "Other": "Q5",
+                "FSC": "Q6"
+            }
+        }
         self.lastEmployeeRow = self.getLastEmployeeRow()
         self.checkForErrors()
 
@@ -24,7 +53,7 @@ class report_reader:
         return self
 
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, traceback):
         """
         This function is a boilerplate for creating a with-open block.
         Everything contained within will be executed once the block
@@ -54,23 +83,23 @@ class report_reader:
         with a run sheet.
         """
         sheet = self.run.active
-        for subset in sheet[f"A{self.cell['first_employee_row']}:H{self.lastEmployeeRow}"]:
+        for subset in sheet[f"A{self.cells['first_employee_row']}:H{self.lastEmployeeRow}"]:
             if subset[4].value is not None or subset[5].value is not None or subset[6].value is not None:
                 if subset[0].value in [None, '']:
                     raise Exception("Employee number cannot be empty!")
                 if subset[1].value in [None, '']:
                     raise Exception("Employee name cannot be empty!")
-                if sheet["D3"].value in [None, '']:
+                if sheet[self.cells["date"]].value in [None, '']:
                     raise Exception("Date cannot be empty!")
-        if sheet[self.cell["incident_number"]].value in [None, '']:
+        if sheet[self.cells["incident_number"]].value in [None, '']:
             raise Exception("Run number cannot be empty!")
-        if sheet[self.cell["run_time"]].value in [None, '']:
+        if sheet[self.cells["run_time"]].value in [None, '']:
             raise Exception("Run time cannot be empty!")
-        if sheet[self.cell["reported"]].value in [None, '']:
+        if sheet[self.cells["reported"]].value in [None, '']:
             raise Exception("Reported cannot be empty!")
-        if sheet[self.cell["1008"]].value in [None, '']:
+        if sheet[self.cells["1008"]].value in [None, '']:
             raise Exception("10-8 cannot be empty!")
-        if sheet[self.cell["shift"]].value in [None, '']:
+        if sheet[self.cells["shift"]].value in [None, '']:
             raise Exception("Shift cannot be empty!")
 
 
@@ -84,7 +113,7 @@ class report_reader:
         """
         end = False
         sheet = self.run.active
-        endRange = self.cells["first_employee_row"]
+        endRange = int(self.cells["first_employee_row"])
         while (not end):
             if sheet[f"L{endRange + 1}"].value != "=":
                 endRange = endRange + 1
@@ -105,28 +134,29 @@ class report_reader:
         """
         sheet = self.run.active
         returnList = []
-        for subset in sheet[f"A{self.cell['first_employee_row']}:H{self.lastEmployeeRow}"]:
-            empNumber = self.run["Pay"][subset[0].value.split("!")[1]].value
-            if subset[7].value is not None:
-                payRate = self.run["Pay"][subset[7].value.split("!")[1]].value
-                full_time = 0
-            else:
-                payRate = 0
-                full_time = 1
-            Name = self.run["Pay"][subset[1].value.split("!")[1]].value
-            if subset[4].value is not None:
-                type_of_response = "PNP"
-            elif subset[6].value is not None:
-                type_of_response = "OD"
-            elif subset[5].value is not None:
-                type_of_response = "P"
-            subhours = int(subset[14].value) if subset[14].value is not None else 0
-            returnList.append({"number": empNumber, "payRate": payRate, "fullTime": full_time,
-                    "name": Name, "responseType": type_of_response, "subhours": subhours})
+        for subset in sheet[f"A{self.cells['first_employee_row']}:O{self.lastEmployeeRow}"]:
+            if not (subset[4].value == subset[5].value == subset[6].value == None):
+                empNumber = self.run["Pay"][subset[0].value.split("!")[1]].value
+                if subset[7].value is not None:
+                    payRate = self.run["Pay"][subset[7].value.split("!")[1]].value
+                    full_time = 0
+                else:
+                    payRate = 0
+                    full_time = 1
+                Name = self.run["Pay"][subset[1].value.split("!")[1]].value
+                if subset[4].value is not None:
+                    type_of_response = "PNP"
+                elif subset[6].value is not None:
+                    type_of_response = "OD"
+                elif subset[5].value is not None:
+                    type_of_response = "P"
+                subhours = int(subset[14].value) if subset[14].value is not None else 0
+                returnList.append({"number": empNumber, "payRate": payRate, "fullTime": full_time,
+                        "name": Name, "responseType": type_of_response, "subhours": subhours})
         return returnList
 
 
-    def getRunInfo(self):
+    def getRunInfo(self) -> dict:
         """
         TODO: Rewrite this DOC
         TODO: Finish making this version agnostic
@@ -139,33 +169,23 @@ class report_reader:
             case 1: the run, date, and run number of the workbook
         """
         sheet = self.run.active
-        date = sheet[self.cell["date"]].value.strftime("%Y-%m-%d")
-        runNumber = sheet[self.cell["incident_number"]].value
-        runTime = sheet[self.cell["run_time"]].value
-        startTime = sheet[self.cell["reported"]].value
-        endTime = sheet[self.cell["1008"]].value
-        shift = sheet[self.cell["shift"]].value
-        fsc = 1 if self.checkForFill(sheet, self.cell["run_type"]["FSC"]) else 0
-        stationCovered = 1 if self.checkForFill(sheet, self.cell["station_covered"]) else 0
+        date = sheet[self.cells["date"]].value.strftime("%Y-%m-%d")
+        runNumber = sheet[self.cells["incident_number"]].value
+        runTime = sheet[self.cells["run_time"]].value
+        startTime = sheet[self.cells["reported"]].value
+        endTime = sheet[self.cells["1008"]].value
+        shift = sheet[self.cells["shift"]].value
+        fsc = 1 if self.checkForFill(sheet, self.cells["run_type"]["FSC"]) else 0
+        stationCovered = 1 if self.checkForFill(sheet, self.cells["station_covered"]) else 0
         medrun = 1 if sheet == self.run["MED RUN"] else 0
-        # TODO: Make a check here to see if there is a full cover box
-        fullCover = self.getFullCover(sheet, shift)
+        fullCover = self.getFullCover(sheet, shift) if self.cells["shift_covered"] == "" else sheet[self.cells["shift_covered"]]
         paid = self.isPaid(sheet, fsc, medrun)
-        return {"runNumber": runNumber, "date": date, "startTime": startTime, "endTime": endTime, "runTime": runTime, "stationCovered": stationCovered, "": }
-        if sqlRunner.newRunNeedsUpdated(runNumber, Timestamp, payroll.Year):
-            sqlRunner.updateRun(runNumber, date, startTime, endTime, runTime, 
-                                stationCovered, medrun, shift, Timestamp, 
-                                fullCover, fsc, paid)
-            return date, runNumber, True
-        elif not sqlRunner.checkIfExists(runNumber, date):
-            sqlRunner.createRun(runNumber, date, startTime, endTime, runTime, 
-                                stationCovered, medrun, shift, Timestamp, 
-                                fullCover, fsc, paid)
-            return date, runNumber, True
-        return date, runNumber, False
+        return {"runNumber": runNumber, "date": date, "startTime": startTime, "endTime": endTime,
+                "runTime": runTime, "stationCovered": stationCovered, "medRun": medrun,
+                "shift": shift, "fullCover": fullCover, "fsc": fsc, "paid": paid}
 
 
-    def checkForFill(sheet, cell: str) -> bool:
+    def checkForFill(self, sheet, cell: str) -> bool:
         """
         This method is to check if the given cell is filled or not.
         Checks for color, legacy index, and any text/number value.
@@ -184,7 +204,7 @@ class report_reader:
                 sheet[cell].value == None else True
 
 
-    def getFullCover(sheet, shift) -> int:
+    def getFullCover(self, sheet, shift) -> int:
         """
         This function is responsible for determining if a run was fully
         covered by its respective shift.
@@ -198,7 +218,7 @@ class report_reader:
         """
         fullCover = False
         lastShift = None
-        for i in range(21, payroll.endRange + 1):
+        for i in range(int(self.cells["first_employee_row"]), self.lastEmployeeRow + 1):
             if sheet[f"L{i}"].value is not None:
                 lastShift = sheet[f"L{i}"].value
             if lastShift == shift and (sheet[f"E{i}"].value is not None or sheet[f"F{i}"].value is not None):
@@ -209,7 +229,7 @@ class report_reader:
         return int(fullCover)
 
 
-    def isPaid(sheet, fsc: int, medrun: int) -> int:
+    def isPaid(self, sheet, fsc: int, medrun: int) -> int:
         """
         This method is for determining if a run is paid or not. Some FSC runs are paid,
         others are not, so this method sorts them out.
@@ -224,10 +244,10 @@ class report_reader:
         """
         if medrun == 1:
             return 0
-        if fsc == 1 and sheet["D5"].value != None:
+        if fsc == 1 and sheet[self.cells["paged"]].value != None:
             return 1
         if fsc == 1:
-            for i1 in sheet[f"E21:G{payroll.endRange}"]:
+            for i1 in sheet[f"E{self.cells['first_employee_row']}:G{self.lastEmployeeRow}"]:
                 if i1[0] not in [None, ""] or i1[1] not in [None, ""]:
                     return 0
             return 1
