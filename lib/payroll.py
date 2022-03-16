@@ -1,8 +1,6 @@
 from datetime import datetime
 import os
-from pydoc import ispackage
 from sqlite3.dbapi2 import Timestamp
-from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
 from .logger import Logger
 from .oneDriveConnect import oneDriveConnect
@@ -119,6 +117,7 @@ class payroll:
             case 1: the run, date, and run number of the workbook
         """
         runInfo = reportReader.getRunInfo()
+        print(f"OIC: {runInfo['OIC']}\nSO: {runInfo['SO']}\nfiler: {runInfo['filer']}\n1076: {runInfo['1076']}\n1023: {runInfo['1023']}\nUC: {runInfo['UC']}\n1008: {runInfo['1008']}\nwork: {runInfo['workingHours']}\noff: {runInfo['offHours']}\napparatus: {runInfo['apparatus']}")
         if sqlRunner.newRunNeedsUpdated(runInfo["runNumber"], Timestamp, payroll.Year):
             sqlRunner.updateRun(runInfo["runNumber"], runInfo["date"], runInfo["startTime"],
                     runInfo["endTime"], runInfo["runTime"], runInfo["stationCovered"],

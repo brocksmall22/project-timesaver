@@ -39,6 +39,89 @@ class report_reader:
                 "CO": "Q4",
                 "Other": "Q5",
                 "FSC": "Q6"
+            },
+            "apparatus": {
+                "ENGINE 1": "A11",
+                "ENGINE 2": "B11",
+                "ENGINE 3": "C11",
+                "TOWER 1": "D11",
+                "TANKER 1": "A12",
+                "GR 1": "B12",
+                "COMMAND 1": "C12",
+                "Command 2": "D12",
+                "RESCUE 1": "A13",
+                "INF Boat 1": "B13",
+                "INF Boat 3": "C13",
+                "Jon Boat": "D13",
+                "Hazmat Tr": "A14",
+                "Foam Tr": "B14",
+                "Gator 1/Trailer": "C14"
+            },
+            "township": {
+                "harrison": {
+                    "city": "B17",
+                    "county": "B18"
+                },
+                "lancaster": {
+                    "city": "D17",
+                    "county": "D18"
+                }
+            },
+            "given_aid": {
+                "station": {
+                    "Chester": {
+                        "man": "I12",
+                        "app": "J12"
+                    },
+                    "Nottingham": {
+                        "man": "I13",
+                        "app": "J13"
+                    },
+                    "Poneto": {
+                        "man": "I14",
+                        "app": "J14"
+                    },
+                    "Monroe": {
+                        "man": "I15",
+                        "app": "J15"
+                    },
+                    "Berne": {
+                        "man": "I16",
+                        "app": "J16"
+                    },
+                    "Decatur": {
+                        "man": "I17",
+                        "app": "J17"
+                    }
+                }
+            },
+            "taken_aid": {
+                "station": {
+                    "Liberty": {
+                        "man": "O12",
+                        "app": "P12"
+                    },
+                    "Ossian": {
+                        "man": "O13",
+                        "app": "P13"
+                    },
+                    "Uniondale": {
+                        "man": "O14",
+                        "app": "P14"
+                    },
+                    "Preble": {
+                        "man": "O15",
+                        "app": "P15"
+                    },
+                    "Markle": {
+                        "man": "O16",
+                        "app": "P16"
+                    },
+                    "Southwest": {
+                        "man": "O17",
+                        "app": "P17"
+                    }
+                }
             }
         }
         self.lastEmployeeRow = self.getLastEmployeeRow()
@@ -160,6 +243,7 @@ class report_reader:
         """
         TODO: Rewrite this DOC
         TODO: Finish making this version agnostic
+        TODO: Make the manual implementation for working, off, and sift
         This gets the Run info from the sheet and runs the SQL import statements.
 
         inputs..
@@ -180,9 +264,25 @@ class report_reader:
         medrun = 1 if sheet == self.run["MED RUN"] else 0
         fullCover = self.getFullCover(sheet, shift) if self.cells["shift_covered"] == "" else sheet[self.cells["shift_covered"]]
         paid = self.isPaid(sheet, fsc, medrun)
+        oic = sheet[self.cells["OIC"]].value
+        so = sheet[self.cells["SO"]].value
+        filer = sheet[self.cells["filer"]].value
+        code1076 = sheet[self.cells["1076"]].value
+        code1023 = sheet[self.cells["1023"]].value
+        uc = sheet[self.cells["UC"]].value
+        code1008 = sheet[self.cells["1008"]].value
+        #workingHours = sheet[self.cells["working_hours"]].value
+        #offHours = sheet[self.cells["off_hours"]].value
+        apparatus = self.getApparatus()
+        #township = self.getTownship()
+        #given_aid = self.getGivenAid()
+        #taken_aid = self.getTakenAid()
         return {"runNumber": runNumber, "date": date, "startTime": startTime, "endTime": endTime,
                 "runTime": runTime, "stationCovered": stationCovered, "medRun": medrun,
-                "shift": shift, "fullCover": fullCover, "fsc": fsc, "paid": paid}
+                "shift": shift, "fullCover": fullCover, "fsc": fsc, "paid": paid, "OIC": oic,
+                "SO": so, "filer": filer, "1076": code1076, "1023": code1023, "UC": uc,
+                "1008": code1008, "workingHours": "TEST", "offHours": "TEST",
+                "apparatus": apparatus}
 
 
     def checkForFill(self, sheet, cell: str) -> bool:
@@ -201,7 +301,7 @@ class report_reader:
             return False if color == 1 else True
         else:
             return False if color == "00000000" and\
-                sheet[cell].value == None else True
+                sheet[cell].value not in [1, "1"] else True
 
 
     def getFullCover(self, sheet, shift) -> int:
@@ -253,3 +353,24 @@ class report_reader:
             return 1
         if fsc == 0 and medrun == 0:
             return 1
+
+
+    def getApparatus(self):
+        """
+        This method is responsible for getting a list of apparatus used for
+        an incident.
+
+        returns..
+            A string encoding of a list
+                eg. "ENGINE 1,COMMAND 1,RESCUE 1
+                    "RESCUE 1"
+        """
+        returnVal = ""
+        sheet = self.run.active
+        apps = self.cells["apparatus"].keys()
+        for app in apps:
+            if self.checkForFill(sheet, self.cells["apparatus"][app]):
+                if returnVal != "":
+                    returnVal += ","
+                returnVal += app
+        return returnVal
