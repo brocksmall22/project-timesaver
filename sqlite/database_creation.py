@@ -15,7 +15,7 @@ class creator:
         sql_create_report_table = """CREATE TABLE IF NOT EXISTS Responded (empNumber STRING REFERENCES Employee (number), 
                                     runNumber TINYINT REFERENCES Run (number), date DATE REFERENCES Run (date), 
                                     payRate FLOAT, type_of_response varchar(20), full_time BIT, 
-                                    subhours FLOAT, PRIMARY KEY(date, empNumber, runNumber));"""
+                                    subhours FLOAT, OIC string, SO string, filler STRING, code1076 STRING, code1023 STRING, UC string, PRIMARY KEY(date, empNumber, runNumber));"""
 
         conn = creator.create_connection(db_file)
 
