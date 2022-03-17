@@ -3,6 +3,7 @@ from sqlite3 import Error
 
 
 class creator:
+
     @staticmethod
     def create_db(db_file):
         sql_create_employee_table = """ CREATE TABLE IF NOT EXISTS Employee (name STRING, number SMALLINT PRIMARY KEY,
@@ -10,12 +11,13 @@ class creator:
 
         sql_create_run_table = """CREATE TABLE IF NOT EXISTS Run (number TINYINT, date DATE, startTime SMALLINT,
                                     stopTime SMALLINT, runTime TINYINT, fsc BIT, Covered BIT, Medrun BIT,
-                                    shift char(1), full_coverage BIT, paidRun BIT, timeStamp FLOAT, PRIMARY KEY(number, date)); """
+                                    shift char(1), full_coverage BIT, paidRun BIT, timeStamp FLOAT,oic string, so string, filler STRING, code1076 STRING, code1023 STRING, uc string,
+                                    PRIMARY KEY(number, date)); """
 
         sql_create_report_table = """CREATE TABLE IF NOT EXISTS Responded (empNumber STRING REFERENCES Employee (number), 
                                     runNumber TINYINT REFERENCES Run (number), date DATE REFERENCES Run (date), 
                                     payRate FLOAT, type_of_response varchar(20), full_time BIT, 
-                                    subhours FLOAT, OIC string, SO string, filler STRING, code1076 STRING, code1023 STRING, UC string, PRIMARY KEY(date, empNumber, runNumber));"""
+                                    subhours FLOAT, PRIMARY KEY(date, empNumber, runNumber));"""
 
         conn = creator.create_connection(db_file)
 
