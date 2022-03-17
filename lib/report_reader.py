@@ -205,8 +205,6 @@ class report_reader:
 
     def getEmployeesInRun(self):
         """
-        TODO: Ensure this method is as file version agnostic as possible.
-
         This method will get all of the employees, and all associated information, that responded
         to a run.
 
@@ -216,25 +214,71 @@ class report_reader:
         sheet = self.run.active
         returnList = []
         for subset in sheet[f"A{self.cells['first_employee_row']}:O{self.lastEmployeeRow}"]:
-            if not (subset[4].value == subset[5].value == subset[6].value == None):
+            if self.employeeResponded(subset):
                 empNumber = self.run["Pay"][subset[0].value.split("!")[1]].value
-                if subset[7].value is not None:
-                    payRate = self.run["Pay"][subset[7].value.split("!")[1]].value
-                    full_time = 0
-                else:
-                    payRate = 0
-                    full_time = 1
+                payRate, full_time = self.getPayAndPosition(subset)
                 Name = self.run["Pay"][subset[1].value.split("!")[1]].value
-                if subset[4].value is not None:
-                    type_of_response = "PNP"
-                elif subset[6].value is not None:
-                    type_of_response = "OD"
-                elif subset[5].value is not None:
-                    type_of_response = "P"
-                subhours = int(subset[14].value) if subset[14].value is not None else 0
+                type_of_response = self.getTypeOfResponse(subset)
+                subhours = self.getSubHours(subset)
                 returnList.append({"number": empNumber, "payRate": payRate, "fullTime": full_time,
                         "name": Name, "responseType": type_of_response, "subhours": subhours})
         return returnList
+
+
+    def employeeResponded(self, subset):
+        """
+        Checks a row to see if the employee in that row
+        responded to a run. Checks the three response
+        type columns to make this decision.
+
+        returns...
+            True if they did respond, else False
+        """
+        return not (subset[4].value == subset[5].value == subset[6].value == None)
+
+
+    def getPayAndPosition(self, subset) -> list:
+        """
+        Determines if an employee is full time and the employee's pay
+        rate.
+
+        returns...
+            The employee's pay rate and the employee's position
+        """
+        if subset[7].value is not None:
+            return [self.run["Pay"][subset[7].value.split("!")[1]].value, 0]
+        else:
+            return [0, 1]
+
+
+    def getTypeOfResponse(self, subset) -> str:
+        """
+        This method takes one row of a responder and determines if their
+        response is paid, present not paid, or on duty.
+
+        returns...
+            String denoting the type of response
+        """
+        if subset[4].value is not None:
+            return "PNP"
+        elif subset[6].value is not None:
+            return "OD"
+        elif subset[5].value is not None:
+            return "P"
+        return ""
+
+
+    def getSubHours(self, subset):
+        """
+        Determines if an employee has any hours that need subtracted
+        and returns the number of hours to subtract.
+
+        returns...
+            A float fo the hours to subtract, 0 if none to subract
+        """
+        if subset[14].value is not None:
+            return float(subset[14].value)
+        return 0
 
 
     def getRunInfo(self) -> dict:
@@ -257,10 +301,10 @@ class report_reader:
         startTime = sheet[self.cells["reported"]].value
         endTime = sheet[self.cells["1008"]].value
         shift = sheet[self.cells["shift"]].value
-        fsc = 1 if self.checkForFill(sheet, self.cells["run_type"]["FSC"]) else 0
-        stationCovered = 1 if self.checkForFill(sheet, self.cells["station_covered"]) else 0
-        medrun = 1 if sheet == self.run["MED RUN"] else 0
-        fullCover = self.getFullCover(sheet, shift) if self.cells["shift_covered"] == "" else sheet[self.cells["shift_covered"]]
+        fsc = int(self.checkForFill(sheet, self.cells["run_type"]["FSC"]))
+        stationCovered = int(self.checkForFill(sheet, self.cells["station_covered"]))
+        medrun = int(sheet == self.run["MED RUN"])
+        fullCover = self.getFullCover(sheet, shift)
         paid = self.isPaid(sheet, fsc, medrun)
         oic = sheet[self.cells["OIC"]].value
         so = sheet[self.cells["SO"]].value
@@ -269,8 +313,8 @@ class report_reader:
         code1023 = sheet[self.cells["1023"]].value
         uc = sheet[self.cells["UC"]].value
         code1008 = sheet[self.cells["1008"]].value
-        workingHours = sheet[self.cells["working_hours"]].value if self.cells["working_hours"] != "" else self.getWorkingHours()
-        offHours = sheet[self.cells["off_hours"]].value if self.cells["off_hours"] != "" else self.getOffHours()
+        workingHours = self.getWorkingHours()
+        offHours = self.getOffHours()
         apparatus = self.getApparatus()
         township = self.getTownship()
         givenAid = self.getGivenAid()
@@ -314,6 +358,8 @@ class report_reader:
             case 1: interger 1 if the run is fully covered
             case 2: interger 0 if the run is not fully covered
         """
+        if self.cells["shift_covered"] != "":
+            return int(sheet[self.cells["shift_covered"]].value)
         fullCover = False
         lastShift = None
         for i in range(int(self.cells["first_employee_row"]), self.lastEmployeeRow + 1):
@@ -382,6 +428,8 @@ class report_reader:
             A 1 if did is or a 0 if it did not
         """
         sheet = self.run.active
+        if self.cells["working_hours"] != "":
+            return int(sheet[self.cells["working_hours"]].value)
         if sheet[self.cells["date"]].value.weekday() in [5, 6]:
             return 0
         if 500 < sheet[self.cells["reported"]].value <= 1700:
