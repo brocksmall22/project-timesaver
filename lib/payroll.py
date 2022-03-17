@@ -117,17 +117,24 @@ class payroll:
             case 1: the run, date, and run number of the workbook
         """
         runInfo = reportReader.getRunInfo()
-        print(f"OIC: {runInfo['OIC']}\nSO: {runInfo['SO']}\nfiler: {runInfo['filer']}\n1076: {runInfo['1076']}\n1023: {runInfo['1023']}\nUC: {runInfo['UC']}\n1008: {runInfo['1008']}\nwork: {runInfo['workingHours']}\noff: {runInfo['offHours']}\napparatus: {runInfo['apparatus']}\ntownship: {runInfo['township']}\ngiven aid: {runInfo['givenAid']}\ntaken aid: {runInfo['takenAid']}")
         if sqlRunner.newRunNeedsUpdated(runInfo["runNumber"], Timestamp, payroll.Year):
             sqlRunner.updateRun(runInfo["runNumber"], runInfo["date"], runInfo["startTime"],
                     runInfo["endTime"], runInfo["runTime"], runInfo["stationCovered"],
                     runInfo["medRun"], runInfo["shift"], Timestamp, runInfo["fullCover"],
-                    runInfo["fsc"], runInfo["paid"])
+                    runInfo["fsc"], runInfo["paid"], runInfo['OIC'], runInfo['SO'],
+                    runInfo['filer'], runInfo['1076'], runInfo['1023'], runInfo['UC'],
+                    runInfo['1008'], runInfo['workingHours'], runInfo['offHours'],
+                    runInfo['apparatus'], runInfo['township'], runInfo['givenAid'],
+                    runInfo['takenAid'])
             return runInfo["date"], runInfo["runNumber"], True
         elif not sqlRunner.checkIfExists(runInfo["runNumber"], runInfo["date"]):
             sqlRunner.createRun(runInfo["runNumber"], runInfo["date"], runInfo["startTime"],
                     runInfo["endTime"], runInfo["runTime"], runInfo["stationCovered"],
                     runInfo["medRun"], runInfo["shift"], Timestamp, runInfo["fullCover"],
-                    runInfo["fsc"], runInfo["paid"])
+                    runInfo["fsc"], runInfo["paid"], runInfo['OIC'], runInfo['SO'],
+                    runInfo['filer'], runInfo['1076'], runInfo['1023'], runInfo['UC'],
+                    runInfo['1008'], runInfo['workingHours'], runInfo['offHours'],
+                    runInfo['apparatus'], runInfo['township'], runInfo['givenAid'],
+                    runInfo['takenAid'])
             return runInfo["date"], runInfo["runNumber"], True
         return runInfo["date"], runInfo["runNumber"], False
