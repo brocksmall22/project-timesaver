@@ -1,5 +1,7 @@
 from openpyxl import load_workbook
 from .config_manager import ConfigManager
+from datetime import datetime
+import calendar
 
 class report_reader:
     def __init__(self, filePath):
@@ -9,7 +11,7 @@ class report_reader:
         will be thrown.
         """
         self.run = load_workbook(filePath)
-        #self.cells = ConfigManager.get_cellLocations(self.run.getDate())\
+        #self.cells = ConfigManager.get_cellLocations(self.run.getDate())
         self.cells = {
             "incident_number": "B3",
             "date": "D3",
@@ -68,59 +70,55 @@ class report_reader:
                 }
             },
             "given_aid": {
-                "station": {
-                    "Chester": {
-                        "man": "I12",
-                        "app": "J12"
-                    },
-                    "Nottingham": {
-                        "man": "I13",
-                        "app": "J13"
-                    },
-                    "Poneto": {
-                        "man": "I14",
-                        "app": "J14"
-                    },
-                    "Monroe": {
-                        "man": "I15",
-                        "app": "J15"
-                    },
-                    "Berne": {
-                        "man": "I16",
-                        "app": "J16"
-                    },
-                    "Decatur": {
-                        "man": "I17",
-                        "app": "J17"
-                    }
+                "Chester": {
+                    "man": "I12",
+                    "app": "J12"
+                },
+                "Nottingham": {
+                    "man": "I13",
+                    "app": "J13"
+                },
+                "Poneto": {
+                    "man": "I14",
+                    "app": "J14"
+                },
+                "Monroe": {
+                    "man": "I15",
+                    "app": "J15"
+                },
+                "Berne": {
+                    "man": "I16",
+                    "app": "J16"
+                },
+                "Decatur": {
+                    "man": "I17",
+                    "app": "J17"
                 }
             },
             "taken_aid": {
-                "station": {
-                    "Liberty": {
-                        "man": "O12",
-                        "app": "P12"
-                    },
-                    "Ossian": {
-                        "man": "O13",
-                        "app": "P13"
-                    },
-                    "Uniondale": {
-                        "man": "O14",
-                        "app": "P14"
-                    },
-                    "Preble": {
-                        "man": "O15",
-                        "app": "P15"
-                    },
-                    "Markle": {
-                        "man": "O16",
-                        "app": "P16"
-                    },
-                    "Southwest": {
-                        "man": "O17",
-                        "app": "P17"
-                    }
+                "Liberty": {
+                    "man": "O12",
+                    "app": "P12"
+                },
+                "Ossian": {
+                    "man": "O13",
+                    "app": "P13"
+                },
+                "Uniondale": {
+                    "man": "O14",
+                    "app": "P14"
+                },
+                "Preble": {
+                    "man": "O15",
+                    "app": "P15"
+                },
+                "Markle": {
+                    "man": "O16",
+                    "app": "P16"
+                },
+                "Southwest": {
+                    "man": "O17",
+                    "app": "P17"
                 }
             }
         }
@@ -181,7 +179,7 @@ class report_reader:
         if sheet[self.cells["reported"]].value in [None, '']:
             raise Exception("Reported cannot be empty!")
         if sheet[self.cells["1008"]].value in [None, '']:
-            raise Exception("10-8 cannot be empty!")
+            raise Exception("10-08 cannot be empty!")
         if sheet[self.cells["shift"]].value in [None, '']:
             raise Exception("Shift cannot be empty!")
 
@@ -271,18 +269,18 @@ class report_reader:
         code1023 = sheet[self.cells["1023"]].value
         uc = sheet[self.cells["UC"]].value
         code1008 = sheet[self.cells["1008"]].value
-        #workingHours = sheet[self.cells["working_hours"]].value
-        #offHours = sheet[self.cells["off_hours"]].value
+        workingHours = sheet[self.cells["working_hours"]].value if self.cells["working_hours"] != "" else self.getWorkingHours()
+        offHours = sheet[self.cells["off_hours"]].value if self.cells["off_hours"] != "" else self.getOffHours()
         apparatus = self.getApparatus()
-        #township = self.getTownship()
-        #given_aid = self.getGivenAid()
-        #taken_aid = self.getTakenAid()
+        township = self.getTownship()
+        givenAid = self.getGivenAid()
+        takenAid = self.getTakenAid()
         return {"runNumber": runNumber, "date": date, "startTime": startTime, "endTime": endTime,
                 "runTime": runTime, "stationCovered": stationCovered, "medRun": medrun,
                 "shift": shift, "fullCover": fullCover, "fsc": fsc, "paid": paid, "OIC": oic,
                 "SO": so, "filer": filer, "1076": code1076, "1023": code1023, "UC": uc,
-                "1008": code1008, "workingHours": "TEST", "offHours": "TEST",
-                "apparatus": apparatus}
+                "1008": code1008, "workingHours": workingHours, "offHours": offHours,
+                "apparatus": apparatus, "township": township, "givenAid": givenAid, "takenAid": takenAid}
 
 
     def checkForFill(self, sheet, cell: str) -> bool:
@@ -355,7 +353,7 @@ class report_reader:
             return 1
 
 
-    def getApparatus(self):
+    def getApparatus(self) -> str:
         """
         This method is responsible for getting a list of apparatus used for
         an incident.
@@ -373,4 +371,92 @@ class report_reader:
                 if returnVal != "":
                     returnVal += ","
                 returnVal += app
+        return returnVal
+
+
+    def getWorkingHours(self) -> int:
+        """
+        Determines if an incident happened between 5a and 5p on a weekday.
+
+        returns...
+            A 1 if did is or a 0 if it did not
+        """
+        sheet = self.run.active
+        if sheet[self.cells["date"]].value.weekday() in [5, 6]:
+            return 0
+        if 500 < sheet[self.cells["reported"]].value <= 1700:
+            return 1
+        return 0
+
+    
+    def getOffHours(self) -> int:
+        """
+        Inverses the results from getWorkingHours to determind if a run
+        happened between 5p and 5a or on the weekend.
+
+        returns...
+            1 if it is a weekend or off hours run 0 otherwise
+        """
+        return 1 if self.getWorkingHours() == 0 else 0
+
+
+    def getTownship(self) -> str:
+        """
+        Determines what township and whether it is in city limits a run occured.
+
+        returns...
+            A string in the format <township>,<city/county>
+        """
+        sheet = self.run.active
+        for township in self.cells["township"]:
+            if self.checkForFill(sheet, self.cells["township"][township]["city"]):
+                return f"{township},city"
+            if self.checkForFill(sheet, self.cells["township"][township]["county"]):
+                return f"{township},county"
+        return ""
+
+
+    def getGivenAid(self) -> str:
+        """
+        Gets all of the departments and types of aid given during an incident.
+
+        returns...
+            A string encoded list of departments and types
+                eg. "Poneto,man;Chester,app"
+                    "Nottingham,man"
+        """
+        sheet = self.run.active
+        returnVal = ""
+        for station in self.cells["given_aid"]:
+            if self.checkForFill(sheet, self.cells["given_aid"][station]["man"]):
+                if returnVal != "":
+                    returnVal += ";"
+                returnVal += f"{station},man"
+            if self.checkForFill(sheet, self.cells["given_aid"][station]["app"]):
+                if returnVal != "":
+                    returnVal += ";"
+                returnVal += f"{station},app"
+        return returnVal
+
+
+    def getTakenAid(self) -> str:
+        """
+        Gets all of the departments and types of aid taken during an incident.
+
+        returns...
+            A string encoded list of departments and types
+                eg. "Poneto,man;Chester,app"
+                    "Nottingham,man"
+        """
+        sheet = self.run.active
+        returnVal = ""
+        for station in self.cells["taken_aid"]:
+            if self.checkForFill(sheet, self.cells["taken_aid"][station]["man"]):
+                if returnVal != "":
+                    returnVal += ";"
+                returnVal += f"{station},man"
+            if self.checkForFill(sheet, self.cells["taken_aid"][station]["app"]):
+                if returnVal != "":
+                    returnVal += ";"
+                returnVal += f"{station},app"
         return returnVal
