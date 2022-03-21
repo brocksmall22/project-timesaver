@@ -1,5 +1,7 @@
 import sqlite3
 from sqlite3 import Error
+import os
+from turtle import st
 
 class sqlFunctions():
     """
@@ -15,7 +17,8 @@ class sqlFunctions():
     and cleanly closes the object and connection to the db upon exiting the with scope.
     """
     
-    def __init__(self, dbFile):
+    def __init__(self,
+                dbFile =  os.getenv('APPDATA') + "\\project-time-saver\\database.db"):
         self.conn = self.createConnection(dbFile)
 
     def __enter__(self):
@@ -597,3 +600,54 @@ class sqlFunctions():
             cur.execute(
                 f"""SELECT * FROM Run WHERE date BETWEEN '{start_date}' AND '{end_date}';"""
             ).fetchall()) == 0
+
+
+    def getStartTimeOfRuns(self, start_date, end_date):
+        """
+        Gets the start time for every run in a given period.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the start time
+                for each run.
+        """
+        sql = """SELECT startTime FROM Run WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
+
+
+    def getTownshipOfRuns(self, start_date, end_date):
+        """
+        Gets the township and if it is in the city
+        for every run in a given period.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the township and
+                if it is in the city for each run.
+        """
+        sql = """SELECT township FROM Run WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
+
+
+    def getApparatusOfRuns(self, start_date, end_date):
+        """
+        Gets all of the appararus used during each run.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the apparatus used.
+        """
+        sql = """SELECT apparatus FROM Run WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
