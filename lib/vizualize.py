@@ -2,6 +2,7 @@ import os
 from xml.sax.handler import feature_external_ges
 import matplotlib.pyplot as plt
 from .sqlFunctions import sqlFunctions
+import numpy as np
 
 class visualize:
     @staticmethod
@@ -9,13 +10,14 @@ class visualize:
         visualize.__plotRunStartTimeDistribution(startDate, endDate)
         visualize.__plotRunTownships(startDate, endDate)
         visualize.__plotApparatusUsageFrequency(startDate, endDate)
+        visualize.__plotGivenAid(startDate, endDate)
+        visualize.__plotTakenAid(startDate, endDate)
 
 
     def __plotTypesOfRuns():
         pass
 
 
-    @staticmethod
     def __plotRunStartTimeDistribution(startDate, endDate):
         with sqlFunctions() as sqlRunner: 
             startTimes = sqlRunner.getStartTimeOfRuns(startDate, endDate)
@@ -128,13 +130,70 @@ class visualize:
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runApparatusDistribution.png")
 
 
+    def __plotGivenAid(startDate, endDate):
+        with sqlFunctions() as sqlRunner: 
+            givenAid = sqlRunner.getGivenAid(startDate, endDate)
+            stations = []
+            man = []
+            app = []
+            for item in givenAid:
+                if item[0] != "":
+                    for aid in item[0].split(";"):
+                        department, aidType = aid.split(",")
+                        if department not in stations:
+                            stations.append(department)
+                            man.append(0)
+                            app.append(0)
+                        if aidType == "man":
+                            man[stations.index(department)] += 1
+                        elif aidType == "app":
+                            app[stations.index(department)] += 1
+            yMax = len(man) if len(man) > len(app) else len(app)
+            x = np.arange(len(stations))
+            plt.figure(figsize=(10, 5), dpi=300)
+            plt.bar(x + 0.2, man, width = 0.4)
+            plt.bar(x - 0.2, app, width = 0.4)
+            plt.yticks(range(0, yMax + 1))
+            plt.xticks(x, stations, rotation="45")
+            ax = plt.subplot()
+            ax.set_ylabel("Number of Incidents")
+            ax.set_xlabel("Department Recieving Aid")
+            plt.legend(["Manual Labor", "Apparatus"])
+            plt.tight_layout()
+            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\givenAidDistribution.png")
 
-    def __plotGivenAid():
-        pass
 
-
-    def __plotTakenAid():
-        pass
+    def __plotTakenAid(startDate, endDate):
+        with sqlFunctions() as sqlRunner: 
+            takenAid = sqlRunner.getTakenAid(startDate, endDate)
+            stations = []
+            man = []
+            app = []
+            for item in takenAid:
+                if item[0] != "":
+                    for aid in item[0].split(";"):
+                        department, aidType = aid.split(",")
+                        if department not in stations:
+                            stations.append(department)
+                            man.append(0)
+                            app.append(0)
+                        if aidType == "man":
+                            man[stations.index(department)] += 1
+                        elif aidType == "app":
+                            app[stations.index(department)] += 1
+            yMax = len(man) if len(man) > len(app) else len(app)
+            x = np.arange(len(stations))
+            plt.figure(figsize=(10, 5), dpi=300)
+            plt.bar(x + 0.2, man, width = 0.4)
+            plt.bar(x - 0.2, app, width = 0.4)
+            plt.yticks(range(0, yMax + 1))
+            plt.xticks(x, stations, rotation="45")
+            ax = plt.subplot()
+            ax.set_ylabel("Number of Incidents")
+            ax.set_xlabel("Department Providing Aid")
+            plt.legend(["Manual Labor", "Apparatus"])
+            plt.tight_layout()
+            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\takennAidDistribution.png")
 
 
     def __plotAverageRunTimes():
