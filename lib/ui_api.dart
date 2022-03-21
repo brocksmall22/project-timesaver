@@ -255,4 +255,13 @@ class API {
     Uri _url = Uri.parse('http://127.0.0.1:8080/trigger_restore');
     await get(_url);
   }
+
+  /*
+  A temporary function to trigger the backend to generate
+  the graphics
+  */
+  static Future<void> generateCharts() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/generate_graphics');
+    await get(_url);
+  }
 }

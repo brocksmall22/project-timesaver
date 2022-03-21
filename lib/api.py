@@ -352,3 +352,19 @@ def trigger_restore():
     scheduler.resume_job(id=INTERVAL_TASK_ID)
     scheduler.resume_job(id=INTERVAL_TASK_ID_1)
     return Response(status = 200) if success != "" else Response(status = 500)
+
+@app.route("/generate_graphics", methods=["GET"])
+def generate_graphics():
+    """
+    A temporary route to allow easier generating of
+    the sample matplotlib files.
+
+    returns..
+        True upon completion
+    """
+    print("Generating graphics...")
+    # PLACE YOU CALL TO THE VISUALIZATION FUNCTIONS HERE
+
+    print("Graphics generated...")
+    
+    return Response(status = 200)
