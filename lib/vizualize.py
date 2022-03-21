@@ -7,6 +7,7 @@ class visualize:
     @staticmethod
     def plotAll(startDate, endDate):
         visualize.__plotRunStartTimeDistribution(startDate, endDate)
+        visualize.__plotRunTownships(startDate, endDate)
 
 
     def __plotTypesOfRuns():
@@ -17,7 +18,6 @@ class visualize:
     def __plotRunStartTimeDistribution(startDate, endDate):
         with sqlFunctions() as sqlRunner: 
             startTimes = sqlRunner.getStartTimeOfRuns(startDate, endDate)
-            print(startTimes)
             hours = ["0000", "0100", "0200", "0300", "0400", "0500", "0600", "0700",
                     "0800", "0900", "1000", "1100", "1200", "1300", "1400", "1500",
                     "1600", "1700", "1800", "1900", "2000", "2100", "2200", "2300"]
@@ -72,7 +72,6 @@ class visualize:
                     frequency[22] += 1
                 elif 2300 <= time[0]:
                     frequency[23] += 1
-            print(frequency)
             plt.figure(figsize=(10, 5), dpi=300)
             plt.bar(hours, frequency)
             plt.xticks(rotation="45")
@@ -83,11 +82,28 @@ class visualize:
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runStartTimeDistribution.png", )
 
 
-    def __plotRunTownships():
-        pass
+    def __plotRunTownships(startDate, endDate):
+        with sqlFunctions() as sqlRunner: 
+            townships = sqlRunner.getTownshipOfRuns(startDate, endDate)
+            options = ["Harrison - City", "Harrison - County", "Lancaster - City",
+                    "Lancaster - County"]
+            frequency = [0, 0, 0, 0]
+            for township in townships:
+                match township[0]:
+                    case "harrison,city":
+                        frequency[0] += 1
+                    case "harrison,county":
+                        frequency[1] += 1
+                    case "lancaster,city":
+                        frequency[2] += 1
+                    case "lancaster,county":
+                        frequency[3] += 1
+            plt.figure(figsize=(5, 3), dpi=300)
+            plt.pie(frequency, labels = options)
+            plt.tight_layout()
+            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runTownshipDistribution.png", )
 
-
-    def __plotRunStartTimesByTypes():
+    def __plotRunDurationsByTypes():
         pass
 
 
