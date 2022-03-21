@@ -7,6 +7,7 @@ import numpy as np
 class visualize:
     @staticmethod
     def plotAll(startDate, endDate):
+        visualize.__plotTypesOfRuns(startDate, endDate)
         visualize.__plotRunStartTimeDistribution(startDate, endDate)
         visualize.__plotRunTownships(startDate, endDate)
         visualize.__plotApparatusUsageFrequency(startDate, endDate)
@@ -14,8 +15,21 @@ class visualize:
         visualize.__plotTakenAid(startDate, endDate)
 
 
-    def __plotTypesOfRuns():
-        pass
+    def __plotTypesOfRuns(startDate, endDate):
+        with sqlFunctions() as sqlRunner:
+            numRuns=sqlRunner.getMedRunBitFromRun(startDate, endDate)
+            options = [0, 1]
+            frequency = [0]
+            for typeRuns in numRuns:
+                match typeRuns[0]:
+                    case 0:
+                        frequency[0] += 1
+                    case 1:
+                        frequency[1] += 1
+            plt.figure(figsize=(5, 3), dpi=300)
+            plt.pie(frequency, labels = options)
+            plt.tight_layout()
+            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runTypes.png")
 
 
     def __plotRunStartTimeDistribution(startDate, endDate):
