@@ -1,5 +1,7 @@
 from openpyxl import load_workbook
 from .config_manager import ConfigManager
+from datetime import datetime
+import calendar
 
 class report_reader:
     def __init__(self, filePath):
@@ -9,7 +11,7 @@ class report_reader:
         will be thrown.
         """
         self.run = load_workbook(filePath)
-        #self.cells = ConfigManager.get_cellLocations(self.run.getDate())\
+        #self.cells = ConfigManager.get_cellLocations(self.run.getDate())
         self.cells = {
             "incident_number": "B3",
             "date": "D3",
@@ -39,6 +41,85 @@ class report_reader:
                 "CO": "Q4",
                 "Other": "Q5",
                 "FSC": "Q6"
+            },
+            "apparatus": {
+                "ENGINE 1": "A11",
+                "ENGINE 2": "B11",
+                "ENGINE 3": "C11",
+                "TOWER 1": "D11",
+                "TANKER 1": "A12",
+                "GR 1": "B12",
+                "COMMAND 1": "C12",
+                "Command 2": "D12",
+                "RESCUE 1": "A13",
+                "INF Boat 1": "B13",
+                "INF Boat 3": "C13",
+                "Jon Boat": "D13",
+                "Hazmat Tr": "A14",
+                "Foam Tr": "B14",
+                "Gator 1/Trailer": "C14"
+            },
+            "township": {
+                "harrison": {
+                    "city": "B17",
+                    "county": "B18"
+                },
+                "lancaster": {
+                    "city": "D17",
+                    "county": "D18"
+                }
+            },
+            "given_aid": {
+                "Chester": {
+                    "man": "I12",
+                    "app": "J12"
+                },
+                "Nottingham": {
+                    "man": "I13",
+                    "app": "J13"
+                },
+                "Poneto": {
+                    "man": "I14",
+                    "app": "J14"
+                },
+                "Monroe": {
+                    "man": "I15",
+                    "app": "J15"
+                },
+                "Berne": {
+                    "man": "I16",
+                    "app": "J16"
+                },
+                "Decatur": {
+                    "man": "I17",
+                    "app": "J17"
+                }
+            },
+            "taken_aid": {
+                "Liberty": {
+                    "man": "O12",
+                    "app": "P12"
+                },
+                "Ossian": {
+                    "man": "O13",
+                    "app": "P13"
+                },
+                "Uniondale": {
+                    "man": "O14",
+                    "app": "P14"
+                },
+                "Preble": {
+                    "man": "O15",
+                    "app": "P15"
+                },
+                "Markle": {
+                    "man": "O16",
+                    "app": "P16"
+                },
+                "Southwest": {
+                    "man": "O17",
+                    "app": "P17"
+                }
             }
         }
         self.lastEmployeeRow = self.getLastEmployeeRow()
@@ -98,7 +179,7 @@ class report_reader:
         if sheet[self.cells["reported"]].value in [None, '']:
             raise Exception("Reported cannot be empty!")
         if sheet[self.cells["1008"]].value in [None, '']:
-            raise Exception("10-8 cannot be empty!")
+            raise Exception("10-08 cannot be empty!")
         if sheet[self.cells["shift"]].value in [None, '']:
             raise Exception("Shift cannot be empty!")
 
@@ -124,8 +205,6 @@ class report_reader:
 
     def getEmployeesInRun(self):
         """
-        TODO: Ensure this method is as file version agnostic as possible.
-
         This method will get all of the employees, and all associated information, that responded
         to a run.
 
@@ -135,31 +214,78 @@ class report_reader:
         sheet = self.run.active
         returnList = []
         for subset in sheet[f"A{self.cells['first_employee_row']}:O{self.lastEmployeeRow}"]:
-            if not (subset[4].value == subset[5].value == subset[6].value == None):
+            if self.employeeResponded(subset):
                 empNumber = self.run["Pay"][subset[0].value.split("!")[1]].value
-                if subset[7].value is not None:
-                    payRate = self.run["Pay"][subset[7].value.split("!")[1]].value
-                    full_time = 0
-                else:
-                    payRate = 0
-                    full_time = 1
+                payRate, full_time = self.getPayAndPosition(subset)
                 Name = self.run["Pay"][subset[1].value.split("!")[1]].value
-                if subset[4].value is not None:
-                    type_of_response = "PNP"
-                elif subset[6].value is not None:
-                    type_of_response = "OD"
-                elif subset[5].value is not None:
-                    type_of_response = "P"
-                subhours = int(subset[14].value) if subset[14].value is not None else 0
+                type_of_response = self.getTypeOfResponse(subset)
+                subhours = self.getSubHours(subset)
                 returnList.append({"number": empNumber, "payRate": payRate, "fullTime": full_time,
                         "name": Name, "responseType": type_of_response, "subhours": subhours})
         return returnList
+
+
+    def employeeResponded(self, subset):
+        """
+        Checks a row to see if the employee in that row
+        responded to a run. Checks the three response
+        type columns to make this decision.
+
+        returns...
+            True if they did respond, else False
+        """
+        return not (subset[4].value == subset[5].value == subset[6].value == None)
+
+
+    def getPayAndPosition(self, subset) -> list:
+        """
+        Determines if an employee is full time and the employee's pay
+        rate.
+
+        returns...
+            The employee's pay rate and the employee's position
+        """
+        if subset[7].value is not None:
+            return [self.run["Pay"][subset[7].value.split("!")[1]].value, 0]
+        else:
+            return [0, 1]
+
+
+    def getTypeOfResponse(self, subset) -> str:
+        """
+        This method takes one row of a responder and determines if their
+        response is paid, present not paid, or on duty.
+
+        returns...
+            String denoting the type of response
+        """
+        if subset[4].value is not None:
+            return "PNP"
+        elif subset[6].value is not None:
+            return "OD"
+        elif subset[5].value is not None:
+            return "P"
+        return ""
+
+
+    def getSubHours(self, subset):
+        """
+        Determines if an employee has any hours that need subtracted
+        and returns the number of hours to subtract.
+
+        returns...
+            A float fo the hours to subtract, 0 if none to subract
+        """
+        if subset[14].value is not None:
+            return float(subset[14].value)
+        return 0
 
 
     def getRunInfo(self) -> dict:
         """
         TODO: Rewrite this DOC
         TODO: Finish making this version agnostic
+        TODO: Make the manual implementation for working, off, and sift
         This gets the Run info from the sheet and runs the SQL import statements.
 
         inputs..
@@ -175,14 +301,30 @@ class report_reader:
         startTime = sheet[self.cells["reported"]].value
         endTime = sheet[self.cells["1008"]].value
         shift = sheet[self.cells["shift"]].value
-        fsc = 1 if self.checkForFill(sheet, self.cells["run_type"]["FSC"]) else 0
-        stationCovered = 1 if self.checkForFill(sheet, self.cells["station_covered"]) else 0
-        medrun = 1 if sheet == self.run["MED RUN"] else 0
-        fullCover = self.getFullCover(sheet, shift) if self.cells["shift_covered"] == "" else sheet[self.cells["shift_covered"]]
+        fsc = int(self.checkForFill(sheet, self.cells["run_type"]["FSC"]))
+        stationCovered = int(self.checkForFill(sheet, self.cells["station_covered"]))
+        medrun = int(sheet == self.run["MED RUN"])
+        fullCover = self.getFullCover(sheet, shift)
         paid = self.isPaid(sheet, fsc, medrun)
+        oic = sheet[self.cells["OIC"]].value
+        so = sheet[self.cells["SO"]].value
+        filer = sheet[self.cells["filer"]].value
+        code1076 = sheet[self.cells["1076"]].value
+        code1023 = sheet[self.cells["1023"]].value
+        uc = sheet[self.cells["UC"]].value
+        code1008 = sheet[self.cells["1008"]].value
+        workingHours = self.getWorkingHours()
+        offHours = self.getOffHours()
+        apparatus = self.getApparatus()
+        township = self.getTownship()
+        givenAid = self.getGivenAid()
+        takenAid = self.getTakenAid()
         return {"runNumber": runNumber, "date": date, "startTime": startTime, "endTime": endTime,
                 "runTime": runTime, "stationCovered": stationCovered, "medRun": medrun,
-                "shift": shift, "fullCover": fullCover, "fsc": fsc, "paid": paid}
+                "shift": shift, "fullCover": fullCover, "fsc": fsc, "paid": paid, "OIC": oic,
+                "SO": so, "filer": filer, "1076": code1076, "1023": code1023, "UC": uc,
+                "1008": code1008, "workingHours": workingHours, "offHours": offHours,
+                "apparatus": apparatus, "township": township, "givenAid": givenAid, "takenAid": takenAid}
 
 
     def checkForFill(self, sheet, cell: str) -> bool:
@@ -201,7 +343,7 @@ class report_reader:
             return False if color == 1 else True
         else:
             return False if color == "00000000" and\
-                sheet[cell].value == None else True
+                sheet[cell].value not in [1, "1"] else True
 
 
     def getFullCover(self, sheet, shift) -> int:
@@ -216,6 +358,8 @@ class report_reader:
             case 1: interger 1 if the run is fully covered
             case 2: interger 0 if the run is not fully covered
         """
+        if self.cells["shift_covered"] != "":
+            return int(sheet[self.cells["shift_covered"]].value)
         fullCover = False
         lastShift = None
         for i in range(int(self.cells["first_employee_row"]), self.lastEmployeeRow + 1):
@@ -253,3 +397,114 @@ class report_reader:
             return 1
         if fsc == 0 and medrun == 0:
             return 1
+
+
+    def getApparatus(self) -> str:
+        """
+        This method is responsible for getting a list of apparatus used for
+        an incident.
+
+        returns..
+            A string encoding of a list
+                eg. "ENGINE 1,COMMAND 1,RESCUE 1
+                    "RESCUE 1"
+        """
+        returnVal = ""
+        sheet = self.run.active
+        apps = self.cells["apparatus"].keys()
+        for app in apps:
+            if self.checkForFill(sheet, self.cells["apparatus"][app]):
+                if returnVal != "":
+                    returnVal += ","
+                returnVal += app
+        return returnVal
+
+
+    def getWorkingHours(self) -> int:
+        """
+        Determines if an incident happened between 5a and 5p on a weekday.
+
+        returns...
+            A 1 if did is or a 0 if it did not
+        """
+        sheet = self.run.active
+        if self.cells["working_hours"] != "":
+            return int(sheet[self.cells["working_hours"]].value)
+        if sheet[self.cells["date"]].value.weekday() in [5, 6]:
+            return 0
+        if 500 < sheet[self.cells["reported"]].value <= 1700:
+            return 1
+        return 0
+
+    
+    def getOffHours(self) -> int:
+        """
+        Inverses the results from getWorkingHours to determind if a run
+        happened between 5p and 5a or on the weekend.
+
+        returns...
+            1 if it is a weekend or off hours run 0 otherwise
+        """
+        return 1 if self.getWorkingHours() == 0 else 0
+
+
+    def getTownship(self) -> str:
+        """
+        Determines what township and whether it is in city limits a run occured.
+
+        returns...
+            A string in the format <township>,<city/county>
+        """
+        sheet = self.run.active
+        for township in self.cells["township"]:
+            if self.checkForFill(sheet, self.cells["township"][township]["city"]):
+                return f"{township},city"
+            if self.checkForFill(sheet, self.cells["township"][township]["county"]):
+                return f"{township},county"
+        return ""
+
+
+    def getGivenAid(self) -> str:
+        """
+        Gets all of the departments and types of aid given during an incident.
+
+        returns...
+            A string encoded list of departments and types
+                eg. "Poneto,man;Chester,app"
+                    "Nottingham,man"
+        """
+        sheet = self.run.active
+        returnVal = ""
+        for station in self.cells["given_aid"]:
+            if self.checkForFill(sheet, self.cells["given_aid"][station]["man"]):
+                if returnVal != "":
+                    returnVal += ";"
+                returnVal += f"{station},man"
+            if self.checkForFill(sheet, self.cells["given_aid"][station]["app"]):
+                if returnVal != "":
+                    returnVal += ";"
+                returnVal += f"{station},app"
+        return returnVal
+
+
+    def getTakenAid(self) -> str:
+        """
+        Gets all of the departments and types of aid taken during an incident.
+
+        returns...
+            A string encoded list of departments and types
+                eg. "Poneto,man;Chester,app"
+                    "Nottingham,man"
+        """
+        sheet = self.run.active
+        returnVal = ""
+        for station in self.cells["taken_aid"]:
+            if self.checkForFill(sheet, self.cells["taken_aid"][station]["man"]):
+                if returnVal != "":
+                    returnVal += ";"
+                returnVal += f"{station},man"
+            if self.checkForFill(sheet, self.cells["taken_aid"][station]["app"]):
+                if returnVal != "":
+                    returnVal += ";"
+                returnVal += f"{station},app"
+        return returnVal

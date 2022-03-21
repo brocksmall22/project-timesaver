@@ -1,8 +1,6 @@
 from datetime import datetime
 import os
-from pydoc import ispackage
 from sqlite3.dbapi2 import Timestamp
-from openpyxl import load_workbook
 from .sqlFunctions import sqlFunctions
 from .logger import Logger
 from .oneDriveConnect import oneDriveConnect
@@ -123,12 +121,20 @@ class payroll:
             sqlRunner.updateRun(runInfo["runNumber"], runInfo["date"], runInfo["startTime"],
                     runInfo["endTime"], runInfo["runTime"], runInfo["stationCovered"],
                     runInfo["medRun"], runInfo["shift"], Timestamp, runInfo["fullCover"],
-                    runInfo["fsc"], runInfo["paid"])
+                    runInfo["fsc"], runInfo["paid"], runInfo['OIC'], runInfo['SO'],
+                    runInfo['filer'], runInfo['1076'], runInfo['1023'], runInfo['UC'],
+                    runInfo['1008'], runInfo['workingHours'], runInfo['offHours'],
+                    runInfo['apparatus'], runInfo['township'], runInfo['givenAid'],
+                    runInfo['takenAid'])
             return runInfo["date"], runInfo["runNumber"], True
         elif not sqlRunner.checkIfExists(runInfo["runNumber"], runInfo["date"]):
             sqlRunner.createRun(runInfo["runNumber"], runInfo["date"], runInfo["startTime"],
                     runInfo["endTime"], runInfo["runTime"], runInfo["stationCovered"],
                     runInfo["medRun"], runInfo["shift"], Timestamp, runInfo["fullCover"],
-                    runInfo["fsc"], runInfo["paid"])
+                    runInfo["fsc"], runInfo["paid"], runInfo['OIC'], runInfo['SO'],
+                    runInfo['filer'], runInfo['1076'], runInfo['1023'], runInfo['UC'],
+                    runInfo['1008'], runInfo['workingHours'], runInfo['offHours'],
+                    runInfo['apparatus'], runInfo['township'], runInfo['givenAid'],
+                    runInfo['takenAid'])
             return runInfo["date"], runInfo["runNumber"], True
         return runInfo["date"], runInfo["runNumber"], False
