@@ -1,25 +1,20 @@
 import sqlite3
 from sqlite3 import Error
-from sqlite3.dbapi2 import Cursor, Timestamp
-from datetime import datetime
-from ssl import VERIFY_X509_TRUSTED_FIRST
-from tracemalloc import start
-"""
-This class is responsible for running all sql operations. It requires that it be enstantiated.
-This class should be used in a `with` block. Follow the example below:
-    ```
-    with sqlFunctions("path/to/the/database") as object_name:
-        # Calls to functions that depend on this class
-        # or calls directly to this class will use
-        # the object in this block.
-    ```
-Usage in this manor is required as it creates the connection, runs all needed actions,
-and cleanly closes the object and connection to the db upon exiting the with scope.
-"""
-
 
 class sqlFunctions():
-
+    """
+    This class is responsible for running all sql operations. It requires that it be enstantiated.
+    This class should be used in a `with` block. Follow the example below:
+        ```
+        with sqlFunctions("path/to/the/database") as object_name:
+            # Calls to functions that depend on this class
+            # or calls directly to this class will use
+            # the object in this block.
+        ```
+    Usage in this manor is required as it creates the connection, runs all needed actions,
+    and cleanly closes the object and connection to the db upon exiting the with scope.
+    """
+    
     def __init__(self, dbFile):
         self.conn = self.createConnection(dbFile)
 
@@ -46,6 +41,7 @@ class sqlFunctions():
         return conn
 
     """
+    TODO: Update this documentation
     This contains all of the SQL functions related to Runs
     -------------------------------------------------------------------------------------------------------
     createRun(self, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift) 
@@ -61,42 +57,56 @@ class sqlFunctions():
     it requires the Run number, date, and connection to the sql database
     """
 
-    def createRun(self, runNumber, date, stopTime, endTime, runTime, Covered,
-                  Medrun, shift, Timestamp, fullCover, fsc, paid, oic, so,
-                  filler, code1076, code1073):
-        sql = """ INSERT INTO Run(number, date, startTime, stopTime, runTime, Covered, Medrun, shift, timeStamp, full_coverage, fsc, paidRun, oic, so, filler, code1076, code1073)
-                VALUES({0},\'{1}\',{2},{3},{4}, {5}, {6}, \'{7}\', {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15}, {16}) """
+    def createRun(self, runNumber, date, startTime, endTime, runTime, covered,
+                  medrun, shift, timestamp, fullCover, fsc, paid, oic, so,
+                  filler, code1076, code1023, uc, code1008,
+                  workingHours, offHours, apparatus, township, givenAid, takenAid):
+        sql = """INSERT INTO Run(number, date, startTime, stopTime, runTime, covered,
+                Medrun, shift, timeStamp, full_coverage, fsc, paidRun, oic, so, filler,
+                code1076, code1023, uc, code1008, workingHours, offHours,
+                apparatus, township, givenAid, takenAid) VALUES(?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) """
+        params = [runNumber, date, startTime, endTime, runTime, covered, medrun,
+                shift, timestamp, fullCover, fsc, paid, oic, so, filler, code1076,
+                code1023, uc, code1008, workingHours, offHours, apparatus, township,
+                givenAid, takenAid]
         cur = self.conn.cursor()
-        sql = sql.format(runNumber, date, stopTime, endTime, runTime, Covered,
-                         Medrun, shift, Timestamp, fullCover, fsc, paid, oic,
-                         so, filler, code1076, code1073)
-        cur.execute(sql)
+        cur.execute(sql, params)
         return cur.lastrowid
 
-    def updateRun(self, runNumber, date, startTime, endTime, runTime, Covered,
-                  Medrun, shift, Timestamp, fullCover, fsc, paid, oic, so,
-                  filler, code1076, code1073):
-        statement = f"""UPDATE Run SET runTime = {runTime}, startTime = {startTime}, stopTime = {endTime}, 
-                    Covered = {Covered}, Medrun = {Medrun}, shift = \'{shift}\', timeStamp = 
-                    {Timestamp}, full_coverage = {fullCover}, fsc = {fsc}, paidRun = {paid},
-                    oic = {oic}, so = {so}, filler = {filler}, code1076 = {code1076}, code1073 ={code1073} 
-                    WHERE number = {runNumber} AND date = \'{date}\';"""
+    def updateRun(self, runNumber, date, startTime, endTime, runTime, covered,
+                  medrun, shift, timestamp, fullCover, fsc, paid, oic, so,
+                  filler, code1076, code1023, uc, code1008, workingHours, offHours,
+                  apparatus, township, givenAid, takenAid):
+        statement = """UPDATE Run SET runTime = ?, startTime = ?, stopTime = ?, 
+                    covered = ?, Medrun = ?, shift = ?, timeStamp = ?,
+                    full_coverage = ?, fsc = ?, paidRun = ?, oic = ?, so = ?,
+                    filler = ?, code1076 = ?, code1023 = ?, uc = ?, code1008 = ?,
+                    workingHours = ?, offHours = ?, apparatus = ?, township = ?,
+                    givenAid = ?, takenAid = ? WHERE number = ? AND date = ?;"""
+        params = [runNumber, date, startTime, endTime, runTime, covered, medrun,
+                shift, timestamp, fullCover, fsc, paid, oic, so, filler, code1076,
+                code1023, uc, code1008, workingHours, offHours, apparatus, township,
+                givenAid, takenAid]
         cur = self.conn.cursor()
-        cur.execute(statement)
+        cur.execute(statement, params)
         return cur.lastrowid
 
     def newRunNeedsUpdated(self, runNumber, Timestamp, Year):
-        statement = f"""SELECT * FROM Run WHERE timeStamp < {Timestamp} AND number = {runNumber} AND date >= \'{Year}\';"""
+        statement = """SELECT * FROM Run WHERE timeStamp < ?
+                    AND number = ? AND date >= ?;"""
+        params = [Timestamp, runNumber, Year]
         cur = self.conn.cursor()
-        cur.execute(statement)
+        cur.execute(statement, params)
         values = cur.fetchall()
 
         return False if len(values) == 0 else True
 
     def checkIfExists(self, runNumber, year):
-        statement = f"""SELECT * FROM Run WHERE Date >= \'{year}\' AND number = {runNumber};"""
+        statement = f"""SELECT * FROM Run WHERE Date >= ? AND number = ?;"""
+        params = [year, runNumber]
         cur = self.conn.cursor()
-        cur.execute(statement)
+        cur.execute(statement, params)
         values = cur.fetchall()
 
         return False if len(values) == 0 else True
@@ -119,28 +129,33 @@ class sqlFunctions():
 
     def createResponded(self, empNumber, payRate, date, num, type_of_response,
                         full_time, subhours):
-        sql = """INSERT INTO Responded(empNumber, runNumber, date, payRate, type_of_response, full_time, subhours)
-                VALUES({0},{1},\'{2}\',{3}, '{4}', {5}, {6}) """
+        sql = """INSERT INTO Responded(empNumber, runNumber, date, payRate,
+                type_of_response, full_time, subhours) VALUES(?, ?, ?, ?,
+                ?, ?, ?) """
+        params = [empNumber, num, date, payRate, type_of_response,
+                full_time, subhours]
         cur = self.conn.cursor()
-        sql = sql.format(empNumber, num, date, payRate, type_of_response,
-                         full_time, subhours)
-        cur.execute(sql)
+        cur.execute(sql, params)
         return cur.lastrowid
 
     def respondedNeedsUpdated(self, empNumber, date, rNum):
-        statement = f"""SELECT * FROM Responded WHERE Date = \'{date}\' AND empNumber = {empNumber} AND runNumber = {rNum};"""
+        statement = """SELECT * FROM Responded WHERE Date = ?
+                    AND empNumber = ? AND runNumber = ?;"""
+        params = [date, empNumber, rNum]
         cur = self.conn.cursor()
-        cur.execute(statement)
+        cur.execute(statement, params)
         values = cur.fetchall()
 
         return False if len(values) == 0 else True
 
     def updateResponded(self, empNumber, payRate, date, rNum, type_of_response,
                         full_time, subhours):
-        statement = f"""UPDATE Responded SET payRate = {payRate} WHERE empNumber = {empNumber} AND date = \'{date}\' 
-                    AND runNumber = {rNum} AND type_of_response = {type_of_response}, full_time = {full_time}, subhours = {subhours};"""
+        statement = """UPDATE Responded SET payRate = ? WHERE empNumber = ?
+                    AND date = ? AND runNumber = ? AND type_of_response = ?,
+                    full_time = ?, subhours = ?;"""
+        params = [payRate, empNumber, date, rNum, type_of_response, full_time, subhours]
         cur = self.conn.cursor()
-        cur.execute(statement)
+        cur.execute(statement, params)
         return cur.lastrowid
 
     """
