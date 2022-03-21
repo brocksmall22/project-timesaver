@@ -5,6 +5,7 @@ from datetime import datetime
 from flask.config import Config
 from .logger import Logger
 
+from .vizualize import visualize
 from lib.backup_manager import backupManager as bm
 from lib.sqlFunctions import sqlFunctions
 from .generate_report import generate_report as grp
@@ -364,7 +365,7 @@ def generate_graphics():
     """
     print("Generating graphics...")
     # PLACE YOU CALL TO THE VISUALIZATION FUNCTIONS HERE
-
+    visualize.plotAll("2021-09-01", "2021-11-30")
     print("Graphics generated...")
     
     return Response(status = 200)
