@@ -610,9 +610,28 @@ class sqlFunctions():
             start_date: the start of the period
             end_date: the end of the period
         returns..
-            TODO: WRITE THE RETURNS
+            A list of tuples containing the start time
+                for each run.
         """
         sql = """SELECT startTime FROM Run WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
+
+
+    def getTownshipOfRuns(self, start_date, end_date):
+        """
+        Gets the township and if it is in the city
+        for every run in a given period.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the township and
+                if it is in the city for each run.
+        """
+        sql = """SELECT township FROM Run WHERE date BETWEEN ? AND ?;"""
         params = [start_date, end_date]
         cur = self.conn.cursor()
         return cur.execute(sql, params).fetchall()
