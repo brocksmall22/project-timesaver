@@ -8,6 +8,7 @@ class visualize:
     def plotAll(startDate, endDate):
         visualize.__plotRunStartTimeDistribution(startDate, endDate)
         visualize.__plotRunTownships(startDate, endDate)
+        visualize.__plotApparatusUsageFrequency(startDate, endDate)
 
 
     def __plotTypesOfRuns():
@@ -107,8 +108,25 @@ class visualize:
         pass
 
 
-    def __plotApparatusUsageFrequency():
-        pass
+    def __plotApparatusUsageFrequency(startDate, endDate):
+        with sqlFunctions() as sqlRunner: 
+            apparatus = sqlRunner.getApparatusOfRuns(startDate, endDate)
+            values = {}
+            for string in apparatus:
+                for app in string[0].split(","):
+                    if app in values.keys():
+                        values[app] += 1
+                    else:
+                        values[app] = 1
+            plt.figure(figsize=(10, 5), dpi=300)
+            plt.bar(values.keys(), values.values())
+            plt.xticks(rotation="45")
+            ax = plt.subplot()
+            ax.set_ylabel("Number of Incidents")
+            ax.set_xlabel("Apparatus")
+            plt.tight_layout()
+            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runApparatusDistribution.png", )
+
 
 
     def __plotGivenAid():

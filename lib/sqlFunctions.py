@@ -635,3 +635,19 @@ class sqlFunctions():
         params = [start_date, end_date]
         cur = self.conn.cursor()
         return cur.execute(sql, params).fetchall()
+
+
+    def getApparatusOfRuns(self, start_date, end_date):
+        """
+        Gets all of the appararus used during each run.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the apparatus used.
+        """
+        sql = """SELECT apparatus FROM Run WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
