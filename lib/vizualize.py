@@ -80,7 +80,7 @@ class visualize:
             ax.set_ylabel("Number of Incidents")
             ax.set_xlabel("Incident Report Time (MST)")
             plt.tight_layout()
-            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runStartTimeDistribution.png", )
+            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runStartTimeDistribution.png")
 
 
     def __plotRunTownships(startDate, endDate):
@@ -102,7 +102,7 @@ class visualize:
             plt.figure(figsize=(5, 3), dpi=300)
             plt.pie(frequency, labels = options)
             plt.tight_layout()
-            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runTownshipDistribution.png", )
+            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runTownshipDistribution.png")
 
     def __plotRunDurationsByTypes():
         pass
@@ -125,7 +125,7 @@ class visualize:
             ax.set_ylabel("Number of Incidents")
             ax.set_xlabel("Apparatus")
             plt.tight_layout()
-            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runApparatusDistribution.png", )
+            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runApparatusDistribution.png")
 
 
 
