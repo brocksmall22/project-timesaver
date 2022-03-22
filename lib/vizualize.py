@@ -1,5 +1,4 @@
 import os
-from xml.sax.handler import feature_external_ges
 import matplotlib.pyplot as plt
 from .sqlFunctions import sqlFunctions
 import numpy as np
@@ -13,6 +12,7 @@ class visualize:
         visualize.__plotApparatusUsageFrequency(startDate, endDate)
         visualize.__plotGivenAid(startDate, endDate)
         visualize.__plotTakenAid(startDate, endDate)
+        visualize.__plotShiftCoverage(startDate, endDate)
 
 
     def __plotTypesOfRuns(startDate, endDate):
@@ -166,7 +166,7 @@ class visualize:
                             man[stations.index(department)] += 1
                         elif aidType == "app":
                             app[stations.index(department)] += 1
-            yMax = len(man) if len(man) > len(app) else len(app)
+            yMax = max(man) if max(man) > max(app) else max(app)
             x = np.arange(len(stations))
             plt.figure(figsize=(10, 5), dpi=300)
             plt.bar(x + 0.2, man, width = 0.4)
@@ -218,5 +218,22 @@ class visualize:
         pass
 
 
-    def __plotShiftCoverage():
-        pass
+    def __plotShiftCoverage(startDate, endDate):
+        with sqlFunctions() as sqlRunner: 
+            shiftCoverages = sqlRunner.getShiftCoverages(startDate, endDate)
+            values = {}
+            for run in shiftCoverages:
+                if run[0].upper() not in values.keys():
+                    values[run[0].upper()] = 0
+                if run[1] == 1:
+                    values[run[0].upper()] += 1
+            yMax = max(values.values())
+            plt.figure(figsize=(10, 5), dpi=300)
+            plt.bar(values.keys(), values.values())
+            plt.yticks(range(0, yMax + 1))
+            plt.xticks()
+            ax = plt.subplot()
+            ax.set_ylabel("Number of Incidents Fully Covered")
+            ax.set_xlabel("Shift Responding")
+            plt.tight_layout()
+            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\shiftCoverageDistribution.png")
