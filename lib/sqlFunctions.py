@@ -687,19 +687,19 @@ class sqlFunctions():
         cur = self.conn.cursor()
         return cur.execute(sql, params).fetchall()
 
-    def getMedRun(self, start_date, end_date):
+
+    def getRunTypes(self, start_date, end_date):
         """
-        Gets the departments that provided this station aid
-            as well as the type of aid.
+        Gets the types of run that apply to the runs
+            for the given period.
 
         inputs..
             start_date: the start of the period
             end_date: the end of the period
         returns..
-            A list of tuples containing the department
-                and the type of aid recieved.
+            A list of tuples containing the types of runs
         """
-        sql = """SELECT Medrun FROM Run WHERE date BETWEEN ? AND ?;"""
+        sql = """SELECT runType FROM Run WHERE date BETWEEN ? AND ?;"""
         params = [start_date, end_date]
         cur = self.conn.cursor()
         return cur.execute(sql, params).fetchall()

@@ -17,14 +17,23 @@ class visualize:
 
     def __plotTypesOfRuns(startDate, endDate):
         with sqlFunctions() as sqlRunner:
-            fireruns = sqlRunner.getCountShiftFireRunsBetweenDates(startDate, endDate)
-            medruns = sqlRunner.getMedRun(startDate, endDate)
-            fscruns = sqlRunner.getCountShiftFscRunsBetweenDates(startDate, endDate)
-            options = ["Fire Runs", "Medical Runs", "FSC Runs"]
-            plt.figure(figsize=(5, 3), dpi=300)
-            plt.pie(fireruns, medruns, fscruns, labels = options)
+            runTypes = sqlRunner.getRunTypes(startDate, endDate)
+            values = {}
+            for item in runTypes:
+                if item[0] != "":
+                    for run in item[0].split(","):
+                        if run not in values.keys():
+                            values[run] = 1
+                        else:
+                            values[run] += 1
+            plt.figure(figsize=(10, 5), dpi=300)
+            plt.bar(values.keys(), values.values())
+            plt.xticks(rotation="45")
+            ax = plt.subplot()
+            ax.set_ylabel("Number of Incidents")
+            ax.set_xlabel("Type of Incident")
             plt.tight_layout()
-            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runTypes.png")
+            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runIncidentTypeDistribution.png")
 
 
     def __plotRunStartTimeDistribution(startDate, endDate):
