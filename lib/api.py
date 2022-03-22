@@ -1,4 +1,5 @@
 import os
+import re
 from flask import Flask, jsonify, request, Response
 from datetime import datetime
 
@@ -354,7 +355,7 @@ def trigger_restore():
     scheduler.resume_job(id=INTERVAL_TASK_ID_1)
     return Response(status = 200) if success != "" else Response(status = 500)
 
-@app.route("/generate_graphics", methods=["GET"])
+@app.route("/generate_graphics", methods=["POST"])
 def generate_graphics():
     """
     A temporary route to allow easier generating of
@@ -363,9 +364,12 @@ def generate_graphics():
     returns..
         True upon completion
     """
+    requestValues = request.json
+    startDate = requestValues["startDate"]
+    endDate = requestValues["endDate"]
     print("Generating graphics...")
     # PLACE YOU CALL TO THE VISUALIZATION FUNCTIONS HERE
-    figures = visualize.plotAll("2021-09-01", "2021-11-30")
+    figures = visualize.plotAll(startDate, endDate)
     print("Graphics generated...")
     
     return jsonify(figures), 200
