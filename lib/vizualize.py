@@ -18,7 +18,7 @@ class visualize:
     def __plotTypesOfRuns(startDate, endDate):
         with sqlFunctions() as sqlRunner:
             fireruns = sqlRunner.getCountShiftFireRunsBetweenDates(startDate, endDate)
-            medruns = sqlRunner.getCountShiftMedRunsBetweenDates(startDate, endDate)
+            medruns = sqlRunner.getMedRun(startDate, endDate)
             fscruns = sqlRunner.getCountShiftFscRunsBetweenDates(startDate, endDate)
             options = ["Fire Runs", "Medical Runs", "FSC Runs"]
             plt.figure(figsize=(5, 3), dpi=300)
