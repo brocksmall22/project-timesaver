@@ -17,17 +17,12 @@ class visualize:
 
     def __plotTypesOfRuns(startDate, endDate):
         with sqlFunctions() as sqlRunner:
-            numRuns=sqlRunner.getMedRunBitFromRun(startDate, endDate)
-            options = [0, 1]
-            frequency = [0]
-            for typeRuns in numRuns:
-                match typeRuns[0]:
-                    case 0:
-                        frequency[0] += 1
-                    case 1:
-                        frequency[1] += 1
+            fireruns = sqlRunner.getCountShiftFireRunsBetweenDates(startDate, endDate)
+            medruns = sqlRunner.getCountShiftMedRunsBetweenDates(startDate, endDate)
+            fscruns = sqlRunner.getCountShiftFscRunsBetweenDates(startDate, endDate)
+            options = ["Fire Runs", "Medical Runs", "FSC Runs"]
             plt.figure(figsize=(5, 3), dpi=300)
-            plt.pie(frequency, labels = options)
+            plt.pie(fireruns, medruns, fscruns, labels = options)
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runTypes.png")
 
