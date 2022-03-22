@@ -319,12 +319,14 @@ class report_reader:
         township = self.getTownship()
         givenAid = self.getGivenAid()
         takenAid = self.getTakenAid()
+        runType = self.getRunType()
         return {"runNumber": runNumber, "date": date, "startTime": startTime, "endTime": endTime,
                 "runTime": runTime, "stationCovered": stationCovered, "medRun": medrun,
                 "shift": shift, "fullCover": fullCover, "fsc": fsc, "paid": paid, "OIC": oic,
                 "SO": so, "filer": filer, "1076": code1076, "1023": code1023, "UC": uc,
                 "1008": code1008, "workingHours": workingHours, "offHours": offHours,
-                "apparatus": apparatus, "township": township, "givenAid": givenAid, "takenAid": takenAid}
+                "apparatus": apparatus, "township": township, "givenAid": givenAid,
+                "takenAid": takenAid, "runType": runType}
 
 
     def checkForFill(self, sheet, cell: str) -> bool:
@@ -507,4 +509,23 @@ class report_reader:
                 if returnVal != "":
                     returnVal += ";"
                 returnVal += f"{station},app"
+        return returnVal
+
+
+    def getRunType(self):
+        """
+        Goes through the possible run types and gets a list of all the types
+        that the run is marked as.
+        returns..
+            A string encoded list of run types that correspond with the run
+                e.g. "Rescue,Explosion"
+                     "Fire"
+        """
+        sheet = self.run.active
+        returnVal = ""
+        for runType in self.cells["run_type"]:
+            if self.checkForFill(sheet, self.cells["run_type"][runType]):
+                if returnVal != "":
+                    returnVal += ","
+                returnVal += runType
         return returnVal
