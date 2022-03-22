@@ -120,7 +120,7 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runStartTimeDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
+            return returnBuff
 
 
     def plotRunTownships(startDate, endDate):
@@ -145,7 +145,7 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runTownshipDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
+            return returnBuff
 
     def plotRunDurationsByTypes():
         pass
@@ -171,7 +171,7 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runApparatusDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
+            return returnBuff
 
 
     def plotGivenAid(startDate, endDate):
@@ -207,7 +207,7 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\givenAidDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
+            return returnBuff
 
 
     def plotTakenAid(startDate, endDate):
@@ -243,7 +243,7 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\takennAidDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
+            return returnBuff
 
 
     def plotAverageRunTimes():
@@ -271,4 +271,4 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\shiftCoverageDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
+            return returnBuff
