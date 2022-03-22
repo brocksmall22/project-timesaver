@@ -365,7 +365,7 @@ def generate_graphics():
     """
     print("Generating graphics...")
     # PLACE YOU CALL TO THE VISUALIZATION FUNCTIONS HERE
-    visualize.plotAll("2021-09-01", "2021-11-30")
+    figures = visualize.plotAll("2021-09-01", "2021-11-30")
     print("Graphics generated...")
     
-    return Response(status = 200)
+    return jsonify(figures), 200

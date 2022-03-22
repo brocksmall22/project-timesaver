@@ -2,20 +2,35 @@ import os
 import matplotlib.pyplot as plt
 from .sqlFunctions import sqlFunctions
 import numpy as np
+import io
 
 class visualize:
     @staticmethod
     def plotAll(startDate, endDate):
-        visualize.__plotTypesOfRuns(startDate, endDate)
-        visualize.__plotRunStartTimeDistribution(startDate, endDate)
-        visualize.__plotRunTownships(startDate, endDate)
-        visualize.__plotApparatusUsageFrequency(startDate, endDate)
-        visualize.__plotGivenAid(startDate, endDate)
-        visualize.__plotTakenAid(startDate, endDate)
-        visualize.__plotShiftCoverage(startDate, endDate)
+        returnFigures = {}
+        returnFigures["typesOfRuns"] = visualize.__plotTypesOfRuns(startDate, endDate)
+        returnFigures["startTimeDistribution"] = visualize.__plotRunStartTimeDistribution(startDate, endDate)
+        returnFigures["townshipDistribution"] = visualize.__plotRunTownships(startDate, endDate)
+        returnFigures["apparatusUsage"] = visualize.__plotApparatusUsageFrequency(startDate, endDate)
+        returnFigures["givenAid"] = visualize.__plotGivenAid(startDate, endDate)
+        returnFigures["takenAid"] = visualize.__plotTakenAid(startDate, endDate)
+        returnFigures["shiftCoverage"] = visualize.__plotShiftCoverage(startDate, endDate)
+        return returnFigures
 
 
-    def __plotTypesOfRuns(startDate, endDate):
+    def __plotTypesOfRuns(startDate: str, endDate: str) -> str:
+        """
+        Takes two dates (formatted "YYYY-mm-dd") and uses
+        them to fetch all of the types of runs for each
+        incident between those dates to generate a
+        frequency distribution bar chart for those variables.
+
+        inputs..
+            startDate: the (inclusive) date for the start of the period
+            endDate: the (inclusive) date for the end of the period
+        returns..
+            A byte string of the generated image
+        """
         with sqlFunctions() as sqlRunner:
             runTypes = sqlRunner.getRunTypes(startDate, endDate)
             values = {}
@@ -26,6 +41,7 @@ class visualize:
                             values[run] = 1
                         else:
                             values[run] += 1
+            returnBuff = io.BytesIO()
             plt.figure(figsize=(10, 5), dpi=300)
             plt.bar(values.keys(), values.values())
             plt.xticks(rotation="45")
@@ -34,6 +50,8 @@ class visualize:
             ax.set_xlabel("Type of Incident")
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runIncidentTypeDistribution.png")
+            plt.savefig(returnBuff, format = "png")
+            return returnBuff.getvalue()
 
 
     def __plotRunStartTimeDistribution(startDate, endDate):
@@ -93,6 +111,7 @@ class visualize:
                     frequency[22] += 1
                 elif 2300 <= time[0]:
                     frequency[23] += 1
+            returnBuff = io.BytesIO()
             plt.figure(figsize=(10, 5), dpi=300)
             plt.bar(hours, frequency)
             plt.xticks(rotation="45")
@@ -101,6 +120,8 @@ class visualize:
             ax.set_xlabel("Incident Report Time (MST)")
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runStartTimeDistribution.png")
+            plt.savefig(returnBuff, format = "png")
+            return returnBuff.getvalue()
 
 
     def __plotRunTownships(startDate, endDate):
@@ -119,10 +140,13 @@ class visualize:
                         frequency[2] += 1
                     case "lancaster,county":
                         frequency[3] += 1
+            returnBuff = io.BytesIO()
             plt.figure(figsize=(5, 3), dpi=300)
             plt.pie(frequency, labels = options)
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runTownshipDistribution.png")
+            plt.savefig(returnBuff, format = "png")
+            return returnBuff.getvalue()
 
     def __plotRunDurationsByTypes():
         pass
@@ -138,6 +162,7 @@ class visualize:
                         values[app] += 1
                     else:
                         values[app] = 1
+            returnBuff = io.BytesIO()
             plt.figure(figsize=(10, 5), dpi=300)
             plt.bar(values.keys(), values.values())
             plt.xticks(rotation="45")
@@ -146,6 +171,8 @@ class visualize:
             ax.set_xlabel("Apparatus")
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runApparatusDistribution.png")
+            plt.savefig(returnBuff, format = "png")
+            return returnBuff.getvalue()
 
 
     def __plotGivenAid(startDate, endDate):
@@ -166,6 +193,7 @@ class visualize:
                             man[stations.index(department)] += 1
                         elif aidType == "app":
                             app[stations.index(department)] += 1
+            returnBuff = io.BytesIO()
             yMax = max(man) if max(man) > max(app) else max(app)
             x = np.arange(len(stations))
             plt.figure(figsize=(10, 5), dpi=300)
@@ -179,6 +207,8 @@ class visualize:
             plt.legend(["Manual Labor", "Apparatus"])
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\givenAidDistribution.png")
+            plt.savefig(returnBuff, format = "png")
+            return returnBuff.getvalue()
 
 
     def __plotTakenAid(startDate, endDate):
@@ -199,6 +229,7 @@ class visualize:
                             man[stations.index(department)] += 1
                         elif aidType == "app":
                             app[stations.index(department)] += 1
+            returnBuff = io.BytesIO()
             yMax = len(man) if len(man) > len(app) else len(app)
             x = np.arange(len(stations))
             plt.figure(figsize=(10, 5), dpi=300)
@@ -212,6 +243,8 @@ class visualize:
             plt.legend(["Manual Labor", "Apparatus"])
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\takennAidDistribution.png")
+            plt.savefig(returnBuff, format = "png")
+            return returnBuff.getvalue()
 
 
     def __plotAverageRunTimes():
@@ -227,6 +260,7 @@ class visualize:
                     values[run[0].upper()] = 0
                 if run[1] == 1:
                     values[run[0].upper()] += 1
+            returnBuff = io.BytesIO()
             yMax = max(values.values())
             plt.figure(figsize=(10, 5), dpi=300)
             plt.bar(values.keys(), values.values())
@@ -237,3 +271,5 @@ class visualize:
             ax.set_xlabel("Shift Responding")
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\shiftCoverageDistribution.png")
+            plt.savefig(returnBuff, format = "png")
+            return returnBuff.getvalue()
