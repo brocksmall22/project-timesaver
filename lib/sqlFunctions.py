@@ -655,7 +655,7 @@ class sqlFunctions():
     def getGivenAid(self, start_date, end_date):
         """
         Gets the departments that revieced this station's aid
-            as well as the type of aid.
+        as well as the type of aid.
 
         inputs..
             start_date: the start of the period
@@ -673,7 +673,7 @@ class sqlFunctions():
     def getTakenAid(self, start_date, end_date):
         """
         Gets the departments that provided this station aid
-            as well as the type of aid.
+        as well as the type of aid.
 
         inputs..
             start_date: the start of the period
@@ -691,7 +691,7 @@ class sqlFunctions():
     def getRunTypes(self, start_date, end_date):
         """
         Gets the types of run that apply to the runs
-            for the given period.
+        for the given period.
 
         inputs..
             start_date: the start of the period
@@ -700,6 +700,26 @@ class sqlFunctions():
             A list of tuples containing the types of runs
         """
         sql = """SELECT runType FROM Run WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
+
+
+    def getShiftCoverages(self, start_date, end_date):
+        """
+        Gets the shift responding to a run as well as
+        whether that shift was fully covered (all
+        employees of that shift responded).
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the shift as
+                as if it was covered
+        """
+        sql = """SELECT shift, full_coverage FROM Run
+                WHERE date BETWEEN ? AND ?;"""
         params = [start_date, end_date]
         cur = self.conn.cursor()
         return cur.execute(sql, params).fetchall()
