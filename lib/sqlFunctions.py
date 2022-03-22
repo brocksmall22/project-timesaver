@@ -62,17 +62,17 @@ class sqlFunctions():
 
     def createRun(self, runNumber, date, startTime, endTime, runTime, covered,
                   medrun, shift, timestamp, fullCover, fsc, paid, oic, so,
-                  filler, code1076, code1023, uc, code1008,
-                  workingHours, offHours, apparatus, township, givenAid, takenAid):
+                  filler, code1076, code1023, uc, code1008, workingHours, offHours,
+                  apparatus, township, givenAid, takenAid, runType):
         sql = """INSERT INTO Run(number, date, startTime, stopTime, runTime, covered,
                 Medrun, shift, timeStamp, full_coverage, fsc, paidRun, oic, so, filler,
                 code1076, code1023, uc, code1008, workingHours, offHours,
-                apparatus, township, givenAid, takenAid) VALUES(?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) """
+                apparatus, township, givenAid, takenAid, runType) VALUES(?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) """
         params = [runNumber, date, startTime, endTime, runTime, covered, medrun,
                 shift, timestamp, fullCover, fsc, paid, oic, so, filler, code1076,
                 code1023, uc, code1008, workingHours, offHours, apparatus, township,
-                givenAid, takenAid]
+                givenAid, takenAid, runType]
         cur = self.conn.cursor()
         cur.execute(sql, params)
         return cur.lastrowid
@@ -80,17 +80,18 @@ class sqlFunctions():
     def updateRun(self, runNumber, date, startTime, endTime, runTime, covered,
                   medrun, shift, timestamp, fullCover, fsc, paid, oic, so,
                   filler, code1076, code1023, uc, code1008, workingHours, offHours,
-                  apparatus, township, givenAid, takenAid):
+                  apparatus, township, givenAid, takenAid, runType):
         statement = """UPDATE Run SET runTime = ?, startTime = ?, stopTime = ?, 
                     covered = ?, Medrun = ?, shift = ?, timeStamp = ?,
                     full_coverage = ?, fsc = ?, paidRun = ?, oic = ?, so = ?,
                     filler = ?, code1076 = ?, code1023 = ?, uc = ?, code1008 = ?,
                     workingHours = ?, offHours = ?, apparatus = ?, township = ?,
-                    givenAid = ?, takenAid = ? WHERE number = ? AND date = ?;"""
+                    givenAid = ?, takenAid = ? WHERE number = ? AND date = ?
+                    AND runType = ?;"""
         params = [runNumber, date, startTime, endTime, runTime, covered, medrun,
                 shift, timestamp, fullCover, fsc, paid, oic, so, filler, code1076,
                 code1023, uc, code1008, workingHours, offHours, apparatus, township,
-                givenAid, takenAid]
+                givenAid, takenAid, runType]
         cur = self.conn.cursor()
         cur.execute(statement, params)
         return cur.lastrowid

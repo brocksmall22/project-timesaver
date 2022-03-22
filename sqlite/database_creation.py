@@ -14,7 +14,7 @@ class creator:
                                     shift char(1), full_coverage BIT, paidRun BIT, timeStamp FLOAT, oic TEXT,
                                     so TEXT, filler TEXT, code1076 SMALLINT, code1023 SMALLINT, uc TEXT,
                                     code1008 SMALLINT, workingHours BIT, offHours BIT, apparatus TEXT, township TEXT,
-                                    givenAid TEXT, takenAid TEXT, PRIMARY KEY(number, date)); """
+                                    givenAid TEXT, takenAid TEXT, runType TEXT, PRIMARY KEY(number, date)); """
 
         sql_create_report_table = """CREATE TABLE IF NOT EXISTS Responded (empNumber TEXT REFERENCES Employee (number), 
                                     runNumber TINYINT REFERENCES Run (number), date DATE REFERENCES Run (date), 
