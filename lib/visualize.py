@@ -8,15 +8,13 @@ import io
 class visualize:
     @staticmethod
     def plotAll(startDate, endDate):
-        returnFigures = {}
-        returnFigures["typesOfRuns"] = visualize.plotTypesOfRuns(startDate, endDate)
-        returnFigures["startTimeDistribution"] = visualize.plotRunStartTimeDistribution(startDate, endDate)
-        returnFigures["townshipDistribution"] = visualize.plotRunTownships(startDate, endDate)
-        returnFigures["apparatusUsage"] = visualize.plotApparatusUsageFrequency(startDate, endDate)
-        returnFigures["givenAid"] = visualize.plotGivenAid(startDate, endDate)
-        returnFigures["takenAid"] = visualize.plotTakenAid(startDate, endDate)
-        returnFigures["shiftCoverage"] = visualize.plotShiftCoverage(startDate, endDate)
-        return returnFigures
+        visualize.plotTypesOfRuns(startDate, endDate)
+        visualize.plotRunStartTimeDistribution(startDate, endDate)
+        visualize.plotRunTownships(startDate, endDate)
+        visualize.plotApparatusUsageFrequency(startDate, endDate)
+        visualize.plotGivenAid(startDate, endDate)
+        visualize.plotTakenAid(startDate, endDate)
+        visualize.plotShiftCoverage(startDate, endDate)
 
 
     def plotTypesOfRuns(startDate: str, endDate: str) -> str:
@@ -52,7 +50,7 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runIncidentTypeDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
+            return returnBuff
 
 
     def plotRunStartTimeDistribution(startDate, endDate):
