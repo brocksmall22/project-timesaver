@@ -260,8 +260,10 @@ class API {
   A temporary function to trigger the backend to generate
   the graphics
   */
-  static Future<void> generateCharts() async {
+  static Future<void> generateCharts(String startDate, String endDate) async {
     Uri _url = Uri.parse('http://127.0.0.1:8080/generate_graphics');
-    await get(_url);
+    String postJson = jsonEncode({"startDate": startDate, "endDate": endDate});
+    Map<String, String> header = {"Content-Type": "application/json"};
+    await post(_url, headers: header, body: postJson);
   }
 }

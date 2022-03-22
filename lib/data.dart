@@ -21,7 +21,7 @@ class _DataUIState extends State<DataUI> {
         body: Center(
             child: ElevatedButton(
           child: const Text("Generate Graphics"),
-          onPressed: () => {API.generateCharts()},
+          onPressed: () => {API.generateCharts("2021-09-01", "2021-11-30")},
         )),
       );
 
