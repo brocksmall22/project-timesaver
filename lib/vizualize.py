@@ -2,6 +2,7 @@ import os
 import matplotlib.pyplot as plt
 from .sqlFunctions import sqlFunctions
 import numpy as np
+import base64
 import io
 
 class visualize:
@@ -51,7 +52,7 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runIncidentTypeDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
 
 
     def __plotRunStartTimeDistribution(startDate, endDate):
@@ -121,7 +122,7 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runStartTimeDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
 
 
     def __plotRunTownships(startDate, endDate):
@@ -146,7 +147,7 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runTownshipDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
 
     def __plotRunDurationsByTypes():
         pass
@@ -172,7 +173,7 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runApparatusDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
 
 
     def __plotGivenAid(startDate, endDate):
@@ -208,7 +209,7 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\givenAidDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
 
 
     def __plotTakenAid(startDate, endDate):
@@ -244,7 +245,7 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\takennAidDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
 
 
     def __plotAverageRunTimes():
@@ -272,4 +273,4 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\shiftCoverageDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return base64.b64encode(returnBuff.getvalue()).decode('utf8')
