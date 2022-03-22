@@ -2,23 +2,22 @@ import os
 import matplotlib.pyplot as plt
 from .sqlFunctions import sqlFunctions
 import numpy as np
+import base64
 import io
 
 class visualize:
     @staticmethod
     def plotAll(startDate, endDate):
-        returnFigures = {}
-        returnFigures["typesOfRuns"] = visualize.__plotTypesOfRuns(startDate, endDate)
-        returnFigures["startTimeDistribution"] = visualize.__plotRunStartTimeDistribution(startDate, endDate)
-        returnFigures["townshipDistribution"] = visualize.__plotRunTownships(startDate, endDate)
-        returnFigures["apparatusUsage"] = visualize.__plotApparatusUsageFrequency(startDate, endDate)
-        returnFigures["givenAid"] = visualize.__plotGivenAid(startDate, endDate)
-        returnFigures["takenAid"] = visualize.__plotTakenAid(startDate, endDate)
-        returnFigures["shiftCoverage"] = visualize.__plotShiftCoverage(startDate, endDate)
-        return returnFigures
+        visualize.plotTypesOfRuns(startDate, endDate)
+        visualize.plotRunStartTimeDistribution(startDate, endDate)
+        visualize.plotRunTownships(startDate, endDate)
+        visualize.plotApparatusUsageFrequency(startDate, endDate)
+        visualize.plotGivenAid(startDate, endDate)
+        visualize.plotTakenAid(startDate, endDate)
+        visualize.plotShiftCoverage(startDate, endDate)
 
 
-    def __plotTypesOfRuns(startDate: str, endDate: str) -> str:
+    def plotTypesOfRuns(startDate: str, endDate: str) -> str:
         """
         Takes two dates (formatted "YYYY-mm-dd") and uses
         them to fetch all of the types of runs for each
@@ -51,10 +50,10 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runIncidentTypeDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return returnBuff
 
 
-    def __plotRunStartTimeDistribution(startDate, endDate):
+    def plotRunStartTimeDistribution(startDate, endDate):
         with sqlFunctions() as sqlRunner: 
             startTimes = sqlRunner.getStartTimeOfRuns(startDate, endDate)
             hours = ["0000", "0100", "0200", "0300", "0400", "0500", "0600", "0700",
@@ -121,10 +120,10 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runStartTimeDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return returnBuff
 
 
-    def __plotRunTownships(startDate, endDate):
+    def plotRunTownships(startDate, endDate):
         with sqlFunctions() as sqlRunner: 
             townships = sqlRunner.getTownshipOfRuns(startDate, endDate)
             options = ["Harrison - City", "Harrison - County", "Lancaster - City",
@@ -146,13 +145,13 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runTownshipDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return returnBuff
 
-    def __plotRunDurationsByTypes():
+    def plotRunDurationsByTypes():
         pass
 
 
-    def __plotApparatusUsageFrequency(startDate, endDate):
+    def plotApparatusUsageFrequency(startDate, endDate):
         with sqlFunctions() as sqlRunner: 
             apparatus = sqlRunner.getApparatusOfRuns(startDate, endDate)
             values = {}
@@ -172,10 +171,10 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runApparatusDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return returnBuff
 
 
-    def __plotGivenAid(startDate, endDate):
+    def plotGivenAid(startDate, endDate):
         with sqlFunctions() as sqlRunner: 
             givenAid = sqlRunner.getGivenAid(startDate, endDate)
             stations = []
@@ -208,10 +207,10 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\givenAidDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return returnBuff
 
 
-    def __plotTakenAid(startDate, endDate):
+    def plotTakenAid(startDate, endDate):
         with sqlFunctions() as sqlRunner: 
             takenAid = sqlRunner.getTakenAid(startDate, endDate)
             stations = []
@@ -244,14 +243,14 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\takennAidDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return returnBuff
 
 
-    def __plotAverageRunTimes():
+    def plotAverageRunTimes():
         pass
 
 
-    def __plotShiftCoverage(startDate, endDate):
+    def plotShiftCoverage(startDate, endDate):
         with sqlFunctions() as sqlRunner: 
             shiftCoverages = sqlRunner.getShiftCoverages(startDate, endDate)
             values = {}
@@ -272,4 +271,4 @@ class visualize:
             plt.tight_layout()
             plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\shiftCoverageDistribution.png")
             plt.savefig(returnBuff, format = "png")
-            return returnBuff.getvalue()
+            return returnBuff

@@ -1,12 +1,10 @@
 import os
-import re
 from flask import Flask, jsonify, request, Response
 from datetime import datetime
-
+from image_api import image_api
 from flask.config import Config
 from .logger import Logger
 
-from .vizualize import visualize
 from lib.backup_manager import backupManager as bm
 from lib.sqlFunctions import sqlFunctions
 from .generate_report import generate_report as grp
@@ -17,6 +15,7 @@ from .config_manager import ConfigManager
 from flask_apscheduler import APScheduler
 
 app = Flask(__name__)
+app.register_blueprint(image_api, url_prefix='/images')
 scheduler = APScheduler()
 scheduler.init_app(app)
 scheduler.start()
@@ -354,22 +353,3 @@ def trigger_restore():
     scheduler.resume_job(id=INTERVAL_TASK_ID)
     scheduler.resume_job(id=INTERVAL_TASK_ID_1)
     return Response(status = 200) if success != "" else Response(status = 500)
-
-@app.route("/generate_graphics", methods=["POST"])
-def generate_graphics():
-    """
-    A temporary route to allow easier generating of
-    the sample matplotlib files.
-
-    returns..
-        True upon completion
-    """
-    requestValues = request.json
-    startDate = requestValues["startDate"]
-    endDate = requestValues["endDate"]
-    print("Generating graphics...")
-    # PLACE YOU CALL TO THE VISUALIZATION FUNCTIONS HERE
-    figures = visualize.plotAll(startDate, endDate)
-    print("Graphics generated...")
-    
-    return jsonify(figures), 200
