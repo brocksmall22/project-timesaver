@@ -723,3 +723,20 @@ class sqlFunctions():
         params = [start_date, end_date]
         cur = self.conn.cursor()
         return cur.execute(sql, params).fetchall()
+
+
+    def getTotalNumberOfRunsDuringPeriod(self, start_date, end_date):
+        """
+        Gets the sum of all runs in a given period.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            An integer representing the total
+        """
+        sql = """SELECT COUNT(*) FROM Run
+                WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()[0][0]
