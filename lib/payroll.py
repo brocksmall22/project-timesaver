@@ -117,6 +117,7 @@ class payroll:
             case 1: the run, date, and run number of the workbook
         """
         runInfo = reportReader.getRunInfo()
+        print(runInfo['runType'])
         if sqlRunner.newRunNeedsUpdated(runInfo["runNumber"], Timestamp, payroll.Year):
             sqlRunner.updateRun(runInfo["runNumber"], runInfo["date"], runInfo["startTime"],
                     runInfo["endTime"], runInfo["runTime"], runInfo["stationCovered"],
@@ -125,7 +126,7 @@ class payroll:
                     runInfo['filer'], runInfo['1076'], runInfo['1023'], runInfo['UC'],
                     runInfo['1008'], runInfo['workingHours'], runInfo['offHours'],
                     runInfo['apparatus'], runInfo['township'], runInfo['givenAid'],
-                    runInfo['takenAid'])
+                    runInfo['takenAid'], runInfo['runType'])
             return runInfo["date"], runInfo["runNumber"], True
         elif not sqlRunner.checkIfExists(runInfo["runNumber"], runInfo["date"]):
             sqlRunner.createRun(runInfo["runNumber"], runInfo["date"], runInfo["startTime"],
@@ -135,6 +136,6 @@ class payroll:
                     runInfo['filer'], runInfo['1076'], runInfo['1023'], runInfo['UC'],
                     runInfo['1008'], runInfo['workingHours'], runInfo['offHours'],
                     runInfo['apparatus'], runInfo['township'], runInfo['givenAid'],
-                    runInfo['takenAid'])
+                    runInfo['takenAid'], runInfo['runType'])
             return runInfo["date"], runInfo["runNumber"], True
         return runInfo["date"], runInfo["runNumber"], False

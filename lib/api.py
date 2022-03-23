@@ -1,8 +1,6 @@
 import os
-from flask import Flask, jsonify, request, Response
+from flask import Flask, jsonify, request, Response, send_file
 from datetime import datetime
-
-from flask.config import Config
 from .logger import Logger
 
 from lib.backup_manager import backupManager as bm
@@ -13,8 +11,10 @@ import sqlite.check_database as cdb
 from flask.wrappers import Request
 from .config_manager import ConfigManager
 from flask_apscheduler import APScheduler
+from .image_api import image_api
 
 app = Flask(__name__)
+app.register_blueprint(image_api)
 scheduler = APScheduler()
 scheduler.init_app(app)
 scheduler.start()

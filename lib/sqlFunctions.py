@@ -1,5 +1,7 @@
 import sqlite3
 from sqlite3 import Error
+import os
+from turtle import st
 
 class sqlFunctions():
     """
@@ -15,7 +17,8 @@ class sqlFunctions():
     and cleanly closes the object and connection to the db upon exiting the with scope.
     """
     
-    def __init__(self, dbFile):
+    def __init__(self,
+                dbFile =  os.getenv('APPDATA') + "\\project-time-saver\\database.db"):
         self.conn = self.createConnection(dbFile)
 
     def __enter__(self):
@@ -59,17 +62,17 @@ class sqlFunctions():
 
     def createRun(self, runNumber, date, startTime, endTime, runTime, covered,
                   medrun, shift, timestamp, fullCover, fsc, paid, oic, so,
-                  filler, code1076, code1023, uc, code1008,
-                  workingHours, offHours, apparatus, township, givenAid, takenAid):
+                  filler, code1076, code1023, uc, code1008, workingHours, offHours,
+                  apparatus, township, givenAid, takenAid, runType):
         sql = """INSERT INTO Run(number, date, startTime, stopTime, runTime, covered,
                 Medrun, shift, timeStamp, full_coverage, fsc, paidRun, oic, so, filler,
                 code1076, code1023, uc, code1008, workingHours, offHours,
-                apparatus, township, givenAid, takenAid) VALUES(?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) """
+                apparatus, township, givenAid, takenAid, runType) VALUES(?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) """
         params = [runNumber, date, startTime, endTime, runTime, covered, medrun,
                 shift, timestamp, fullCover, fsc, paid, oic, so, filler, code1076,
                 code1023, uc, code1008, workingHours, offHours, apparatus, township,
-                givenAid, takenAid]
+                givenAid, takenAid, runType]
         cur = self.conn.cursor()
         cur.execute(sql, params)
         return cur.lastrowid
@@ -77,17 +80,18 @@ class sqlFunctions():
     def updateRun(self, runNumber, date, startTime, endTime, runTime, covered,
                   medrun, shift, timestamp, fullCover, fsc, paid, oic, so,
                   filler, code1076, code1023, uc, code1008, workingHours, offHours,
-                  apparatus, township, givenAid, takenAid):
+                  apparatus, township, givenAid, takenAid, runType):
         statement = """UPDATE Run SET runTime = ?, startTime = ?, stopTime = ?, 
                     covered = ?, Medrun = ?, shift = ?, timeStamp = ?,
                     full_coverage = ?, fsc = ?, paidRun = ?, oic = ?, so = ?,
                     filler = ?, code1076 = ?, code1023 = ?, uc = ?, code1008 = ?,
                     workingHours = ?, offHours = ?, apparatus = ?, township = ?,
-                    givenAid = ?, takenAid = ? WHERE number = ? AND date = ?;"""
+                    givenAid = ?, takenAid = ? WHERE number = ? AND date = ?
+                    AND runType = ?;"""
         params = [runNumber, date, startTime, endTime, runTime, covered, medrun,
                 shift, timestamp, fullCover, fsc, paid, oic, so, filler, code1076,
                 code1023, uc, code1008, workingHours, offHours, apparatus, township,
-                givenAid, takenAid]
+                givenAid, takenAid, runType]
         cur = self.conn.cursor()
         cur.execute(statement, params)
         return cur.lastrowid
@@ -597,3 +601,142 @@ class sqlFunctions():
             cur.execute(
                 f"""SELECT * FROM Run WHERE date BETWEEN '{start_date}' AND '{end_date}';"""
             ).fetchall()) == 0
+
+
+    def getStartTimeOfRuns(self, start_date, end_date):
+        """
+        Gets the start time for every run in a given period.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the start time
+                for each run.
+        """
+        sql = """SELECT startTime FROM Run WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
+
+
+    def getTownshipOfRuns(self, start_date, end_date):
+        """
+        Gets the township and if it is in the city
+        for every run in a given period.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the township and
+                if it is in the city for each run.
+        """
+        sql = """SELECT township FROM Run WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
+
+    def getApparatusOfRuns(self, start_date, end_date):
+        """
+        Gets all of the appararus used during each run.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the apparatus used.
+        """
+        sql = """SELECT apparatus FROM Run WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
+
+    def getGivenAid(self, start_date, end_date):
+        """
+        Gets the departments that revieced this station's aid
+        as well as the type of aid.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the department
+                and the type of aid given.
+        """
+        sql = """SELECT givenAid FROM Run WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
+
+
+    def getTakenAid(self, start_date, end_date):
+        """
+        Gets the departments that provided this station aid
+        as well as the type of aid.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the department
+                and the type of aid recieved.
+        """
+        sql = """SELECT takenAid FROM Run WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
+
+
+    def getRunTypes(self, start_date, end_date):
+        """
+        Gets the types of run that apply to the runs
+        for the given period.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the types of runs
+        """
+        sql = """SELECT runType FROM Run WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
+
+
+    def getShiftCoverages(self, start_date, end_date):
+        """
+        Gets the shift responding to a run as well as
+        whether that shift was fully covered (all
+        employees of that shift responded).
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            A list of tuples containing the shift as
+                as if it was covered
+        """
+        sql = """SELECT shift, full_coverage FROM Run
+                WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()
+
+
+    def getTotalNumberOfRunsDuringPeriod(self, start_date, end_date):
+        """
+        Gets the sum of all runs in a given period.
+
+        inputs..
+            start_date: the start of the period
+            end_date: the end of the period
+        returns..
+            An integer representing the total
+        """
+        sql = """SELECT COUNT(*) FROM Run
+                WHERE date BETWEEN ? AND ?;"""
+        params = [start_date, end_date]
+        cur = self.conn.cursor()
+        return cur.execute(sql, params).fetchall()[0][0]
