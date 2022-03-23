@@ -18,7 +18,7 @@ class payroll:
         """
         Loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
 
-        TODO: Fix error handling here. if SQL statement fails, causes error that looks like an I/O error
+        TODO: Fix error handling such that not every error passed shows as an SQL error
 
         inputs..
             fileList (optional): a list of files you wish to process; optional as in production
