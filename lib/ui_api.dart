@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 
 class API {
@@ -260,8 +261,44 @@ class API {
   A temporary function to trigger the backend to generate
   the graphics
   */
-  static Future<void> generateCharts() async {
-    Uri _url = Uri.parse('http://127.0.0.1:8080/generate_graphics');
-    await get(_url);
+  static Future<Map<String, ImageProvider<Object>>> generateCharts(
+      String startDate, String endDate) async {
+    Map<String, Uri> addresses = {
+      "runTypes": Uri.parse("http://127.0.0.1:8080/images/types_of_runs"),
+      "startTimeDistribution":
+          Uri.parse("http://127.0.0.1:8080/images/run_start_distribution"),
+      "townshipDistribution":
+          Uri.parse("http://127.0.0.1:8080/images/run_township_distribution"),
+      "apparatusDistribution":
+          Uri.parse("http://127.0.0.1:8080/images/apparatus_distribution"),
+      "givenAid": Uri.parse("http://127.0.0.1:8080/images/given_aid"),
+      "takenAid": Uri.parse("http://127.0.0.1:8080/images/taken_aid"),
+      "shiftCoverage": Uri.parse("http://127.0.0.1:8080/images/shift_coverage")
+    };
+    Map<String, String> titles = {
+      "runTypes": "Number of Incidents for Each Type of Run",
+      "startTimeDistribution": "Number of Incidents Occuring in Every Hour",
+      "townshipDistribution": "Number of Incidents in Each Township",
+      "apparatusDistribution":
+          "Number of Incidents Each Apparatus Responded to",
+      "givenAid": "Type of and to Whom Mutual Aid was Given",
+      "takenAid": "Type of and from Whom Mutual Aid was Recieved",
+      "shiftCoverage": "Number of Incidents Recieving Full Coverage by Shift"
+    };
+    Map<String, ImageProvider<Object>> results = {};
+    String postJson = jsonEncode({"startDate": startDate, "endDate": endDate});
+    Map<String, String> header = {
+      "Content-Type": "application/json",
+      "Connection": "keep-alive",
+      "Keep-Alive": "timeout=120"
+    };
+    for (String key in addresses.keys) {
+      Response response =
+          await post(addresses[key]!, headers: header, body: postJson);
+      if (response.statusCode != 500) {
+        results[titles[key]!] = Image.memory(response.bodyBytes).image;
+      }
+    }
+    return (results);
   }
 }

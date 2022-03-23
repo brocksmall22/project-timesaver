@@ -1,22 +1,27 @@
-import os
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from .sqlFunctions import sqlFunctions
 import numpy as np
+import io
 
 class visualize:
-    @staticmethod
-    def plotAll(startDate, endDate):
-        visualize.__plotTypesOfRuns(startDate, endDate)
-        visualize.__plotRunStartTimeDistribution(startDate, endDate)
-        visualize.__plotRunTownships(startDate, endDate)
-        visualize.__plotApparatusUsageFrequency(startDate, endDate)
-        visualize.__plotGivenAid(startDate, endDate)
-        visualize.__plotTakenAid(startDate, endDate)
-        visualize.__plotShiftCoverage(startDate, endDate)
+    #TODO: wrap each of these in a try catch and be sure that the errors are captured
+    #   and logged
+    def plotTypesOfRuns(startDate: str, endDate: str) -> str:
+        """
+        Takes two dates (formatted "YYYY-mm-dd") and uses
+        them to fetch all of the types of runs for each
+        incident between those dates to generate a
+        frequency distribution bar chart for those variables.
 
-
-    def __plotTypesOfRuns(startDate, endDate):
+        inputs..
+            startDate: the (inclusive) date for the start of the period
+            endDate: the (inclusive) date for the end of the period
+        returns..
+            A byte string of the generated image
+        """
         with sqlFunctions() as sqlRunner:
+            if sqlRunner.getTotalNumberOfRunsDuringPeriod(startDate, endDate) == 0:
+                return None
             runTypes = sqlRunner.getRunTypes(startDate, endDate)
             values = {}
             for item in runTypes:
@@ -26,18 +31,22 @@ class visualize:
                             values[run] = 1
                         else:
                             values[run] += 1
-            plt.figure(figsize=(10, 5), dpi=300)
+            returnBuff = io.BytesIO()
+            fig = Figure(figsize=(10, 5), dpi=300)
+            plt = fig.subplots()
             plt.bar(values.keys(), values.values())
-            plt.xticks(rotation="45")
-            ax = plt.subplot()
-            ax.set_ylabel("Number of Incidents")
-            ax.set_xlabel("Type of Incident")
-            plt.tight_layout()
-            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runIncidentTypeDistribution.png")
+            plt.tick_params(axis = "x", labelrotation = 45)
+            plt.set_ylabel("Number of Incidents")
+            plt.set_xlabel("Type of Incident")
+            fig.tight_layout()
+            fig.savefig(returnBuff, format = "png")
+            return returnBuff
 
 
-    def __plotRunStartTimeDistribution(startDate, endDate):
+    def plotRunStartTimeDistribution(startDate, endDate):
         with sqlFunctions() as sqlRunner: 
+            if sqlRunner.getTotalNumberOfRunsDuringPeriod(startDate, endDate) == 0:
+                return None
             startTimes = sqlRunner.getStartTimeOfRuns(startDate, endDate)
             hours = ["0000", "0100", "0200", "0300", "0400", "0500", "0600", "0700",
                     "0800", "0900", "1000", "1100", "1200", "1300", "1400", "1500",
@@ -93,18 +102,22 @@ class visualize:
                     frequency[22] += 1
                 elif 2300 <= time[0]:
                     frequency[23] += 1
-            plt.figure(figsize=(10, 5), dpi=300)
+            returnBuff = io.BytesIO()
+            fig = Figure(figsize=(10, 5), dpi=300)
+            plt = fig.subplots()
             plt.bar(hours, frequency)
-            plt.xticks(rotation="45")
-            ax = plt.subplot()
-            ax.set_ylabel("Number of Incidents")
-            ax.set_xlabel("Incident Report Time (MST)")
-            plt.tight_layout()
-            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runStartTimeDistribution.png")
+            plt.tick_params(axis = "x", labelrotation = 45)
+            plt.set_ylabel("Number of Incidents")
+            plt.set_xlabel("Incident Report Time (MST)")
+            fig.tight_layout()
+            fig.savefig(returnBuff, format = "png")
+            return returnBuff
 
 
-    def __plotRunTownships(startDate, endDate):
-        with sqlFunctions() as sqlRunner: 
+    def plotRunTownships(startDate, endDate):
+        with sqlFunctions() as sqlRunner:
+            if sqlRunner.getTotalNumberOfRunsDuringPeriod(startDate, endDate) == 0:
+                return None
             townships = sqlRunner.getTownshipOfRuns(startDate, endDate)
             options = ["Harrison - City", "Harrison - County", "Lancaster - City",
                     "Lancaster - County"]
@@ -119,17 +132,22 @@ class visualize:
                         frequency[2] += 1
                     case "lancaster,county":
                         frequency[3] += 1
-            plt.figure(figsize=(5, 3), dpi=300)
+            returnBuff = io.BytesIO()
+            fig = Figure(figsize=(5, 3), dpi=300)
+            plt = fig.subplots()
             plt.pie(frequency, labels = options)
-            plt.tight_layout()
-            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runTownshipDistribution.png")
+            fig.tight_layout()
+            fig.savefig(returnBuff, format = "png")
+            return returnBuff
 
-    def __plotRunDurationsByTypes():
+    def plotRunDurationsByTypes():
         pass
 
 
-    def __plotApparatusUsageFrequency(startDate, endDate):
-        with sqlFunctions() as sqlRunner: 
+    def plotApparatusUsageFrequency(startDate, endDate):
+        with sqlFunctions() as sqlRunner:
+            if sqlRunner.getTotalNumberOfRunsDuringPeriod(startDate, endDate) == 0:
+                return None
             apparatus = sqlRunner.getApparatusOfRuns(startDate, endDate)
             values = {}
             for string in apparatus:
@@ -138,18 +156,22 @@ class visualize:
                         values[app] += 1
                     else:
                         values[app] = 1
-            plt.figure(figsize=(10, 5), dpi=300)
+            returnBuff = io.BytesIO()
+            fig = Figure(figsize=(10, 5), dpi=300)
+            plt = fig.subplots()
             plt.bar(values.keys(), values.values())
-            plt.xticks(rotation="45")
-            ax = plt.subplot()
-            ax.set_ylabel("Number of Incidents")
-            ax.set_xlabel("Apparatus")
-            plt.tight_layout()
-            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\runApparatusDistribution.png")
+            plt.tick_params(axis = "x", labelrotation = 45)
+            plt.set_ylabel("Number of Incidents")
+            plt.set_xlabel("Apparatus")
+            fig.tight_layout()
+            fig.savefig(returnBuff, format = "png")
+            return returnBuff
 
 
-    def __plotGivenAid(startDate, endDate):
-        with sqlFunctions() as sqlRunner: 
+    def plotGivenAid(startDate, endDate):
+        with sqlFunctions() as sqlRunner:
+            if sqlRunner.getTotalNumberOfRunsDuringPeriod(startDate, endDate) == 0:
+                return None
             givenAid = sqlRunner.getGivenAid(startDate, endDate)
             stations = []
             man = []
@@ -166,23 +188,31 @@ class visualize:
                             man[stations.index(department)] += 1
                         elif aidType == "app":
                             app[stations.index(department)] += 1
-            yMax = max(man) if max(man) > max(app) else max(app)
+            returnBuff = io.BytesIO()
+            fig = Figure(figsize=(10, 5), dpi=300)
+            plt = fig.subplots()
+            if man == app == []:
+                yMax = 1
+            else:
+                yMax = max(man) if max(man) > max(app) else max(app)
             x = np.arange(len(stations))
-            plt.figure(figsize=(10, 5), dpi=300)
             plt.bar(x + 0.2, man, width = 0.4)
             plt.bar(x - 0.2, app, width = 0.4)
-            plt.yticks(range(0, yMax + 1))
-            plt.xticks(x, stations, rotation="45")
-            ax = plt.subplot()
-            ax.set_ylabel("Number of Incidents")
-            ax.set_xlabel("Department Recieving Aid")
+            plt.set_yticks(range(0, yMax + 1))
+            plt.set_xticks(x, stations)
+            plt.tick_params(axis = "x", labelrotation = 45)
+            plt.set_ylabel("Number of Incidents")
+            plt.set_xlabel("Department Recieving Aid")
             plt.legend(["Manual Labor", "Apparatus"])
-            plt.tight_layout()
-            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\givenAidDistribution.png")
+            fig.tight_layout()
+            fig.savefig(returnBuff, format = "png")
+            return returnBuff
 
 
-    def __plotTakenAid(startDate, endDate):
-        with sqlFunctions() as sqlRunner: 
+    def plotTakenAid(startDate, endDate):
+        with sqlFunctions() as sqlRunner:
+            if sqlRunner.getTotalNumberOfRunsDuringPeriod(startDate, endDate) == 0:
+                return None
             takenAid = sqlRunner.getTakenAid(startDate, endDate)
             stations = []
             man = []
@@ -199,27 +229,35 @@ class visualize:
                             man[stations.index(department)] += 1
                         elif aidType == "app":
                             app[stations.index(department)] += 1
-            yMax = len(man) if len(man) > len(app) else len(app)
+            returnBuff = io.BytesIO()
+            fig = Figure(figsize=(10, 5), dpi=300)
+            plt = fig.subplots()
+            if man == app == []:
+                yMax = 1
+            else:
+                yMax = max(man) if max(man) > max(app) else max(app)
             x = np.arange(len(stations))
-            plt.figure(figsize=(10, 5), dpi=300)
             plt.bar(x + 0.2, man, width = 0.4)
             plt.bar(x - 0.2, app, width = 0.4)
-            plt.yticks(range(0, yMax + 1))
-            plt.xticks(x, stations, rotation="45")
-            ax = plt.subplot()
-            ax.set_ylabel("Number of Incidents")
-            ax.set_xlabel("Department Providing Aid")
+            plt.set_yticks(range(0, yMax + 1))
+            plt.set_xticks(x, stations)
+            plt.tick_params(axis = "x", labelrotation = 45)
+            plt.set_ylabel("Number of Incidents")
+            plt.set_xlabel("Department Providing Aid")
             plt.legend(["Manual Labor", "Apparatus"])
-            plt.tight_layout()
-            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\takennAidDistribution.png")
+            fig.tight_layout()
+            fig.savefig(returnBuff, format = "png")
+            return returnBuff
 
 
-    def __plotAverageRunTimes():
+    def plotAverageRunTimes():
         pass
 
 
-    def __plotShiftCoverage(startDate, endDate):
-        with sqlFunctions() as sqlRunner: 
+    def plotShiftCoverage(startDate, endDate):
+        with sqlFunctions() as sqlRunner:
+            if sqlRunner.getTotalNumberOfRunsDuringPeriod(startDate, endDate) == 0:
+                return None
             shiftCoverages = sqlRunner.getShiftCoverages(startDate, endDate)
             values = {}
             for run in shiftCoverages:
@@ -227,13 +265,15 @@ class visualize:
                     values[run[0].upper()] = 0
                 if run[1] == 1:
                     values[run[0].upper()] += 1
+            returnBuff = io.BytesIO()
+            fig = Figure(figsize=(10, 5), dpi=300)
+            plt = fig.subplots()
             yMax = max(values.values())
-            plt.figure(figsize=(10, 5), dpi=300)
+            yMax = yMax + 1 if yMax == 0 else yMax
             plt.bar(values.keys(), values.values())
-            plt.yticks(range(0, yMax + 1))
-            plt.xticks()
-            ax = plt.subplot()
-            ax.set_ylabel("Number of Incidents Fully Covered")
-            ax.set_xlabel("Shift Responding")
-            plt.tight_layout()
-            plt.savefig(os.getenv("HOMEPATH") + "\\Documents\\shiftCoverageDistribution.png")
+            plt.set_yticks(range(0, yMax + 1))
+            plt.set_ylabel("Number of Incidents Fully Covered")
+            plt.set_xlabel("Shift Responding")
+            fig.tight_layout()
+            fig.savefig(returnBuff, format = "png")
+            return returnBuff
