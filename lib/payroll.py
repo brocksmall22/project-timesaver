@@ -117,7 +117,6 @@ class payroll:
             case 1: the run, date, and run number of the workbook
         """
         runInfo = reportReader.getRunInfo()
-        print(runInfo['runType'])
         if sqlRunner.newRunNeedsUpdated(runInfo["runNumber"], Timestamp, payroll.Year):
             sqlRunner.updateRun(runInfo["runNumber"], runInfo["date"], runInfo["startTime"],
                     runInfo["endTime"], runInfo["runTime"], runInfo["stationCovered"],

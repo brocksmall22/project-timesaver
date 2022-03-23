@@ -19,7 +19,11 @@ class _DataUIState extends State<DataUI> {
         appBar: AppBar(
           title: const Text("Settings"),
         ),
-        body: !images ? Center(child: _noImageLayout()) : _imageLayout(),
+        body: _loading
+            ? _progressScreen()
+            : !images
+                ? Center(child: _noImageLayout())
+                : _imageLayout(),
       );
 
   // Variables
@@ -28,8 +32,16 @@ class _DataUIState extends State<DataUI> {
   bool images = false;
   Map<String, ImageProvider<Object>> imageMap = {};
   bool _readyToGenerate = false;
+  bool _loading = false;
 
   // Widgets
+
+  //Displays a circular progress indicator when the figures are being generated
+  Widget _progressScreen() => Center(
+          child: BasicWidgets.vertical([
+        BasicWidgets.pad(const Text("Generating figures...")),
+        BasicWidgets.pad(const CircularProgressIndicator())
+      ]));
 
   //This widget is the layout without any generated images.
   Widget _noImageLayout() =>
@@ -83,6 +95,8 @@ class _DataUIState extends State<DataUI> {
       child: const Text("Generate Graphics"),
       onPressed: _readyToGenerate
           ? () async {
+              _loading = true;
+              setState(() {});
               imageMap = await API.generateCharts(
                   _dates.start.toString(), _dates.end.toString());
               if (imageMap.isEmpty) {
@@ -94,11 +108,12 @@ class _DataUIState extends State<DataUI> {
                     ],
                     "Errors occured!");
                 images = false;
-                setState(() {});
               } else {
                 images = true;
-                setState(() {});
               }
+              await BasicActions.displayThenClearErrors(context);
+              _loading = false;
+              setState(() {});
             }
           : null);
 

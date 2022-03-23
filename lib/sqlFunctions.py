@@ -18,8 +18,9 @@ class sqlFunctions():
     """
     
     def __init__(self,
-                dbFile =  os.getenv('APPDATA') + "\\project-time-saver\\database.db"):
-        self.conn = self.createConnection(dbFile)
+                dbFile =  ""):
+        self.conn = self.createConnection(dbFile) if dbFile != "" else \
+                self.createConnection(os.getenv('APPDATA') + "\\project-time-saver\\database.db")
 
     def __enter__(self):
         return self
