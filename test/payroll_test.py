@@ -1,19 +1,18 @@
 import unittest
 import sqlite3
 import os
-
 import sys
 
 sys.path.append(os.getcwd())
 from sqlite.check_database import check_database
 from lib.payroll import payroll as p
 from lib.logger import Logger
-"""
-This test class tests the insertion and update operations function as expected.
-"""
 
 
 class payroll_test(unittest.TestCase):
+    """
+    This test class tests the insertion and update operations function as expected.
+    """
     good_1 = [os.getcwd() + "\\test\\resc\\good_tests\\584.xlsx"]
     good_1_altered = [os.getcwd() + "\\test\\resc\\altered_tests\\584.xlsx"]
     good_2 = [os.getcwd() + "\\test\\resc\\good_tests\\585.xlsx"]
@@ -259,7 +258,7 @@ class payroll_test(unittest.TestCase):
                           (120, 585, '2021-11-01', 0.0, 'P', 1, 0.0),
                           (520, 585, '2021-11-01', 0.0, 'OD', 1, 0.0)])
 
-    
+
     def test_6_insert_mix(self):
         """
         Test to ensure that you can submit multiple files, mixed with bad ones.
@@ -304,7 +303,6 @@ class payroll_test(unittest.TestCase):
                                          (215, 585, '2021-11-01', 0.0, 'OD', 1, 0.0),
                                          (120, 585, '2021-11-01', 0.0, 'P', 1, 0.0),
                                          (520, 585, '2021-11-01', 0.0, 'OD', 1, 0.0)])
-
 
     def delete_db():
         """
