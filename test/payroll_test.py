@@ -67,6 +67,11 @@ class payroll_test(unittest.TestCase):
         runvals = self.getRunData(cur)
         employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
+        timestampVals = cur.execute("""SELECT timeStamp FROM Run;""").fetchall()
+        for val in timestampVals:
+            self.assertTrue(type(val[0]) == float)
+        for val in timestampVals:
+            self.assertTrue(val[0] > 0)
         self.assertEqual(
             runvals,
             [(584, '2021-11-01', 949, 1038, 1, 0, 1, 1, 'C', 0, 0, None,
@@ -90,6 +95,11 @@ class payroll_test(unittest.TestCase):
         runvals = self.getRunData(cur)
         employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
+        timestampVals = cur.execute("""SELECT timeStamp FROM Run;""").fetchall()
+        for val in timestampVals:
+            self.assertTrue(type(val[0]) == float)
+        for val in timestampVals:
+            self.assertTrue(val[0] > 0)
         self.assertEqual(
             runvals,
             [(584, '2021-11-01', 949, 1038, 1, 0, 1, 1, 'C', 0, 0,
@@ -134,6 +144,11 @@ class payroll_test(unittest.TestCase):
         runvals = self.getRunData(cur)
         employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
+        timestampVals = cur.execute("""SELECT timeStamp FROM Run;""").fetchall()
+        for val in timestampVals:
+            self.assertTrue(type(val[0]) == float)
+        for val in timestampVals:
+            self.assertTrue(val[0] > 0)
         self.assertEqual(
             runvals,
             [(584, '2021-11-01', 949, 1038, 1, 0, 1, 1, 'C', 0, 0,
@@ -177,6 +192,11 @@ class payroll_test(unittest.TestCase):
         runvals = self.getRunData(cur)
         employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
+        timestampVals = cur.execute("""SELECT timeStamp FROM Run;""").fetchall()
+        for val in timestampVals:
+            self.assertTrue(type(val[0]) == float)
+        for val in timestampVals:
+            self.assertTrue(val[0] > 0)
         self.assertEqual(
             runvals,
             [(584, '2021-11-01', 949, 1038, 1, 0, 1, 1, 'C', 0, 0,
@@ -227,6 +247,11 @@ class payroll_test(unittest.TestCase):
         runvals = self.getRunData(cur)
         employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
+        timestampVals = cur.execute("""SELECT timeStamp FROM Run;""").fetchall()
+        for val in timestampVals:
+            self.assertTrue(type(val[0]) == float)
+        for val in timestampVals:
+            self.assertTrue(val[0] > 0)
         self.assertEqual(
             runvals,
             [(584, '2021-11-01', 949, 1038, 1, 0, 1, 1, 'C', 0, 0,
@@ -274,6 +299,11 @@ class payroll_test(unittest.TestCase):
         runvals = self.getRunData(cur)
         employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
+        timestampVals = cur.execute("""SELECT timeStamp FROM Run;""").fetchall()
+        for val in timestampVals:
+            self.assertTrue(type(val[0]) == float)
+        for val in timestampVals:
+            self.assertTrue(val[0] > 0)
         self.assertEqual(
             runvals,
             [(584, '2021-11-01', 949, 1038, 1, 0, 1, 1, 'C', 0, 0,
