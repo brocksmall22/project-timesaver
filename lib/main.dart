@@ -3,6 +3,7 @@ import 'package:project_time_saver/basic_actions.dart';
 import 'package:project_time_saver/basic_widgets.dart';
 import 'package:project_time_saver/payroll.dart';
 import 'package:project_time_saver/settings.dart';
+import 'package:project_time_saver/data.dart';
 import 'package:project_time_saver/ui_api.dart';
 import 'package:window_size/window_size.dart';
 import 'dart:io';
@@ -90,7 +91,8 @@ class MainPage extends StatelessWidget {
 
   //This button will open the stats generation page once implemented
   Widget _statsButton(BuildContext context) =>
-      BasicWidgets.mainNavigationButton(context, "View Statistics", null);
+      BasicWidgets.mainNavigationButton(
+          context, "View Statistics", const DataUI());
 
   //This button will open the settings page once implemented
   Widget _settingsButton(BuildContext context) =>
