@@ -16,7 +16,7 @@ class creator:
                                     code1008 SMALLINT, workingHours BIT, offHours BIT, apparatus TEXT, township TEXT,
                                     givenAid TEXT, takenAid TEXT, runType TEXT, PRIMARY KEY(number, date)); """
 
-        sql_create_report_table = """CREATE TABLE IF NOT EXISTS Responded (empNumber TEXT REFERENCES Employee (number), 
+        sql_create_report_table = """CREATE TABLE IF NOT EXISTS Responded (empNumber SMALLINT REFERENCES Employee (number), 
                                     runNumber TINYINT REFERENCES Run (number), date DATE REFERENCES Run (date), 
                                     payRate FLOAT, type_of_response TEXT, full_time BIT, 
                                     subhours FLOAT, PRIMARY KEY(date, empNumber, runNumber));"""

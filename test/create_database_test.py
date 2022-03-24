@@ -1,3 +1,4 @@
+from tkinter import E
 import unittest
 import sqlite3
 import os
@@ -58,10 +59,10 @@ class create_database_test(unittest.TestCase):
     def test_run_columns(self):
         expected_columns = [
             'number', 'date', 'startTime', 'stopTime', 'runTime', 'fsc',
-            'Covered', 'Medrun', 'shift', 'full_coverage', 'paidRun',
+            'covered', 'Medrun', 'shift', 'full_coverage', 'paidRun',
             'timeStamp', 'oic', 'so', 'filler', 'code1076', 'code1023', 'uc',
             'code1008', 'workingHours', 'offHours', 'apparatus', 'township',
-            'givenAid', 'takenAid'
+            'givenAid', 'takenAid', 'runType'
         ]
         real_columns = []
         cur = create_database_test.conn.cursor()

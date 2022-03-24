@@ -4,8 +4,6 @@ import os
 import sys
 from unittest import result
 
-from black import assert_equivalent
-
 sys.path.append(os.getcwd())
 from lib.backup_manager import backupManager as bM
 

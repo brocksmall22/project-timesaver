@@ -58,6 +58,10 @@ class visualize_test(unittest.TestCase):
 
 
     def test_plotApparatusUsageFrequency(self):
+        """
+        Generates the apparatus frequency figure and tests against
+        one on the disk.
+        """
         value = visualize.plotApparatusUsageFrequency(visualize_test.startDate,
                                                               visualize_test.endDate,
                                                               dbFile = visualize_test.dbFile,
@@ -66,6 +70,10 @@ class visualize_test(unittest.TestCase):
 
 
     def test_plotGivenAid(self):
+        """
+        Generates the given aid figure and tests against
+        one on the disk.
+        """
         value = visualize.plotGivenAid(visualize_test.startDate,
                                                               visualize_test.endDate,
                                                               dbFile = visualize_test.dbFile,
@@ -74,6 +82,10 @@ class visualize_test(unittest.TestCase):
 
 
     def test_plotRunStartTimeDistribution(self):
+        """
+        Generates the start time distribution figure and tests against
+        one on the disk.
+        """
         value = visualize.plotRunStartTimeDistribution(visualize_test.startDate,
                                                               visualize_test.endDate,
                                                               dbFile = visualize_test.dbFile,
@@ -82,6 +94,10 @@ class visualize_test(unittest.TestCase):
 
 
     def test_plotRunTownships(self):
+        """
+        Generates the township frequency figure and tests against
+        one on the disk.
+        """
         value = visualize.plotRunTownships(visualize_test.startDate,
                                                               visualize_test.endDate,
                                                               dbFile = visualize_test.dbFile,
@@ -90,6 +106,10 @@ class visualize_test(unittest.TestCase):
 
 
     def test_plotShiftCoverage(self):
+        """
+        Generates the shift coverage frequency figure and tests against
+        one on the disk.
+        """
         value = visualize.plotShiftCoverage(visualize_test.startDate,
                                                               visualize_test.endDate,
                                                               dbFile = visualize_test.dbFile,
@@ -98,6 +118,10 @@ class visualize_test(unittest.TestCase):
 
 
     def test_plotTakenAid(self):
+        """
+        Generates the taken aid figure and tests against
+        one on the disk.
+        """
         value = visualize.plotTakenAid(visualize_test.startDate,
                                                               visualize_test.endDate,
                                                               dbFile = visualize_test.dbFile,
@@ -106,6 +130,10 @@ class visualize_test(unittest.TestCase):
 
 
     def test_plotTypesOfRuns(self):
+        """
+        Generates the incident type frequency figure and tests against
+        one on the disk.
+        """
         value = visualize.plotTypesOfRuns(visualize_test.startDate,
                                                               visualize_test.endDate,
                                                               dbFile = visualize_test.dbFile,
