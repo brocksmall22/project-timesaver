@@ -17,7 +17,7 @@ class _DataUIState extends State<DataUI> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: const Text("Settings"),
+          title: const Text("Data Visualization"),
         ),
         body: _loading
             ? _progressScreen()

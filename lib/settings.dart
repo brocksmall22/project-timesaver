@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 import 'package:project_time_saver/basic_actions.dart';
 import 'package:project_time_saver/basic_widgets.dart';
+import 'package:project_time_saver/layout_configurator.dart';
 import 'package:project_time_saver/ui_api.dart';
 
 class SettingsUI extends StatefulWidget {
@@ -61,8 +62,11 @@ class _SettingsUIState extends State<SettingsUI> {
                                 [_backupDatabase(), _restoreDatabase()]))
                         .withGridPlacement(
                             columnStart: 0, columnSpan: 2, rowStart: 2),
-                    _bakcButton().withGridPlacement(
-                        columnStart: 0, columnSpan: 2, rowStart: 3)
+                    Center(
+                            child: BasicWidgets.horizontal(
+                                [_layoutButton(), _backButton()]))
+                        .withGridPlacement(
+                            columnStart: 0, columnSpan: 2, rowStart: 3)
                   ]
                 //Desktop (vertical) mobile-like layout
                 : [
@@ -83,7 +87,7 @@ class _SettingsUIState extends State<SettingsUI> {
                                 [_backupDatabase(), _restoreDatabase()]))
                         .withGridPlacement(
                             columnStart: 0, columnSpan: 2, rowStart: 2),
-                    _bakcButton().withGridPlacement(
+                    _backButton().withGridPlacement(
                         columnStart: 0, columnSpan: 2, rowStart: 3)
                   ],
           ),
@@ -115,10 +119,15 @@ class _SettingsUIState extends State<SettingsUI> {
       ));
 
   // This widget will take you back home.
-  Widget _bakcButton() => Center(
-      child: BasicWidgets.pad(ElevatedButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"))));
+  Widget _backButton() => BasicWidgets.pad(ElevatedButton(
+      onPressed: () => Navigator.pop(context), child: const Text("Cancel")));
+
+  // This widget will open the layout configurator screen
+  Widget _layoutButton() => BasicWidgets.pad(BasicWidgets.mainNavigationButton(
+      context,
+      "Incident Sheet Layout Configurator",
+      const layoutConfiguratorUI(),
+      restricted: false));
 
   //This widget is a button that spawns a folder choosing window.
   Widget _getFolder(String folderToUpdate) =>

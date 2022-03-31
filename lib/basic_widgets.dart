@@ -58,16 +58,20 @@ class BasicWidgets {
     case 2: If page is not null, it will return a button that will navigate to
       the new page
   */
-  static Widget mainNavigationButton(BuildContext context, String text, page) {
+  static Widget mainNavigationButton(BuildContext context, String text, page,
+      {restricted = true}) {
     //This if, and everything in it, can be removed when all main UI buttons
     //have a page they link to
     if (page == null) {
       return pad(mainBox(ElevatedButton(onPressed: null, child: Text(text))));
     }
-
-    return pad(mainBox(ElevatedButton(
-        onPressed: () => BasicActions.nextPage(context, page),
-        child: Text(text))));
+    return restricted
+        ? pad(mainBox(ElevatedButton(
+            onPressed: () => BasicActions.nextPage(context, page),
+            child: Text(text))))
+        : pad(ElevatedButton(
+            onPressed: () => BasicActions.nextPage(context, page),
+            child: Text(text)));
   }
 
   /*
