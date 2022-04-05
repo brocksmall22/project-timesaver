@@ -16,7 +16,7 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(title: const Text("Incident Report Layout Configurator")),
-      body: Center(child: _configurationDropDown()));
+      body: BasicWidgets.vertical([_configurationDropDown(), _layoutForm()]));
 
   // This is where the layout is generated.
   // @override
@@ -93,6 +93,8 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
 
   // Variables
 
+  final RegExp _cellRegex = RegExp(r"^([a-zA-Z]{1,2})(\d{1,3})$");
+  final _formKey = GlobalKey<FormState>();
   Map<String, Map<String, Object>> _configurations = {
     "old": {"string": 5},
     "less-old": {"string": 5},
@@ -115,6 +117,32 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
           _selectedConfiguration = newValue!;
         });
       });
+
+  Widget _layoutForm() => Form(
+        key: _formKey,
+        child: Expanded(
+            child: ListView(
+          children: [_testFormField(), _checkFormButton()],
+        )),
+      );
+
+  Widget _testFormField() => Center(child: BasicWidgets.pad(
+          BasicWidgets.mainBox(TextFormField(validator: (value) {
+        if (value == null || !_cellRegex.hasMatch(value)) {
+          return "Invalid Input!";
+        }
+        return null;
+      }))));
+
+  Widget _checkFormButton() => Center(
+      child: BasicWidgets.pad(BasicWidgets.mainBox(ElevatedButton(
+          onPressed: () {
+            if (_formKey.currentState!.validate()) {
+              BasicActions.generalAlertBox(
+                  context, [const Text("Okay")], "It is a good input!");
+            }
+          },
+          child: const Text("Submit")))));
 
   // Helper functions
 
