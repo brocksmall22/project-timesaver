@@ -96,7 +96,37 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
   final RegExp _cellRegex = RegExp(r"^([a-zA-Z]{1,2})(\d{1,3})$");
   final _formKey = GlobalKey<FormState>();
   Map<String, Map<String, Object>> _configurations = {
-    "old": {"string": 5},
+    "old": {
+      "startDate": "",
+      "endDate": "",
+      "incidentNumber": "",
+      "date": "",
+      "shift": "",
+      "OIC": "",
+      "SO": "",
+      "filer": "",
+      "reported": "",
+      "paged": "",
+      "1076": "",
+      "1023": "",
+      "UC": "",
+      "1008": "",
+      "stationCovered": "",
+      "weekend": "",
+      "workingHours": "",
+      "offHours": "",
+      "shiftCovered": "",
+      "runTime": "",
+      "firstEmployeeRow": "",
+      "runType": {},
+      "apparatus": {},
+      "township": {
+        "harrison": {"city": "", "county": ""},
+        "lancaster": {"city": "", "county": ""}
+      },
+      "givenAid": {},
+      "takenAid": {}
+    },
     "less-old": {"string": 5},
     "newest": {"string": 5}
   };
@@ -122,16 +152,34 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
         key: _formKey,
         child: Expanded(
             child: ListView(
-          children: [_testFormField(), _checkFormButton()],
+          children: [
+            BasicWidgets.horizontal([
+              Text("First date to use this layout:"),
+              _formField("startDate", startDate: true)
+            ]),
+            BasicWidgets.horizontal([
+              Text("Last date to use this layout:"),
+              _formField("endDate", endDate: true)
+            ]),
+            BasicWidgets.horizontal([
+              Text("Cell of Incident Number:"),
+              _formField("incidentNumber")
+            ]),
+            _checkFormButton()
+          ],
         )),
       );
 
-  Widget _testFormField() => Center(child: BasicWidgets.pad(
+  Widget _formField(String configKey,
+          {name = false,
+          number = false,
+          startDate = false,
+          endDate = false,
+          canBeEmpty = false}) =>
+      Center(child: BasicWidgets.pad(
           BasicWidgets.mainBox(TextFormField(validator: (value) {
-        if (value == null || !_cellRegex.hasMatch(value)) {
-          return "Invalid Input!";
-        }
-        return null;
+        return _validateInput(
+            value, configKey, name, number, startDate, endDate, canBeEmpty);
       }))));
 
   Widget _checkFormButton() => Center(
@@ -146,4 +194,35 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
 
   // Helper functions
 
+  String? _validateInput(String? value, String configKey, bool name,
+      bool number, bool startDate, bool endDate, bool canBeEmpty) {
+    if (name) {
+      if (value == null) return "Value cannot be empty!";
+    } else if (number) {
+      if (value == null || !RegExp(r"^\d*$").hasMatch(value)) {
+        return "Value must be a number!";
+      }
+    } else if (startDate) {
+      if (value == null || value == null) {
+        return "The starting date of a config cannot be empty!";
+      }
+      try {
+        DateTime.parse(value);
+      } on FormatException {
+        return "Date is incorrectly formatted!";
+      }
+    } else if (endDate) {
+      if (value == null || value == "") return null;
+      try {
+        DateTime.parse(value);
+      } on FormatException {
+        return "Date is incorrectly formatted!";
+      }
+    } else if (!canBeEmpty && value == null || !_cellRegex.hasMatch(value!)) {
+      return "Invalid Input!";
+    }
+    _configurations[_selectedConfiguration]![configKey] = value;
+    print(_configurations[_selectedConfiguration]);
+    return null;
+  }
 }
