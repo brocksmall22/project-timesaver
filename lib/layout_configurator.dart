@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 import 'package:project_time_saver/basic_actions.dart';
 import 'package:project_time_saver/basic_widgets.dart';
@@ -153,18 +154,35 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
         child: Expanded(
             child: ListView(
           children: [
-            BasicWidgets.horizontal([
-              Text("First date to use this layout:"),
-              _formField("startDate", startDate: true)
-            ]),
-            BasicWidgets.horizontal([
-              Text("Last date to use this layout:"),
-              _formField("endDate", endDate: true)
-            ]),
-            BasicWidgets.horizontal([
-              Text("Cell of Incident Number:"),
-              _formField("incidentNumber")
-            ]),
+            _inputNameValue("First date to use this layout:", "startDate",
+                startDate: true),
+            _inputNameValue("Last date to use this layout:", "endDate",
+                endDate: true),
+            _inputNameValue("Cell of Incident Number:", "incidentNumber"),
+            _inputNameValue("Cell of Incident Date:", "date"),
+            _inputNameValue("Cell of Covering Shift:", "shift"),
+            _inputNameValue("Cell of OIC:", "OIC"),
+            _inputNameValue("Cell of SO:", "SO"),
+            _inputNameValue("Cell of Filer:", "filer"),
+            _inputNameValue("Cell of Reported Time:", "reported"),
+            _inputNameValue("Cell of Paged Time:", "paged"),
+            _inputNameValue("Cell of 1076 Time:", "1076"),
+            _inputNameValue("Cell of 1023 Time:", "1023"),
+            _inputNameValue("Cell of UC:", "UC"),
+            _inputNameValue("Cell of 1008 Time:", "1008"),
+            _inputNameValue(
+                "Cell of Station Covered Indicator:", "stationCovered"),
+            _inputNameValue("Cell of Weekend Incident Indicator:", "weekend"),
+            _inputNameValue(
+                "Cell of Commitment Hours Indicator:", "workingHours"),
+            _inputNameValue(
+                "Cell of Non-Commitment Hours Indicator:", "offHours"),
+            _inputNameValue(
+                "Cell of Full Shift Cover Indicator:", "shiftCovered"),
+            _inputNameValue("Cell of run Duration:", "runTime"),
+            _inputNameValue(
+                "Row Number of First Employee Row:", "firstEmployeeRow"),
+            _inputKeyValueTable("Name and Cell of Run Types", "runType"),
             _checkFormButton()
           ],
         )),
@@ -191,6 +209,62 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
             }
           },
           child: const Text("Submit")))));
+
+  Widget _inputNameValue(String inputName, String key,
+          {startDate = false,
+          endDate = false,
+          number = false,
+          name = false,
+          canBeEmpty = false}) =>
+      Center(
+        child: SizedBox(
+            width: 400,
+            child: BasicWidgets.horizontal([
+              SizedBox(width: 200, child: Flexible(child: Text(inputName))),
+              Spacer(),
+              _formField(key,
+                  name: name,
+                  number: number,
+                  startDate: startDate,
+                  endDate: endDate,
+                  canBeEmpty: canBeEmpty)
+            ])),
+      );
+
+  Widget _inputKeyValueTable(String inputName, String key) {
+    List<Widget> displayList = [
+      BasicWidgets.horizontal([
+        SizedBox(width: 200, child: Flexible(child: Text(inputName))),
+        Spacer(),
+        SizedBox(
+            width: 200,
+            child: ElevatedButton(
+              child: const Text("Add New"),
+              onPressed: () => _addNewValueToList(key),
+            ))
+      ]),
+      BasicWidgets.horizontal([
+        SizedBox(width: 200, child: Flexible(child: Text("Value Name"))),
+        Spacer(),
+        SizedBox(width: 200, child: Flexible(child: Text("Cell Location")))
+      ])
+    ];
+    displayList.addAll(_getKeyValues(key));
+    return Center(
+        child: SizedBox(width: 400, child: BasicWidgets.vertical(displayList)));
+  }
+
+  List<Widget> _getKeyValues(String key) {
+    List<Widget> returnlist = [];
+    var _current = _configurations[_selectedConfiguration]![key];
+    if (_current is Map) {
+      for (String keyVal in _current.keys) {
+        returnlist.add(BasicWidgets.horizontal(
+            [_formField(keyVal), Spacer(), _formField(keyVal)]));
+      }
+    }
+    return returnlist;
+  }
 
   // Helper functions
 
@@ -221,8 +295,18 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
     } else if (!canBeEmpty && value == null || !_cellRegex.hasMatch(value!)) {
       return "Invalid Input!";
     }
+    //TODO: move this to an onSave
     _configurations[_selectedConfiguration]![configKey] = value;
     print(_configurations[_selectedConfiguration]);
     return null;
+  }
+
+  void _addNewValueToList(key) {
+    var _current = _configurations[_selectedConfiguration]![key];
+    if (_current is Map) {
+      _current.putIfAbsent("", () => "");
+      _configurations[_selectedConfiguration]![key] = _current;
+      setState(() {});
+    }
   }
 }
