@@ -96,6 +96,8 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
 
   final RegExp _cellRegex = RegExp(r"^([a-zA-Z]{1,2})(\d{1,3})$");
   final _formKey = GlobalKey<FormState>();
+  List<String> _alreadySaved = [];
+  Map<String, Map<int, TextEditingController>> _controllers = {};
   Map<String, Map<String, Object>> _configurations = {
     "old": {
       "startDate": "",
@@ -119,8 +121,8 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
       "shiftCovered": "",
       "runTime": "",
       "firstEmployeeRow": "",
-      "runType": {},
-      "apparatus": {},
+      "runType": {"asdf": "", "oiuyouiy": ""},
+      "apparatus": {"vwefvdsj": "wrbtyyjuj", "wfbrtb": "asdfe"},
       "township": {
         "harrison": {"city": "", "county": ""},
         "lancaster": {"city": "", "county": ""}
@@ -146,6 +148,7 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
       onChanged: (String? newValue) {
         setState(() {
           _selectedConfiguration = newValue!;
+          _controllers = {};
         });
       });
 
@@ -183,6 +186,7 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
             _inputNameValue(
                 "Row Number of First Employee Row:", "firstEmployeeRow"),
             _inputKeyValueTable("Name and Cell of Run Types", "runType"),
+            _inputKeyValueTable("Name and Cell of Apparatus", "apparatus"),
             _checkFormButton()
           ],
         )),
@@ -193,17 +197,30 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
           number = false,
           startDate = false,
           endDate = false,
-          canBeEmpty = false}) =>
-      Center(child: BasicWidgets.pad(
-          BasicWidgets.mainBox(TextFormField(validator: (value) {
-        return _validateInput(
-            value, configKey, name, number, startDate, endDate, canBeEmpty);
-      }))));
+          canBeEmpty = false,
+          fillValue,
+          altOnSave = false,
+          TextEditingController? altController}) =>
+      Center(
+          child: BasicWidgets.pad(BasicWidgets.mainBox(TextFormField(
+        controller: altController,
+        initialValue: fillValue,
+        validator: (value) {
+          return _validateInput(
+              value, configKey, name, number, startDate, endDate, canBeEmpty);
+        },
+        onSaved: (value) => altOnSave
+            ? _saveSublist(configKey)
+            : _onSaveAction(value, configKey),
+      ))));
 
   Widget _checkFormButton() => Center(
       child: BasicWidgets.pad(BasicWidgets.mainBox(ElevatedButton(
           onPressed: () {
             if (_formKey.currentState!.validate()) {
+              _formKey.currentState!.save();
+              _alreadySaved = [];
+              print(_configurations[_selectedConfiguration]);
               BasicActions.generalAlertBox(
                   context, [const Text("Okay")], "It is a good input!");
             }
@@ -220,8 +237,8 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
         child: SizedBox(
             width: 400,
             child: BasicWidgets.horizontal([
-              SizedBox(width: 200, child: Flexible(child: Text(inputName))),
-              Spacer(),
+              SizedBox(width: 200, child: Text(inputName)),
+              const Spacer(),
               _formField(key,
                   name: name,
                   number: number,
@@ -234,8 +251,8 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
   Widget _inputKeyValueTable(String inputName, String key) {
     List<Widget> displayList = [
       BasicWidgets.horizontal([
-        SizedBox(width: 200, child: Flexible(child: Text(inputName))),
-        Spacer(),
+        SizedBox(width: 200, child: Text(inputName)),
+        const Spacer(),
         SizedBox(
             width: 200,
             child: ElevatedButton(
@@ -244,9 +261,9 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
             ))
       ]),
       BasicWidgets.horizontal([
-        SizedBox(width: 200, child: Flexible(child: Text("Value Name"))),
-        Spacer(),
-        SizedBox(width: 200, child: Flexible(child: Text("Cell Location")))
+        const SizedBox(width: 200, child: Text("Value Name")),
+        const Spacer(),
+        const SizedBox(width: 200, child: Text("Cell Location"))
       ])
     ];
     displayList.addAll(_getKeyValues(key));
@@ -255,12 +272,38 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
   }
 
   List<Widget> _getKeyValues(String key) {
+    // This needs changed a little such taht the key and value pairs
+    // are somehow linked. I'm thinking to make a
+    // Map<int, TextController> for the key-values and then overriding
+    // controller of the necessary form fields. This will allow me to do
+    // two things. 1. independently access the values in the fields and
+    // 2. associate the values. My plan for association is that each even idenx
+    // from (0) is a key and each odd index is the value. So Map[0] is a key and
+    // Map[1] is its value. I need to exempt these fields from the onSave and
+    // add the save logic manually to the submit button. I can still validate
+    // the values in these cells.
     List<Widget> returnlist = [];
     var _current = _configurations[_selectedConfiguration]![key];
+    _controllers[key] = {};
+    int count = 0;
     if (_current is Map) {
       for (String keyVal in _current.keys) {
-        returnlist.add(BasicWidgets.horizontal(
-            [_formField(keyVal), Spacer(), _formField(keyVal)]));
+        _controllers[key]!
+            .putIfAbsent(count, () => TextEditingController(text: keyVal));
+        _controllers[key]!.putIfAbsent(count + 1,
+            () => TextEditingController(text: _current[keyVal] ?? ""));
+        returnlist.add(BasicWidgets.horizontal([
+          _formField(key,
+              name: true,
+              altController: _controllers[key]![count],
+              altOnSave: true),
+          const Spacer(),
+          _formField(key,
+              name: true,
+              altController: _controllers[key]![count + 1],
+              altOnSave: true)
+        ]));
+        count = count + 2;
       }
     }
     return returnlist;
@@ -295,10 +338,11 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
     } else if (!canBeEmpty && value == null || !_cellRegex.hasMatch(value!)) {
       return "Invalid Input!";
     }
-    //TODO: move this to an onSave
-    _configurations[_selectedConfiguration]![configKey] = value;
-    print(_configurations[_selectedConfiguration]);
     return null;
+  }
+
+  void _onSaveAction(String? value, String configKey) {
+    _configurations[_selectedConfiguration]![configKey] = value!;
   }
 
   void _addNewValueToList(key) {
@@ -307,6 +351,25 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
       _current.putIfAbsent("", () => "");
       _configurations[_selectedConfiguration]![key] = _current;
       setState(() {});
+    }
+  }
+
+  void _saveSublist(String key) {
+    if (!_alreadySaved.contains(key)) {
+      Map<int, TextEditingController> values = _controllers[key]!;
+      Map<String, String> toSave = {};
+      String keyVal = "";
+      String val = "";
+      for (var index in values.keys) {
+        if (index % 2 == 0) {
+          keyVal = values[index]!.text;
+        } else {
+          val = values[index]!.text;
+          toSave[keyVal] = val;
+        }
+      }
+      _configurations[_selectedConfiguration]![key] = toSave;
+      _alreadySaved.add(key);
     }
   }
 }

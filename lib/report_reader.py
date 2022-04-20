@@ -13,13 +13,13 @@ class report_reader:
         self.run = load_workbook(filePath)
         #self.cells = ConfigManager.get_cellLocations(self.run.getDate())
         self.cells = {
-            "incident_number": "B3",
+            "incident_number": "B3",                
             "date": "D3",
             "shift": "F3",
             "OIC": "H3",
             "SO": "J3",
             "filer": "L3",
-            "reported": "B5",
+            "reported": "B5",           
             "paged": "D5",
             "1076": "F5",
             "1023": "H5",
