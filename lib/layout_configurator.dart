@@ -216,15 +216,7 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
 
   Widget _checkFormButton() => Center(
       child: BasicWidgets.pad(BasicWidgets.mainBox(ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              _formKey.currentState!.save();
-              _alreadySaved = [];
-              print(_configurations[_selectedConfiguration]);
-              BasicActions.generalAlertBox(
-                  context, [const Text("Okay")], "It is a good input!");
-            }
-          },
+          onPressed: () => _submitButtonLogic(),
           child: const Text("Submit")))));
 
   Widget _inputNameValue(String inputName, String key,
@@ -271,17 +263,33 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
         child: SizedBox(width: 400, child: BasicWidgets.vertical(displayList)));
   }
 
+  Widget _inputKeyTownshipTable(String inputName, String key) {
+    List<Widget> displayList = [
+      Text(inputName),
+      BasicWidgets.horizontal([
+        const SizedBox(width: 200, child: Text("Value Name")),
+        const Spacer(),
+        const SizedBox(width: 200, child: Text("Cell Location"))
+      ])
+    ];
+    displayList.addAll(_getKeyValues(key));
+    return Center(
+        child: SizedBox(width: 400, child: BasicWidgets.vertical(displayList)));
+  }
+
+/*
+TODO:
+Change the onSave method. As opposed to passing a bool, I should pass a string.
+Different string keys correspond with different save methods. Null is the
+standard save, "list" is for custom lists, and "township" if for the townships
+*/
+
   List<Widget> _getKeyValues(String key) {
-    // This needs changed a little such taht the key and value pairs
-    // are somehow linked. I'm thinking to make a
-    // Map<int, TextController> for the key-values and then overriding
-    // controller of the necessary form fields. This will allow me to do
-    // two things. 1. independently access the values in the fields and
-    // 2. associate the values. My plan for association is that each even idenx
-    // from (0) is a key and each odd index is the value. So Map[0] is a key and
-    // Map[1] is its value. I need to exempt these fields from the onSave and
-    // add the save logic manually to the submit button. I can still validate
-    // the values in these cells.
+    // Add optional township parameter. It would change the _current var to
+    // allow the program to fetch values one level deeper than before. This will
+    // let me get the city, county keys from the township names. The var key
+    // would be the township name, and the township parameter would inform the
+    // program that that is what we are working with.
     List<Widget> returnlist = [];
     var _current = _configurations[_selectedConfiguration]![key];
     _controllers[key] = {};
@@ -370,6 +378,16 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
       }
       _configurations[_selectedConfiguration]![key] = toSave;
       _alreadySaved.add(key);
+    }
+  }
+
+  void _submitButtonLogic() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      _alreadySaved = [];
+      print(_configurations[_selectedConfiguration]);
+      BasicActions.generalAlertBox(
+          context, [const Text("Okay")], "It is a good input!");
     }
   }
 }
