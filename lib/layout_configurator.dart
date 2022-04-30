@@ -184,9 +184,11 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
                 "Cell of Full Shift Cover Indicator:", "shiftCovered"),
             _inputNameValue("Cell of run Duration:", "runTime"),
             _inputNameValue(
-                "Row Number of First Employee Row:", "firstEmployeeRow"),
+                "Row Number of First Employee Row:", "firstEmployeeRow",
+                number: true),
             _inputKeyValueTable("Name and Cell of Run Types", "runType"),
             _inputKeyValueTable("Name and Cell of Apparatus", "apparatus"),
+            _inputKeyTownshipTable(),
             _checkFormButton()
           ],
         )),
@@ -199,20 +201,25 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
           endDate = false,
           canBeEmpty = false,
           fillValue,
-          altOnSave = false,
+          String? altOnSave,
           TextEditingController? altController}) =>
       Center(
           child: BasicWidgets.pad(BasicWidgets.mainBox(TextFormField(
-        controller: altController,
-        initialValue: fillValue,
-        validator: (value) {
-          return _validateInput(
-              value, configKey, name, number, startDate, endDate, canBeEmpty);
-        },
-        onSaved: (value) => altOnSave
-            ? _saveSublist(configKey)
-            : _onSaveAction(value, configKey),
-      ))));
+              controller: altController,
+              initialValue: fillValue,
+              validator: (value) {
+                return _validateInput(value, configKey, name, number, startDate,
+                    endDate, canBeEmpty);
+              },
+              onSaved: (value) {
+                if (altOnSave == null) {
+                  _onSaveAction(value, configKey);
+                } else if (altOnSave == "list") {
+                  _saveSublist(configKey);
+                } else if (altOnSave == "township") {
+                  _saveTownship();
+                }
+              }))));
 
   Widget _checkFormButton() => Center(
       child: BasicWidgets.pad(BasicWidgets.mainBox(ElevatedButton(
@@ -263,33 +270,14 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
         child: SizedBox(width: 400, child: BasicWidgets.vertical(displayList)));
   }
 
-  Widget _inputKeyTownshipTable(String inputName, String key) {
-    List<Widget> displayList = [
-      Text(inputName),
-      BasicWidgets.horizontal([
-        const SizedBox(width: 200, child: Text("Value Name")),
-        const Spacer(),
-        const SizedBox(width: 200, child: Text("Cell Location"))
-      ])
-    ];
-    displayList.addAll(_getKeyValues(key));
+  Widget _inputKeyTownshipTable() {
+    List<Widget> displayList = [];
+    displayList.addAll(_geTwonshiptKeyValues());
     return Center(
         child: SizedBox(width: 400, child: BasicWidgets.vertical(displayList)));
   }
 
-/*
-TODO:
-Change the onSave method. As opposed to passing a bool, I should pass a string.
-Different string keys correspond with different save methods. Null is the
-standard save, "list" is for custom lists, and "township" if for the townships
-*/
-
   List<Widget> _getKeyValues(String key) {
-    // Add optional township parameter. It would change the _current var to
-    // allow the program to fetch values one level deeper than before. This will
-    // let me get the city, county keys from the township names. The var key
-    // would be the township name, and the township parameter would inform the
-    // program that that is what we are working with.
     List<Widget> returnlist = [];
     var _current = _configurations[_selectedConfiguration]![key];
     _controllers[key] = {};
@@ -304,14 +292,46 @@ standard save, "list" is for custom lists, and "township" if for the townships
           _formField(key,
               name: true,
               altController: _controllers[key]![count],
-              altOnSave: true),
+              altOnSave: "list"),
           const Spacer(),
           _formField(key,
               name: true,
               altController: _controllers[key]![count + 1],
-              altOnSave: true)
+              altOnSave: "list")
         ]));
         count = count + 2;
+      }
+    }
+    return returnlist;
+  }
+
+  List<Widget> _geTwonshiptKeyValues() {
+    List<String> townships = ["harrison", "harrison", "lancaster", "lancaster"];
+    List<String> limits = ["city", "county", "city", "county"];
+    List<String> cellDescriptions = [
+      "Cell indicating if a run was in Harrison township inside city limits",
+      "Cell indicating if a run was in Harrison township outside city limits",
+      "Cell indicating if a run was in Lancaster township inside city limits",
+      "Cell indicating if a run was in Lancaster township outside city limits"
+    ];
+    List<Widget> returnlist = [];
+    var current = _configurations[_selectedConfiguration]!["township"];
+    _controllers["township"] = {};
+    if (current is Map) {
+      for (int i = 0; i != 4; i++) {
+        var townshipCell = current[townships[i]][limits[i]];
+        _controllers["township"]!.putIfAbsent(
+            i,
+            () => TextEditingController(
+                text: townshipCell is String ? townshipCell : ""));
+        returnlist.add(BasicWidgets.horizontal([
+          SizedBox(width: 200, child: Text(cellDescriptions[i])),
+          const Spacer(),
+          _formField("township",
+              name: true,
+              altController: _controllers["township"]![i],
+              altOnSave: "township")
+        ]));
       }
     }
     return returnlist;
@@ -388,6 +408,19 @@ standard save, "list" is for custom lists, and "township" if for the townships
       print(_configurations[_selectedConfiguration]);
       BasicActions.generalAlertBox(
           context, [const Text("Okay")], "It is a good input!");
+    }
+  }
+
+  void _saveTownship() {
+    if (!_alreadySaved.contains("township")) {
+      Map<int, TextEditingController> values = _controllers["township"]!;
+      Map<String, Map<String, String>> toSave = {};
+      toSave.putIfAbsent("harrison",
+          () => {"city": values[0]!.text, "county": values[1]!.text});
+      toSave.putIfAbsent("lancaster",
+          () => {"city": values[2]!.text, "county": values[3]!.text});
+      _configurations[_selectedConfiguration]!["township"] = toSave;
+      _alreadySaved.add("township");
     }
   }
 }
