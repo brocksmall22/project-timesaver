@@ -4,7 +4,7 @@ import sys
 from openpyxl.reader.excel import load_workbook
 
 sys.path.append(os.getcwd())
-from sqlite.check_database import check_database
+from lib.check_database import check_database
 from lib.generate_report import generate_report as gp
 from lib.payroll import payroll as p
 from lib.oneDriveConnect import oneDriveConnect as odc

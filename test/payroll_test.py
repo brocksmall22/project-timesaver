@@ -5,7 +5,7 @@ import os
 import sys
 
 sys.path.append(os.getcwd())
-from sqlite.check_database import check_database
+from lib.check_database import check_database
 from lib.payroll import payroll as p
 from lib.logger import Logger
 
