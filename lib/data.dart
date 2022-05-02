@@ -1,4 +1,3 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:project_time_saver/basic_actions.dart';
@@ -17,7 +16,7 @@ class _DataUIState extends State<DataUI> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: const Text("Settings"),
+          title: const Text("Data Visualization"),
         ),
         body: _loading
             ? _progressScreen()

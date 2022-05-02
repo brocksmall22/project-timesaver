@@ -22,9 +22,9 @@ void main() async {
   bool debug = false;
   bool awake = await API.checkIfServerIsAlive();
 
+  //exe of python code here: must be in the same directory
   !debug & !awake
-      ? Process.run(
-          "waitress-serve", ["--host=127.0.0.1", "--port=8080", "lib.api:app"])
+      ? Process.run("waitress-serve", ["dist\\project-timesaver.exe"])
       : null;
 
   WidgetsFlutterBinding.ensureInitialized();

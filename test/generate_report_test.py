@@ -19,6 +19,8 @@ class generate_report_test(unittest.TestCase):
     blank_breakdown = os.getcwd() + "\\test\\resc\\Monthly Shift Run Breakdown.xlsx"
     payroll_save = os.getenv("APPDATA") + "\\project-time-saver\\payroll.xlsx"
     breakdown_save = os.getenv("APPDATA") + "\\project-time-saver\\breakdown.xlsx"
+    test_config = os.getcwd() + "\\test\\resc\\generate_report_and_payroll_test_config.json"
+    test_log = os.getcwd() + "\\test\\resc\\generate_report_test_log.json"
 
     """
     This method deletes the database, makes a new one, and populates it.
@@ -27,7 +29,8 @@ class generate_report_test(unittest.TestCase):
     def setUpClass(cls):
         generate_report_test.delete_files()
         check_database.check(db_name = "\\database_test.db")
-        p.loadWorkBooks(generate_report_test.runs, database = generate_report_test.test_db)
+        p.loadWorkBooks(generate_report_test.runs, database = generate_report_test.test_db,
+                        test_log_location = generate_report_test.test_log, test_config_location = generate_report_test.test_config)
 
     """
     This is the actual test.
@@ -128,6 +131,8 @@ class generate_report_test(unittest.TestCase):
             os.remove(generate_report_test.payroll_save)
         if os.path.exists(generate_report_test.breakdown_save):
             os.remove(generate_report_test.breakdown_save)
+        if os.path.exists(generate_report_test.test_log):
+            os.remove(generate_report_test.test_log)
 
 if __name__ == "__main__":
     unittest.main()

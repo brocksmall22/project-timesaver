@@ -1,17 +1,17 @@
 import os
 from flask import Flask, jsonify, request, Response, send_file
 from datetime import datetime
-from .logger import Logger
-
-from lib.backup_manager import backupManager as bm
-from lib.sqlFunctions import sqlFunctions
-from .generate_report import generate_report as grp
-from .payroll import payroll
-import sqlite.check_database as cdb
+from logger import Logger
+from waitress import serve
+from backup_manager import backupManager as bm
+from sqlFunctions import sqlFunctions
+from generate_report import generate_report as grp
+from payroll import payroll
+import check_database as cdb
 from flask.wrappers import Request
-from .config_manager import ConfigManager
+from config_manager import ConfigManager
 from flask_apscheduler import APScheduler
-from .image_api import image_api
+from image_api import image_api
 
 app = Flask(__name__)
 app.register_blueprint(image_api)
@@ -352,3 +352,34 @@ def trigger_restore():
     scheduler.resume_job(id=INTERVAL_TASK_ID)
     scheduler.resume_job(id=INTERVAL_TASK_ID_1)
     return Response(status = 200) if success != "" else Response(status = 500)
+
+
+@app.route("/set_cell_locations", methods=["POST"])
+def set_cell_locations():
+    """
+    This method sets the cell locations in the config.
+
+    inputs..
+        (request): A json file containing the new values
+    returns..
+        True upon completion
+    """
+    configs = request.json
+    ConfigManager.set_cellLocations(configs["cell_locations"])
+    return Response(status = 200)
+
+
+@app.route("/get_all_cell_locations", methods=["GET"])
+def get_all_cell_locations():
+    """
+    This method gets all the cell locations in the config.
+
+    inputs..
+        (request): A json file containing the new values
+    returns..
+        A json object containing the list of configurations
+    """
+    return jsonify({"cell_locations": ConfigManager.get_allCellLocationConfigs()})
+
+if __name__ == '__main__':
+    serve(app, host="127.0.0.1", port="8080")

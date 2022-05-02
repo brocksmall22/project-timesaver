@@ -2,8 +2,8 @@ from contextlib import nullcontext
 from datetime import date, datetime
 from fileinput import close
 from hmac import digest
-from .config_manager import ConfigManager as conf
-from .logger import Logger
+from config_manager import ConfigManager as conf
+from logger import Logger
 import os
 import shutil
 import hashlib

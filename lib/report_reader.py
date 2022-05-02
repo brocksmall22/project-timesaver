@@ -1,129 +1,45 @@
+from re import sub
+from unittest.util import strclass
 from openpyxl import load_workbook
-from .config_manager import ConfigManager
+from config_manager import ConfigManager
 from datetime import datetime
-import calendar
+import dateutil.parser
+from logger import Logger
 
 class report_reader:
-    def __init__(self, filePath):
+    def __init__(self, filePath, test_log_location = "", test_config_location = ""):
         """
         When called, this function will create the object for reading
         the run report. If there are any I/O errors, a error
         will be thrown.
         """
         self.run = load_workbook(filePath)
-        #self.cells = ConfigManager.get_cellLocations(self.run.getDate())
-        self.cells = {
-            "incident_number": "B3",
-            "date": "D3",
-            "shift": "F3",
-            "OIC": "H3",
-            "SO": "J3",
-            "filer": "L3",
-            "reported": "B5",
-            "paged": "D5",
-            "1076": "F5",
-            "1023": "H5",
-            "UC": "J5",
-            "1008": "L5",
-            "station_covered": "F6",
-            "weekend": "F4",
-            "working_hours": "",
-            "off_hours": "",
-            "shift_covered": "",
-            "run_time": "B8",
-            "first_employee_row": "21",
-            "run_type": {
-                "Fire": "O3",
-                "Invest": "O4",
-                "Med": "O5",
-                "Hazmat": "O6",
-                "Rescue": "Q3",
-                "CO": "Q4",
-                "Other": "Q5",
-                "FSC": "Q6"
-            },
-            "apparatus": {
-                "ENGINE 1": "A11",
-                "ENGINE 2": "B11",
-                "ENGINE 3": "C11",
-                "TOWER 1": "D11",
-                "TANKER 1": "A12",
-                "GR 1": "B12",
-                "COMMAND 1": "C12",
-                "Command 2": "D12",
-                "RESCUE 1": "A13",
-                "INF Boat 1": "B13",
-                "INF Boat 3": "C13",
-                "Jon Boat": "D13",
-                "Hazmat Tr": "A14",
-                "Foam Tr": "B14",
-                "Gator 1/Trailer": "C14"
-            },
-            "township": {
-                "harrison": {
-                    "city": "B17",
-                    "county": "B18"
-                },
-                "lancaster": {
-                    "city": "D17",
-                    "county": "D18"
-                }
-            },
-            "given_aid": {
-                "Chester": {
-                    "man": "I12",
-                    "app": "J12"
-                },
-                "Nottingham": {
-                    "man": "I13",
-                    "app": "J13"
-                },
-                "Poneto": {
-                    "man": "I14",
-                    "app": "J14"
-                },
-                "Monroe": {
-                    "man": "I15",
-                    "app": "J15"
-                },
-                "Berne": {
-                    "man": "I16",
-                    "app": "J16"
-                },
-                "Decatur": {
-                    "man": "I17",
-                    "app": "J17"
-                }
-            },
-            "taken_aid": {
-                "Liberty": {
-                    "man": "O12",
-                    "app": "P12"
-                },
-                "Ossian": {
-                    "man": "O13",
-                    "app": "P13"
-                },
-                "Uniondale": {
-                    "man": "O14",
-                    "app": "P14"
-                },
-                "Preble": {
-                    "man": "O15",
-                    "app": "P15"
-                },
-                "Markle": {
-                    "man": "O16",
-                    "app": "P16"
-                },
-                "Southwest": {
-                    "man": "O17",
-                    "app": "P17"
-                }
-            }
-        }
-        self.lastEmployeeRow = self.getLastEmployeeRow()
-        self.checkForErrors()
+        self.cells = {}
+        allCells = ConfigManager.get_allCellLocationConfigs(test_config_location)
+        for layout in allCells:
+            self.cells = layout
+            startDate = datetime.strptime(layout["startDate"], "%Y-%m-%d")
+            endDate = None
+            if (layout["endDate"] != "" and layout["endDate"] != None):
+                endDate = datetime.strptime(layout["endDate"], "%Y-%m-%d")
+            else:
+                endDate = datetime.now()
+            try:
+                date = self.getDate()
+                self.cells = {}
+                if (date >= startDate and date <= endDate):
+                    self.cells = layout
+                    break
+            except Exception as e:
+                self.cells = {}
+                pass
+        if self.cells == {}:
+            Logger.addNewError("I/O error", datetime.now(), 
+                                    f"File {filePath} has no mathing layout configuration in the settings!", 
+                                    file = test_log_location)
+        else:
+            self.lastEmployeeRow = self.getLastEmployeeRow()
+            self.checkForErrors()
 
 
     def __enter__(self):
@@ -145,17 +61,18 @@ class report_reader:
 
     def getDate(self):
         """
-        TODO: Figure out a better way to get the date agnostic of the
-            specific run report. Possibly do a text search on the file
-            for the date cell? Could do a regex match.
-        This method gets the date, as a string, of the run report.
+        This method gets the date, as a datetime, of the run report.
         This is the weak-link here. If the date cell moves, nothing works.
 
         returns..
-            The date of the run as a string.
+            The date of the run as a datetime.
         """
         sheet = self.run.active
-        return sheet["D2"]
+        date = sheet[self.cells["date"]].value
+        if type(date) == str:
+                    date = repr(sheet[self.cells["date"]].value).replace("\\", "/")
+                    date = dateutil.parser.parse(date)
+        return date
 
 
     def checkForErrors(self):
@@ -164,7 +81,7 @@ class report_reader:
         with a run sheet.
         """
         sheet = self.run.active
-        for subset in sheet[f"A{self.cells['first_employee_row']}:H{self.lastEmployeeRow}"]:
+        for subset in sheet[f"A{self.cells['firstEmployeeRow']}:H{self.lastEmployeeRow}"]:
             if subset[4].value is not None or subset[5].value is not None or subset[6].value is not None:
                 if subset[0].value in [None, '']:
                     raise Exception("Employee number cannot be empty!")
@@ -172,9 +89,9 @@ class report_reader:
                     raise Exception("Employee name cannot be empty!")
                 if sheet[self.cells["date"]].value in [None, '']:
                     raise Exception("Date cannot be empty!")
-        if sheet[self.cells["incident_number"]].value in [None, '']:
+        if sheet[self.cells["incidentNumber"]].value in [None, '']:
             raise Exception("Run number cannot be empty!")
-        if sheet[self.cells["run_time"]].value in [None, '']:
+        if sheet[self.cells["runTime"]].value in [None, '']:
             raise Exception("Run time cannot be empty!")
         if sheet[self.cells["reported"]].value in [None, '']:
             raise Exception("Reported cannot be empty!")
@@ -194,7 +111,7 @@ class report_reader:
         """
         end = False
         sheet = self.run.active
-        endRange = int(self.cells["first_employee_row"])
+        endRange = int(self.cells["firstEmployeeRow"])
         while (not end):
             if sheet[f"L{endRange + 1}"].value != "=":
                 endRange = endRange + 1
@@ -213,11 +130,19 @@ class report_reader:
         """
         sheet = self.run.active
         returnList = []
-        for subset in sheet[f"A{self.cells['first_employee_row']}:O{self.lastEmployeeRow}"]:
+        for subset in sheet[f"A{self.cells['firstEmployeeRow']}:O{self.lastEmployeeRow}"]:
             if self.employeeResponded(subset):
-                empNumber = self.run["Pay"][subset[0].value.split("!")[1]].value
+                if type(subset[0].value) == str and "=" in subset[0].value:
+                    empNumber = self.run["Pay"][subset[0].value.split("!")[1]].value
+                elif type(subset[0].value) == str and "=" not in subset[0].value:
+                    empNumber = int(subset[0].value)
+                elif type(subset[0].value) == int:
+                    empNumber = subset[0].value
                 payRate, full_time = self.getPayAndPosition(subset)
-                Name = self.run["Pay"][subset[1].value.split("!")[1]].value
+                if type(subset[1].value) == str and "=" in subset[1].value:
+                    Name = self.run["Pay"][subset[1].value.split("!")[1]].value
+                elif type(subset[1].value) == str and "=" not in subset[1].value:
+                    Name = subset[1].value
                 type_of_response = self.getTypeOfResponse(subset)
                 subhours = self.getSubHours(subset)
                 returnList.append({"number": empNumber, "payRate": payRate, "fullTime": full_time,
@@ -246,6 +171,8 @@ class report_reader:
             The employee's pay rate and the employee's position
         """
         if subset[7].value is not None:
+            if type(subset[7].value) != str:
+                return [subset[7].value, 0]
             return [self.run["Pay"][subset[7].value.split("!")[1]].value, 0]
         else:
             return [0, 1]
@@ -295,14 +222,25 @@ class report_reader:
             case 1: the run, date, and run number of the workbook
         """
         sheet = self.run.active
-        date = sheet[self.cells["date"]].value.strftime("%Y-%m-%d")
-        runNumber = sheet[self.cells["incident_number"]].value
-        runTime = sheet[self.cells["run_time"]].value
+        date = self.getDate().strftime("%Y-%m-%d")
+        runNumber = sheet[self.cells["incidentNumber"]].value
+        runTime = sheet[self.cells["runTime"]].value
         startTime = sheet[self.cells["reported"]].value
         endTime = sheet[self.cells["1008"]].value
         shift = sheet[self.cells["shift"]].value
-        fsc = int(self.checkForFill(sheet, self.cells["run_type"]["FSC"]))
-        stationCovered = int(self.checkForFill(sheet, self.cells["station_covered"]))
+        if "FSC" in self.cells["runType"].keys():
+            fsc = int(self.checkForFill(sheet, self.cells["runType"]["FSC"]))
+        elif "fsc" in self.cells["runType"].keys():
+            fsc = int(self.checkForFill(sheet, self.cells["runType"]["fsc"]))
+        elif "Service Call" in self.cells["runType"].keys():
+            fsc = int(self.checkForFill(sheet, self.cells["runType"]["Service Call"]))
+        elif "Service call" in self.cells["runType"].keys():
+            fsc = int(self.checkForFill(sheet, self.cells["runType"]["Service call"]))
+        elif "service call" in self.cells["runType"].keys():
+            fsc = int(self.checkForFill(sheet, self.cells["runType"]["service sall"]))
+        else:
+            raise Exception("The run type for fire service call cannot be found! Double check the configuration!")
+        stationCovered = int(self.checkForFill(sheet, self.cells["stationCovered"]))
         medrun = int(sheet == self.run["MED RUN"])
         fullCover = self.getFullCover(sheet, shift)
         paid = self.isPaid(sheet, fsc, medrun)
@@ -360,11 +298,11 @@ class report_reader:
             case 1: interger 1 if the run is fully covered
             case 2: interger 0 if the run is not fully covered
         """
-        if self.cells["shift_covered"] != "":
-            return int(sheet[self.cells["shift_covered"]].value)
+        if self.cells["shiftCovered"] != "":
+            return  1 if sheet[self.cells["shiftCovered"]].value not in ["", None] else 0
         fullCover = False
         lastShift = None
-        for i in range(int(self.cells["first_employee_row"]), self.lastEmployeeRow + 1):
+        for i in range(int(self.cells["firstEmployeeRow"]), self.lastEmployeeRow + 1):
             if sheet[f"L{i}"].value is not None:
                 lastShift = sheet[f"L{i}"].value
             if lastShift == shift and (sheet[f"E{i}"].value is not None or sheet[f"F{i}"].value is not None):
@@ -393,7 +331,7 @@ class report_reader:
         if fsc == 1 and sheet[self.cells["paged"]].value != None:
             return 1
         if fsc == 1:
-            for i1 in sheet[f"E{self.cells['first_employee_row']}:G{self.lastEmployeeRow}"]:
+            for i1 in sheet[f"E{self.cells['firstEmployeeRow']}:G{self.lastEmployeeRow}"]:
                 if i1[0] not in [None, ""] or i1[1] not in [None, ""]:
                     return 0
             return 1
@@ -430,8 +368,8 @@ class report_reader:
             A 1 if did is or a 0 if it did not
         """
         sheet = self.run.active
-        if self.cells["working_hours"] != "":
-            return int(sheet[self.cells["working_hours"]].value)
+        if self.cells["workingHours"] != "":
+            return 1 if sheet[self.cells["workingHours"]].value not in ["", None] else 0
         if sheet[self.cells["date"]].value.weekday() in [5, 6]:
             return 0
         if 500 < sheet[self.cells["reported"]].value <= 1700:
@@ -477,12 +415,12 @@ class report_reader:
         """
         sheet = self.run.active
         returnVal = ""
-        for station in self.cells["given_aid"]:
-            if self.checkForFill(sheet, self.cells["given_aid"][station]["man"]):
+        for station in self.cells["givenAid"]:
+            if self.checkForFill(sheet, self.cells["givenAid"][station]["man"]):
                 if returnVal != "":
                     returnVal += ";"
                 returnVal += f"{station},man"
-            if self.checkForFill(sheet, self.cells["given_aid"][station]["app"]):
+            if self.checkForFill(sheet, self.cells["givenAid"][station]["app"]):
                 if returnVal != "":
                     returnVal += ";"
                 returnVal += f"{station},app"
@@ -500,12 +438,12 @@ class report_reader:
         """
         sheet = self.run.active
         returnVal = ""
-        for station in self.cells["taken_aid"]:
-            if self.checkForFill(sheet, self.cells["taken_aid"][station]["man"]):
+        for station in self.cells["takenAid"]:
+            if self.checkForFill(sheet, self.cells["takenAid"][station]["man"]):
                 if returnVal != "":
                     returnVal += ";"
                 returnVal += f"{station},man"
-            if self.checkForFill(sheet, self.cells["taken_aid"][station]["app"]):
+            if self.checkForFill(sheet, self.cells["takenAid"][station]["app"]):
                 if returnVal != "":
                     returnVal += ";"
                 returnVal += f"{station},app"
@@ -523,8 +461,8 @@ class report_reader:
         """
         sheet = self.run.active
         returnVal = ""
-        for runType in self.cells["run_type"]:
-            if self.checkForFill(sheet, self.cells["run_type"][runType]):
+        for runType in self.cells["runType"]:
+            if self.checkForFill(sheet, self.cells["runType"][runType]):
                 if returnVal != "":
                     returnVal += ","
                 returnVal += runType

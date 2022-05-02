@@ -1,6 +1,6 @@
 import os
 from tkinter import W
-from .config_manager import ConfigManager
+from config_manager import ConfigManager
 
 
 class oneDriveConnect:

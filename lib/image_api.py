@@ -1,6 +1,6 @@
 from sys import prefix
 from flask import Flask, Blueprint, send_file, request, Response
-from .visualize import visualize
+from visualize import visualize
 import io
 
 image_api = Blueprint("image_api", __name__, url_prefix = "/images")
@@ -11,7 +11,7 @@ def generateTypesOfRunResponse():
     This route fetches the run type distribution figure
 
     returns..
-        The figure and status 200
+        The figure and status 200r
     """
     requestValues = request.json
     startDate = requestValues["startDate"]
