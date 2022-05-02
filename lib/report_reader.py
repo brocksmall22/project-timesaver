@@ -1,10 +1,10 @@
 from re import sub
 from unittest.util import strclass
 from openpyxl import load_workbook
-from .config_manager import ConfigManager
+from config_manager import ConfigManager
 from datetime import datetime
 import dateutil.parser
-from .logger import Logger
+from logger import Logger
 
 class report_reader:
     def __init__(self, filePath, test_log_location = "", test_config_location = ""):

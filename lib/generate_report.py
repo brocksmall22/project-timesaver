@@ -1,9 +1,9 @@
 from msilib.schema import SelfReg
 from openpyxl import load_workbook
 
-from lib.payroll import payroll
-from .sqlFunctions import sqlFunctions
-from .logger import Logger
+from payroll import payroll
+from sqlFunctions import sqlFunctions
+from logger import Logger
 import os
 import traceback
 from datetime import datetime

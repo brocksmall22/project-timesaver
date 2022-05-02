@@ -1,10 +1,10 @@
 from datetime import datetime
 import os
 from sqlite3 import OperationalError
-from .sqlFunctions import sqlFunctions
-from .logger import Logger
-from .oneDriveConnect import oneDriveConnect
-from .report_reader import report_reader
+from sqlFunctions import sqlFunctions
+from logger import Logger
+from oneDriveConnect import oneDriveConnect
+from report_reader import report_reader
 import traceback
 
 

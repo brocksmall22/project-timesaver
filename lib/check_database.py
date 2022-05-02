@@ -1,5 +1,5 @@
 import os
-from .database_creation import creator
+from database_creation import creator
 
 class check_database:
     @staticmethod

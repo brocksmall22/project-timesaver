@@ -1,17 +1,17 @@
 import os
 from flask import Flask, jsonify, request, Response, send_file
 from datetime import datetime
-from .logger import Logger
-
-from lib.backup_manager import backupManager as bm
-from lib.sqlFunctions import sqlFunctions
-from .generate_report import generate_report as grp
-from .payroll import payroll
-import sqlite.check_database as cdb
+from logger import Logger
+from waitress import serve
+from backup_manager import backupManager as bm
+from sqlFunctions import sqlFunctions
+from generate_report import generate_report as grp
+from payroll import payroll
+import check_database as cdb
 from flask.wrappers import Request
-from .config_manager import ConfigManager
+from config_manager import ConfigManager
 from flask_apscheduler import APScheduler
-from .image_api import image_api
+from image_api import image_api
 
 app = Flask(__name__)
 app.register_blueprint(image_api)
@@ -380,3 +380,6 @@ def get_all_cell_locations():
         A json object containing the list of configurations
     """
     return jsonify({"cell_locations": ConfigManager.get_allCellLocationConfigs()})
+
+if __name__ == '__main__':
+    serve(app, host="127.0.0.1", port="8080")
