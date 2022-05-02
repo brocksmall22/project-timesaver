@@ -1,21 +1,18 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 import 'package:project_time_saver/basic_actions.dart';
 import 'package:project_time_saver/basic_widgets.dart';
 import 'package:project_time_saver/ui_api.dart';
 import 'dart:math';
 
-class layoutConfiguratorUI extends StatefulWidget {
-  const layoutConfiguratorUI({Key? key}) : super(key: key);
+class LayoutConfiguratorUI extends StatefulWidget {
+  const LayoutConfiguratorUI({Key? key}) : super(key: key);
 
   @override
-  State<layoutConfiguratorUI> createState() => _layoutConfiguratorUIState();
+  State<LayoutConfiguratorUI> createState() => _LayoutConfiguratorUIState();
 }
 
-class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
-  _layoutConfiguratorUIState() {
+class _LayoutConfiguratorUIState extends State<LayoutConfiguratorUI> {
+  _LayoutConfiguratorUIState() {
     _setConfigurations();
   }
 
@@ -33,10 +30,10 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
   // Variables
 
   final RegExp _cellRegex = RegExp(r"^([a-zA-Z]{1,2})(\d{1,3})$");
-  final _formKey = GlobalKey<FormState>();
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   List<String> _alreadySaved = [];
   Map<String, Map<int, TextEditingController>> _controllers = {};
-  Map<String, Map<String, dynamic>> _configurations = {};
+  final Map<String, Map<String, dynamic>> _configurations = {};
   final _blankLayout = {
     "startDate": "",
     "endDate": "",
@@ -87,13 +84,15 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
           );
         }).toList(),
         onChanged: (String? newValue) {
-          setState(() {
-            _selectedConfiguration = newValue!;
-            _alreadySaved = [];
-          });
+          _selectedConfiguration = newValue!;
+          _controllers = {};
+          _alreadySaved = [];
+          _formKey = GlobalKey<FormState>();
+          setState(() {});
         });
   }
 
+  /// This button is for creating a new configuration layout the user can edit.
   Widget _addNewConfigurationButton() => SizedBox(
       width: 200,
       child: ElevatedButton(
@@ -104,10 +103,45 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
         },
       ));
 
-  Widget _topBarLayout() => BasicWidgets.horizontal([
+  /// This button allows the user to delete the selected configuration.
+  Widget _removeCurrentConfigurationButton() => SizedBox(
+      width: 200,
+      child: ElevatedButton(
+        child: const Text("Delete Current Layout"),
+        style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.resolveWith<Color?>(
+            (Set<MaterialState> states) {
+              if (states.contains(MaterialState.pressed)) return Colors.red;
+              if (states.contains(MaterialState.hovered)) {
+                return Colors.red[300];
+              }
+              return null; // Use the component's default.
+            },
+          ),
+        ),
+        onPressed: () async {
+          _configurations.remove(_selectedConfiguration);
+          _selectedConfiguration = "Select a layout";
+          await API.updateLayoutConfigs(_configurations.values.toList());
+          setState(() {});
+        },
+      ));
+
+  /// Populates the controls that appear at the top of this UI page
+  Widget _topBarLayout() {
+    if (_selectedConfiguration == "Select a layout") {
+      return BasicWidgets.horizontal([
         BasicWidgets.pad(_configurationDropDown()),
         BasicWidgets.pad(_addNewConfigurationButton())
       ]);
+    } else {
+      return BasicWidgets.horizontal([
+        BasicWidgets.pad(_configurationDropDown()),
+        BasicWidgets.pad(_addNewConfigurationButton()),
+        BasicWidgets.pad(_removeCurrentConfigurationButton())
+      ]);
+    }
+  }
 
   /// This widget is the actual form that is displayed to the user for editing a
   /// configuration. It contains every text entry box.
@@ -156,7 +190,8 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
             _inputKeyTownship(),
             _aidKeyValueTable("Given mutual aid", "givenAid"),
             _aidKeyValueTable("Taken mutual aid", "takenAid"),
-            _checkFormButton()
+            BasicWidgets.horizontal(
+                [_checkFormButton(), _clearEmptyValuesButton()])
           ],
         ))),
       );
@@ -220,10 +255,14 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
 
   /// This button is used to check the form, save its values, and submit it to
   /// the backend to be saved.
-  Widget _checkFormButton() => Center(
-      child: BasicWidgets.pad(BasicWidgets.mainBox(ElevatedButton(
-          onPressed: () => _submitButtonLogic(),
-          child: const Text("Submit")))));
+  Widget _checkFormButton() =>
+      BasicWidgets.pad(BasicWidgets.mainBox(ElevatedButton(
+          onPressed: () => _submitButtonLogic(), child: const Text("Submit"))));
+
+  Widget _clearEmptyValuesButton() =>
+      BasicWidgets.pad(BasicWidgets.mainBox(ElevatedButton(
+          onPressed: () => _deleteEmptyValues(),
+          child: const Text("Clear Empty Values"))));
 
   /// This item combines a description of a text entry box and the box itself
   /// into a fixed width row to make the layout look nicer. It has the same
@@ -236,7 +275,7 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
           name = false,
           canBeEmpty = false}) =>
       Center(
-        child: SizedBox(
+        child: BasicWidgets.pad(SizedBox(
             width: 400,
             child: BasicWidgets.horizontal([
               SizedBox(width: 200, child: Text(inputName)),
@@ -247,7 +286,7 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
                   startDate: startDate,
                   endDate: endDate,
                   canBeEmpty: canBeEmpty)
-            ])),
+            ]))),
       );
 
   /// This function makes the input table for any variable-length parameter. It
@@ -256,21 +295,21 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
   /// and the key for the map.
   Widget _inputKeyValueTable(String inputName, String key) {
     List<Widget> displayList = [
-      BasicWidgets.horizontal([
+      BasicWidgets.pad(BasicWidgets.horizontal([
         SizedBox(width: 200, child: Text(inputName)),
         const Spacer(),
         SizedBox(
-            width: 200,
+            width: 190,
             child: ElevatedButton(
               child: const Text("Add New"),
               onPressed: () => _addNewValueToList(key),
             ))
-      ]),
-      BasicWidgets.horizontal([
-        const SizedBox(width: 200, child: Text("Value Name")),
+      ])),
+      BasicWidgets.pad(BasicWidgets.horizontal([
+        const SizedBox(width: 195, child: Text("Value Name:")),
         const Spacer(),
-        const SizedBox(width: 200, child: Text("Cell Location"))
-      ])
+        const SizedBox(width: 195, child: Text("Cell Location:"))
+      ]))
     ];
     displayList.addAll(_getKeyValues(key));
     return Center(
@@ -299,7 +338,7 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
             .putIfAbsent(count, () => TextEditingController(text: keyVal));
         _controllers[key]!.putIfAbsent(count + 1,
             () => TextEditingController(text: _current[keyVal] ?? ""));
-        returnlist.add(BasicWidgets.horizontal([
+        returnlist.add(BasicWidgets.pad(BasicWidgets.horizontal([
           _formField(key,
               name: true,
               altController: _controllers[key]![count],
@@ -310,7 +349,7 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
               altController: _controllers[key]![count + 1],
               altOnSave: "list",
               autosave: true)
-        ]));
+        ])));
         count = count + 2;
       }
     }
@@ -338,14 +377,15 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
             i,
             () => TextEditingController(
                 text: townshipCell is String ? townshipCell : ""));
-        returnlist.add(BasicWidgets.horizontal([
+        returnlist.add(BasicWidgets.pad(BasicWidgets.horizontal([
           SizedBox(width: 200, child: Text(cellDescriptions[i])),
           const Spacer(),
           _formField("township",
               name: true,
               altController: _controllers["township"]![i],
-              altOnSave: "township")
-        ]));
+              altOnSave: "township",
+              autosave: true)
+        ])));
       }
     }
     return returnlist;
@@ -357,16 +397,16 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
   /// the key for the type of aid (given or taken).
   Widget _aidKeyValueTable(String inputName, String key) {
     List<Widget> displayList = [
-      BasicWidgets.horizontal([
+      BasicWidgets.pad(BasicWidgets.horizontal([
         SizedBox(width: 200, child: Text(inputName)),
         const Spacer(),
         SizedBox(
-            width: 200,
+            width: 190,
             child: ElevatedButton(
               child: const Text("Add New"),
               onPressed: () => _addNewValueToAid(key),
             ))
-      ])
+      ]))
     ];
     displayList.addAll(_getAidKeyValues(key));
     return Center(
@@ -393,7 +433,7 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
             count + 2,
             () => TextEditingController(
                 text: departmentCell is Map ? departmentCell["app"] : ""));
-        returnlist.add(BasicWidgets.horizontal([
+        returnlist.add(BasicWidgets.pad(BasicWidgets.horizontal([
           const SizedBox(width: 200, child: Text("Department: ")),
           const Spacer(),
           _formField(aidType,
@@ -401,7 +441,7 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
               altController: _controllers[aidType]![count],
               altOnSave: "mututalAid",
               autosave: true)
-        ]));
+        ])));
         returnlist.add(BasicWidgets.horizontal([
           const SizedBox(
               width: 200, child: Text("Cell indicating manual labor: ")),
@@ -516,7 +556,6 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
   void _submitButtonLogic() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      print(_configurations[_selectedConfiguration]);
       if (_selectedConfiguration !=
           _getTitle(_configurations[_selectedConfiguration]!)) {
         Map<String, dynamic> updated = _configurations[_selectedConfiguration]!;
@@ -526,9 +565,38 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
       }
       _alreadySaved = [];
       await API.updateLayoutConfigs(_configurations.values.toList());
-      BasicActions.generalAlertBox(
-          context, [const Text("Okay")], "It is a good input!");
+      BasicWidgets.snack(
+          context, "Configuration successfully saved!", Colors.green);
       setState(() {});
+    } else {
+      BasicWidgets.snack(
+          context, "Configuration could not be saved!", Colors.red);
+    }
+  }
+
+  /// This method will delete all empty list values in the layout.
+  void _deleteEmptyValues() {
+    for (String key in ["givenAid", "takenAid"]) {
+      Map<int, TextEditingController> values = _controllers[key]!;
+      for (int i = 0; i <= values.keys.reduce(max); i += 3) {
+        if (values[i]!.text == "" &&
+            values[i + 1]!.text == "" &&
+            values[i + 2]!.text == "") {
+          _controllers[key]!.remove(i);
+          _controllers[key]!.remove(i + 1);
+          _controllers[key]!.remove(i + 2);
+          _configurations[_selectedConfiguration]![key]!.remove("");
+          setState(() {});
+        }
+      }
+    }
+    for (String key in ["apparatus", "runType"]) {
+      var _current = _configurations[_selectedConfiguration]![key];
+      if (_current is Map) {
+        _current.remove("");
+        _configurations[_selectedConfiguration]![key] = _current;
+        setState(() {});
+      }
     }
   }
 
@@ -561,6 +629,7 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
     }
   }
 
+  /// This method adds all of the possible configurations to the dropdown.
   void _setConfigurations() async {
     List<Map<String, dynamic>> layouts = await API.getCellLocations();
     if (layouts.isEmpty) {
@@ -569,16 +638,17 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
       for (Map<String, dynamic> layout in layouts) {
         String title = _getTitle(layout);
         _configurations.putIfAbsent(title, () => layout);
-        print(_configurations);
       }
     }
     setState(() {});
   }
 
+  /// This method adds a new blank configuration.
   void _addBlankConfig() {
     _configurations.putIfAbsent("New Layout", () => _blankLayout);
   }
 
+  /// This method generates the title that is displayed in the dropdown.
   String _getTitle(Map<String, dynamic> layout) {
     var storedStart = layout["startDate"];
     var storedEnd = layout["endDate"];
@@ -591,6 +661,7 @@ class _layoutConfiguratorUIState extends State<layoutConfiguratorUI> {
     return title;
   }
 
+  /// This method gets the value to fill any of the standard key-value pairs.
   String _getFillValue(String key) {
     dynamic value = _configurations[_selectedConfiguration]![key];
     return value is String ? value : "";

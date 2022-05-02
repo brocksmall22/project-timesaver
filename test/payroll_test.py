@@ -1,3 +1,4 @@
+from time import time
 import unittest
 import sqlite3
 import os
@@ -21,6 +22,7 @@ class payroll_test(unittest.TestCase):
     conn = None
     test_json = os.getcwd() + "\\test\\resc\\test.json"
     db = os.getenv('APPDATA') + "\\project-time-saver\\database_test.db"
+    test_config = os.getcwd() + "\\test\\resc\\generate_report_and_payroll_test_config.json"
 
     
     @classmethod
@@ -63,7 +65,7 @@ class payroll_test(unittest.TestCase):
         This test tests that a known good file can be submitted.
         """
         cur = payroll_test.conn.cursor()
-        p.loadWorkBooks(payroll_test.good_1, self.test_json, database=self.db)
+        p.loadWorkBooks(payroll_test.good_1, self.test_json, database=self.db, test_config_location = payroll_test.test_config)
         runvals = self.getRunData(cur)
         employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
@@ -76,7 +78,7 @@ class payroll_test(unittest.TestCase):
             runvals,
             [(584, '2021-11-01', 949, 1038, 1, 0, 1, 1, 'C', 0, 0, None,
             None, '621', 1002, 1005, None, 1038, 1,
-            0, 'ENGINE 3', 'harrison,city', '', '', 'Med')])
+            0, 'Engine 3', 'lancaster,city', '', '', 'Med')])
         self.assertEqual(employeevals, [('M. Burkholder', 421, None),
                                         ('K. Gerber', 621, None),
                                         ('B. Ehrman - F13', 509, None)])
@@ -91,7 +93,7 @@ class payroll_test(unittest.TestCase):
         This test tests that a known good file can be submitted.
         """
         cur = payroll_test.conn.cursor()
-        p.loadWorkBooks(payroll_test.good_2, self.test_json, database=self.db)
+        p.loadWorkBooks(payroll_test.good_2, self.test_json, database=self.db, test_config_location = payroll_test.test_config)
         runvals = self.getRunData(cur)
         employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
@@ -104,10 +106,10 @@ class payroll_test(unittest.TestCase):
             runvals,
             [(584, '2021-11-01', 949, 1038, 1, 0, 1, 1, 'C', 0, 0,
               None, None, '621', 1002, 1005, None, 1038, 1,
-              0, 'ENGINE 3', 'harrison,city', '', '', 'Med'),
+              0, 'Engine 3', 'lancaster,city', '', '', 'Med'),
              (585, '2021-11-01', 1114, 1133, 1, 0, 1, 0, 'C', 0, 1,
               '1', '13', '1', 1117, 1121, None, 1133, 1, 0,
-              'ENGINE 1', 'lancaster,city', '', '', 'Fire,Invest')])
+              'Engine 1', 'harrison,city', '', '', 'Fire,Invest')])
         self.assertEqual(employeevals, [('M. Burkholder', 421, None),
                                         ('K. Gerber', 621, None),
                                         ('B. Ehrman - F13', 509, None),
@@ -140,7 +142,7 @@ class payroll_test(unittest.TestCase):
         cur = payroll_test.conn.cursor()
         p.loadWorkBooks(payroll_test.good_1_altered,
                         self.test_json,
-                        database=self.db)
+                        database=self.db, test_config_location = payroll_test.test_config)
         runvals = self.getRunData(cur)
         employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
@@ -153,10 +155,10 @@ class payroll_test(unittest.TestCase):
             runvals,
             [(584, '2021-11-01', 949, 1038, 1, 0, 1, 1, 'C', 0, 0,
               None, None, '621', 1002, 1005, None, 1038, 1,
-              0, 'ENGINE 3', 'harrison,city', '', '', 'Med'),
+              0, 'Engine 3', 'lancaster,city', '', '', 'Med'),
              (585, '2021-11-01', 1114, 1133, 1, 0, 1, 0, 'C', 0, 1,
               '1', '13', '1', 1117, 1121, None, 1133, 1, 0,
-              'ENGINE 1', 'lancaster,city', '', '', 'Fire,Invest')])
+              'Engine 1', 'harrison,city', '', '', 'Fire,Invest')])
         self.assertEqual(employeevals, [('M. Burkholder', 421, None),
                                         ('K. Gerber', 621, None),
                                         ('B. Ehrman - F13', 509, None),
@@ -188,7 +190,7 @@ class payroll_test(unittest.TestCase):
         cur = payroll_test.conn.cursor()
         p.loadWorkBooks(payroll_test.good_1 + payroll_test.good_2,
                         self.test_json,
-                        database=self.db)
+                        database=self.db, test_config_location = payroll_test.test_config)
         runvals = self.getRunData(cur)
         employeevals = cur.execute("""SELECT * FROM Employee;""").fetchall()
         respondedvals = cur.execute("""SELECT * FROM Responded;""").fetchall()
@@ -201,10 +203,10 @@ class payroll_test(unittest.TestCase):
             runvals,
             [(584, '2021-11-01', 949, 1038, 1, 0, 1, 1, 'C', 0, 0,
               None, None, '621', 1002, 1005, None, 1038, 1,
-              0, 'ENGINE 3', 'harrison,city', '', '', 'Med'),
+              0, 'Engine 3', 'lancaster,city', '', '', 'Med'),
              (585, '2021-11-01', 1114, 1133, 1, 0, 1, 0, 'C', 0, 1,
               '1', '13', '1', 1117, 1121, None, 1133, 1, 0,
-              'ENGINE 1', 'lancaster,city', '', '', 'Fire,Invest')])
+              'Engine 1', 'harrison,city', '', '', 'Fire,Invest')])
         self.assertEqual(employeevals, [('M. Burkholder', 421, None),
                                         ('K. Gerber', 621, None),
                                         ('B. Ehrman - F13', 509, None),
@@ -235,12 +237,12 @@ class payroll_test(unittest.TestCase):
         """
         self.removeFile()
         cur = payroll_test.conn.cursor()
-        p.loadWorkBooks(payroll_test.bad_2, self.test_json, database=self.db)
+        p.loadWorkBooks(payroll_test.bad_2, self.test_json, database=self.db, test_config_location = payroll_test.test_config)
         self.assertEqual(
-            Logger.getErrors(self.test_json)[0]["type"], "I/O error")
+            Logger.getErrors(self.test_json)[0]["type"], "Report format error")
         self.assertEqual(
             Logger.getErrors(self.test_json)[0]["message"].split("\\")[-1],
-            "654.xlsx has error: Critical error, file cannot be read!")
+            "654.xlsx has error: Employee number cannot be empty!")
         self.assertTrue(Logger.getErrors(self.test_json)[0]["time"] != "")
         self.assertEqual(len(Logger.getErrors(self.test_json)), 1)
         self.removeFile()
@@ -256,10 +258,10 @@ class payroll_test(unittest.TestCase):
             runvals,
             [(584, '2021-11-01', 949, 1038, 1, 0, 1, 1, 'C', 0, 0,
               None, None, '621', 1002, 1005, None, 1038, 1,
-              0, 'ENGINE 3', 'harrison,city', '', '', 'Med'),
+              0, 'Engine 3', 'lancaster,city', '', '', 'Med'),
              (585, '2021-11-01', 1114, 1133, 1, 0, 1, 0, 'C', 0, 1,
               '1', '13', '1', 1117, 1121, None, 1133, 1, 0,
-              'ENGINE 1', 'lancaster,city', '', '', 'Fire,Invest')])
+              'Engine 1', 'harrison,city', '', '', 'Fire,Invest')])
         self.assertEqual(employeevals, [('M. Burkholder', 421, None),
                                         ('K. Gerber', 621, None),
                                         ('B. Ehrman - F13', 509, None),
@@ -290,9 +292,9 @@ class payroll_test(unittest.TestCase):
         """
         self.removeFile()
         cur = payroll_test.conn.cursor()
-        p.loadWorkBooks([payroll_test.good_1_altered[0], payroll_test.bad_2[0]], self.test_json, database = self.db)
-        self.assertEqual(Logger.getErrors(self.test_json)[0]["type"], "I/O error")
-        self.assertEqual(Logger.getErrors(self.test_json)[0]["message"].split("\\")[-1], "654.xlsx has error: Critical error, file cannot be read!")
+        p.loadWorkBooks([payroll_test.good_1_altered[0], payroll_test.bad_2[0]], self.test_json, database = self.db, test_config_location = payroll_test.test_config)
+        self.assertEqual(Logger.getErrors(self.test_json)[0]["type"], "Report format error")
+        self.assertEqual(Logger.getErrors(self.test_json)[0]["message"].split("\\")[-1], "654.xlsx has error: Employee number cannot be empty!")
         self.assertTrue(Logger.getErrors(self.test_json)[0]["time"] != "")
         self.assertEqual(len(Logger.getErrors(self.test_json)), 1)
         self.removeFile()
@@ -308,10 +310,10 @@ class payroll_test(unittest.TestCase):
             runvals,
             [(584, '2021-11-01', 949, 1038, 1, 0, 1, 1, 'C', 0, 0,
               None, None, '621', 1002, 1005, None, 1038, 1,
-              0, 'ENGINE 3', 'harrison,city', '', '', 'Med'),
+              0, 'Engine 3', 'lancaster,city', '', '', 'Med'),
              (585, '2021-11-01', 1114, 1133, 1, 0, 1, 0, 'C', 0, 1,
               '1', '13', '1', 1117, 1121, None, 1133, 1, 0,
-              'ENGINE 1', 'lancaster,city', '', '', 'Fire,Invest')])
+              'Engine 1', 'harrison,city', '', '', 'Fire,Invest')])
         self.assertEqual(employeevals, [('M. Burkholder', 421, None),
                                         ('K. Gerber', 621, None),
                                         ('B. Ehrman - F13', 509, None),

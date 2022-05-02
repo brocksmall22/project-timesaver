@@ -1,10 +1,13 @@
+from re import sub
+from unittest.util import strclass
 from openpyxl import load_workbook
 from .config_manager import ConfigManager
 from datetime import datetime
+import dateutil.parser
 from .logger import Logger
 
 class report_reader:
-    def __init__(self, filePath, test_log_location = ""):
+    def __init__(self, filePath, test_log_location = "", test_config_location = ""):
         """
         When called, this function will create the object for reading
         the run report. If there are any I/O errors, a error
@@ -12,7 +15,7 @@ class report_reader:
         """
         self.run = load_workbook(filePath)
         self.cells = {}
-        allCells = ConfigManager.get_allCellLocationConfigs()
+        allCells = ConfigManager.get_allCellLocationConfigs(test_config_location)
         for layout in allCells:
             self.cells = layout
             startDate = datetime.strptime(layout["startDate"], "%Y-%m-%d")
@@ -34,8 +37,9 @@ class report_reader:
             Logger.addNewError("I/O error", datetime.now(), 
                                     f"File {filePath} has no mathing layout configuration in the settings!", 
                                     file = test_log_location)
-        self.lastEmployeeRow = self.getLastEmployeeRow()
-        self.checkForErrors()
+        else:
+            self.lastEmployeeRow = self.getLastEmployeeRow()
+            self.checkForErrors()
 
 
     def __enter__(self):
@@ -57,17 +61,18 @@ class report_reader:
 
     def getDate(self):
         """
-        TODO: Figure out a better way to get the date agnostic of the
-            specific run report. Possibly do a text search on the file
-            for the date cell? Could do a regex match.
-        This method gets the date, as a string, of the run report.
+        This method gets the date, as a datetime, of the run report.
         This is the weak-link here. If the date cell moves, nothing works.
 
         returns..
-            The date of the run as a string.
+            The date of the run as a datetime.
         """
         sheet = self.run.active
-        return sheet[self.cells["date"]].value
+        date = sheet[self.cells["date"]].value
+        if type(date) == str:
+                    date = repr(sheet[self.cells["date"]].value).replace("\\", "/")
+                    date = dateutil.parser.parse(date)
+        return date
 
 
     def checkForErrors(self):
@@ -127,9 +132,17 @@ class report_reader:
         returnList = []
         for subset in sheet[f"A{self.cells['firstEmployeeRow']}:O{self.lastEmployeeRow}"]:
             if self.employeeResponded(subset):
-                empNumber = self.run["Pay"][subset[0].value.split("!")[1]].value
+                if type(subset[0].value) == str and "=" in subset[0].value:
+                    empNumber = self.run["Pay"][subset[0].value.split("!")[1]].value
+                elif type(subset[0].value) == str and "=" not in subset[0].value:
+                    empNumber = int(subset[0].value)
+                elif type(subset[0].value) == int:
+                    empNumber = subset[0].value
                 payRate, full_time = self.getPayAndPosition(subset)
-                Name = self.run["Pay"][subset[1].value.split("!")[1]].value
+                if type(subset[1].value) == str and "=" in subset[1].value:
+                    Name = self.run["Pay"][subset[1].value.split("!")[1]].value
+                elif type(subset[1].value) == str and "=" not in subset[1].value:
+                    Name = subset[1].value
                 type_of_response = self.getTypeOfResponse(subset)
                 subhours = self.getSubHours(subset)
                 returnList.append({"number": empNumber, "payRate": payRate, "fullTime": full_time,
@@ -158,6 +171,8 @@ class report_reader:
             The employee's pay rate and the employee's position
         """
         if subset[7].value is not None:
+            if type(subset[7].value) != str:
+                return [subset[7].value, 0]
             return [self.run["Pay"][subset[7].value.split("!")[1]].value, 0]
         else:
             return [0, 1]
@@ -207,13 +222,24 @@ class report_reader:
             case 1: the run, date, and run number of the workbook
         """
         sheet = self.run.active
-        date = sheet[self.cells["date"]].value.strftime("%Y-%m-%d")
+        date = self.getDate().strftime("%Y-%m-%d")
         runNumber = sheet[self.cells["incidentNumber"]].value
         runTime = sheet[self.cells["runTime"]].value
         startTime = sheet[self.cells["reported"]].value
         endTime = sheet[self.cells["1008"]].value
         shift = sheet[self.cells["shift"]].value
-        fsc = int(self.checkForFill(sheet, self.cells["runType"]["FSC"]))
+        if "FSC" in self.cells["runType"].keys():
+            fsc = int(self.checkForFill(sheet, self.cells["runType"]["FSC"]))
+        elif "fsc" in self.cells["runType"].keys():
+            fsc = int(self.checkForFill(sheet, self.cells["runType"]["fsc"]))
+        elif "Service Call" in self.cells["runType"].keys():
+            fsc = int(self.checkForFill(sheet, self.cells["runType"]["Service Call"]))
+        elif "Service call" in self.cells["runType"].keys():
+            fsc = int(self.checkForFill(sheet, self.cells["runType"]["Service call"]))
+        elif "service call" in self.cells["runType"].keys():
+            fsc = int(self.checkForFill(sheet, self.cells["runType"]["service sall"]))
+        else:
+            raise Exception("The run type for fire service call cannot be found! Double check the configuration!")
         stationCovered = int(self.checkForFill(sheet, self.cells["stationCovered"]))
         medrun = int(sheet == self.run["MED RUN"])
         fullCover = self.getFullCover(sheet, shift)
@@ -273,7 +299,7 @@ class report_reader:
             case 2: interger 0 if the run is not fully covered
         """
         if self.cells["shiftCovered"] != "":
-            return int(sheet[self.cells["shiftCovered"]].value)
+            return  1 if sheet[self.cells["shiftCovered"]].value not in ["", None] else 0
         fullCover = False
         lastShift = None
         for i in range(int(self.cells["firstEmployeeRow"]), self.lastEmployeeRow + 1):
@@ -343,7 +369,7 @@ class report_reader:
         """
         sheet = self.run.active
         if self.cells["workingHours"] != "":
-            return int(sheet[self.cells["workingHours"]].value)
+            return 1 if sheet[self.cells["workingHours"]].value not in ["", None] else 0
         if sheet[self.cells["date"]].value.weekday() in [5, 6]:
             return 0
         if 500 < sheet[self.cells["reported"]].value <= 1700:

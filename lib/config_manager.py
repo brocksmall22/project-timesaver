@@ -136,30 +136,6 @@ class ConfigManager:
             json.dump(contents, conf)
 
     @staticmethod
-    def get_allCellLocationConfigs(date: datetime, file=""):
-        """
-        This method is responsible for fetching the layout of a given run
-        report.
-
-        inputs..
-            date: the date of the current run report in question
-            file: an optional file path to the configuration file
-        returns..
-            A dictonary of the layour or None if none exists
-        """
-        file = ConfigManager.configFile if file == "" else file
-        ConfigManager.createConfigIfNotExists(file)
-        with open(file, "r") as conf:
-            configs = json.load(conf)["cell_locations"]
-            for config in configs:
-                configStart = datetime.strptime(config["start_date"], "%y-%m-%d")
-                configEnd = None if config["end_date"] in ["", None] else datetime.strptime(config["end_date"], "%y-%m-%d")
-                if configStart <= date and (configEnd == None or 
-                        configEnd >= date):
-                    return config
-            return None
-
-    @staticmethod
     def get_allCellLocationConfigs(file=""):
         """
         This method gets all of the layout configs.
