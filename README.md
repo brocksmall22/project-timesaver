@@ -429,23 +429,23 @@ This class contains some methods that were frequently reused.
 
 ## Documentation from the  payroll.py file for the backend
 
-### This is all for the looping through of the excel workbooks
+### This is for looping through the Excel workbooks.
 
 > **loadWorkBooks(fileList)**
 >
->loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
->This requires the whole file list
->It returns the retun array of the failed files or true if no files have failed
+>Loops through the fileList array and runs the readWorkBook on each file. This is the main driver for the program.
+>This requires the whole file list.
+>It returns the return array of the failed files, or true if no files have failed.
 
 > **readWorkBook(wb, filename)**
 >
->reads an indiual work book then prints the resulting values from in the range of cells A21->F55
->It requires the Workbook and the Filename
+>Reads an individual work book then prints the resulting values in the range of cells A21->F55.
+>It requires the Workbook and the Filename.
 
 > **getRange(wb)**
 >
->This function loops through the work book file
->It requires the work book file
+>This function loops through the work book file.
+>It requires the work book file.
 
 > **checkForErrors(wb)**
 >
@@ -459,14 +459,14 @@ This class contains some methods that were frequently reused.
 
 > **getEmpinfo(conn, wb, date, rNum)**
 >
->This gets the Employee information from the wb file then it runs the employee and Responded SQL insertions
->It requires the SQL connection workbookFile and the Date and RunNumber from the getRunInfo
+>This gets the Employee information from the wb file then it runs the employee and Responded SQL insertions.
+>It requires the SQL connection workbookFile and the Date and RunNumber from the getRunInfo.
 
 > **getRunInfo(conn, wb)**
 >
->This gets the Run info from the sheet and runs the SQL import statements
->it requires the SQL connection and the workbook file
->It retuns the Run Date and Number
+>This gets the Run info from the sheet and runs the SQL import statements.
+>it requires the SQL connection and the workbook file.
+>It returns the Run Date and Number.
 
  > **getFullCover(sheet, shift)**
  >This function is responsible for determining if a run was fully
@@ -480,64 +480,64 @@ This class contains some methods that were frequently reused.
  >>       case 1: interger 1 if the run is fully covered
  >>       case 2: interger 0 if the run is not fully covered
 
-### This is for the SQL insertions and updates for the backend
+### SQL insertions and updates for the backend:
 
-#### This contains all of the SQL functions related to Runs
+#### This contains the SQL functions related to the Runs table.
 
 
 
 > **createRun(conn, runNumber, date, stopTime, endTime, runTime, Covered, Medrun, shift)**
 >
->this is the general insertion of runs into the data base.
->it requires the runNumber, Date, StartTime, EndTime, Runtime,Bool for station covered, bool for Medrun, and the connextion to the sql database
+>This is the general insertion of runs into the database.
+>It requires the runNumber, Date, StartTime, EndTime, Runtime,Bool for station covered, bool for Medrun, and the connection to the sql database.
 
 > **updateRun(conn, num, date, startTime, endTime, runTime)**
 >
->this updates the run given that it has alredy been insterted into the database and has differing information then therun alredy has
->it requires the runNumber, Date, StartTime, EndTime, Runtime,Bool for station covered, bool for Medrun, and the connextion to the sql database
+>This updates the run given that it has already been inserted into the database and has differing information then the run already has.
+>It requires the runNumber, Date, StartTime, EndTime, Runtime,Bool for station covered, bool for Medrun, and the connection to the sql database.
 
 > **runNeedsUpdated(conn, num, date)**
 >
->this checks the runs alredy in the database against the given information to see if the run needs to be updatded
->it requires the Run number, date, and connection to the sql database
+>This checks the runs already in the database against the given information to see if the run needs to be updated.
+>It requires the Run number, date, and connection to the sql database.
 
 
-#### This Contains all of the SQL functions related to the Responded tabel
+#### This contains all of the SQL functions related to the Responded table.
 
 
 > **createResponded(conn, empNumber, payRate, date, num)**
 >
->this is the general insertion for the Responded Table
->it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
+>This is the general insertion for the Responded Table.
+>It requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number.
 
 > **respondedNeedsUpdated(conn, empNumber, date, rNum)**
 >
->this is to check the responded table against the given information to see if the responded table needs to be updated 
->it requires the SQL Connection as well as Employee number, date of the run, and the run number
+>This is to check the responded table against the given information to see if the responded table needs to be updated 
+>It requires the SQL Connection as well as Employee number, date of the run, and the run number.
 
 > **updateResponded(conn, empNumber, payRate, date, rNum)**
->this is to update the responded table
->it requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number
+>This is to update the responded table.
+>It requires the connection to the SQL database as well as the Employee number, payrate, date of the run, and the run number.
 
 
-#### This Contains all of the SQL functions related to the Employee tabel
+#### This contains the SQL functions related to the Employee table.
 
 
 
 > **createEmployee(conn, name, empNumber)**
 >
->This is the insertion for the Employee table
->It requires the SQL connection as well as the name, and employee number
+>This is the insertion for the Employee table.
+>It requires the SQL connection as well as the name, and employee number.
 
 > **empNeedsUpdated(conn, empNumber)**
 >
->this checks the Employee table against the given information to see if it needs to be updated
->it rquires the SQL connection as well as the Employee number
+>This checks the Employee table against the given information to see if it needs to be updated.
+>It requires the SQL connection as well as the Employee number.
 
 > **updateEmp(conn, name ,empNumber)**
 >
->this updates the employee table given the new information
->it requires the SQL connection as well as the Employee Name and Number
+>This updates the employee table given the new information.
+>It requires the SQL connection as well as the Employee Name and Number.
 
 
 ## Documentation for the api.py file:
@@ -545,8 +545,8 @@ This class contains some methods that were frequently reused.
 > **def verify_awake():**
 >
 >This function is for the UI to determine if the server is running. If the server
->sees any call to this address, it will return a signal signifying the sercer is alive.
->If the UI recieves a socket error, that means the server is not running and needs
+>sees any call to this address, it will return a signal signifying the server is alive.
+>If the UI receives a socket error, that means the server is not running and needs
 >to be started.
 >
 > *inputs..*
@@ -562,10 +562,10 @@ This class contains some methods that were frequently reused.
 >the information into the database.
 >
 > *inputs..*
->>    (request): A post request containing a Json array of strings
+>>    (request): A post request containing a Json array of strings.
 > *returns..*
->>    case 1: A Json array containing true (in the case of sucessful inserts)
->>    case 2: A list of files that failed to be insterted
+>>    case 1: A Json array containing true (in the case of successful inserts)
+>>    case 2: A list of files that failed to be inserted
 
 
 > **def generate_reports():**
@@ -632,7 +632,7 @@ This class contains some methods that were frequently reused.
 
 > **def fill_sheet(conn, wb, start_date, end_date):**
 >
-> This method actually fills and saves a copy of the master copy of the tally sheet.
+> This method fills and saves a copy of the master copy of the tally sheet.
 >    *inputs..*
 >>        conn: the connection to the SQL
 >>        wb: the xlsx workbook we are working with
@@ -707,45 +707,45 @@ This class contains some methods that were frequently reused.
 ## Documentation for logger.py file:
 > **createLogIfNotExists(file = "")**
 >
->Detect if log file is present
+>Detects if log file is present.
 
 > **def getLastUpdate(file = "")**
 >
->Checks if the config file has been created, then returns the last update
+>Checks if the config file has been created, then returns the last update.
 
 > **def setLastUpdate(newUpdate, file = "")**
 >
->Updates the last update value
+>Updates the last update value.
 
 > **getErrors(file = "")**
 >
->Gets the logged errors
+>Gets the logged errors.
 
 > **addNewError(type: str, datetime: datetime, message: str, file = "")**
 >
->Adds a new error to the log
+>Adds a new error to the log.
 
 > **clearErrors(file = "")**
 >
->Removes all logged errors
+>Removes all logged errors.
 
 > **getGenerateMessages(file = "")**
 >
->Gets the generation messages
+>Gets the generation messages.
 
 > **addNewGenerateMessage(newMessage, file = "")**
 >
->Adds a new generation message
+>Adds a new generation message.
 
 > **clearGenerateMessages(file = "")**
 >
->Resets the generation messages
+>Resets the generation messages.
 
 ## Documentation for Backup_manager.py
 
     
 >    **getLocalDB(database_path)**
->    This method gets the local database file
+>    This method gets the local database file.
 >    
 >    *inputs..*
 >>        (database_path): takes a filepath as a string to the database used for testing.
@@ -754,7 +754,7 @@ This class contains some methods that were frequently reused.
    
     
 >    **uploadLocalDB(database, onedrive_path)**
->    This method uploads the database to the onedrive
+>    This method uploads the database to the onedrive folder.
 >
 >    *inputs..*
 >>        (database, onedrive_path):takes the database folder itself. takes a filepath to the one drive folder as a string used for testing.
@@ -772,7 +772,7 @@ This class contains some methods that were frequently reused.
 
 
 >    **downloadCloudDB(database, local_path)**
->    This method checks to see if the two databases are diffrent if diffrent then downloads the database
+>    This method checks to see if the two databases are different. If different, it downloads the database.
 >
 >    *inputs..*
 >>        (database, local_path):takes the database folder itself. takes a filepath to the local database as a string used for testing.
@@ -782,7 +782,7 @@ This class contains some methods that were frequently reused.
 
 
 >    **generateHash(filepath)**
->    This method generates the Hash of files contents
+>    This method generates the Hash of files contents.
 >
 >    *inputs..*
 >>        (filepath): takes a filepath as a string.
@@ -791,7 +791,7 @@ This class contains some methods that were frequently reused.
 
 
 >    **checksum(local_filePath, cloud_filePath)**
->    This method runs the generate function on two files and checks the hashes
+>    This method runs the generate function on two files and checks the hashes.
 >
 >    *inputs..*
 >>        (local_filePath, cloud_filePath): these are the paths to the local file path and cloud filepath.
