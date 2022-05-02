@@ -13,16 +13,16 @@ class report_reader:
         self.run = load_workbook(filePath)
         self.cells = {}
         allCells = ConfigManager.get_allCellLocationConfigs()
-        print(allCells)
         for layout in allCells:
             self.cells = layout
             startDate = datetime.strptime(layout["startDate"], "%Y-%m-%d")
-            endDate = datetime.strptime(layout["endDate"], "%Y-%m-%d") \
-                if (layout["endDate"] != "" or layout["endDate"] != None) else datetime.now
+            endDate = None
+            if (layout["endDate"] != "" and layout["endDate"] != None):
+                endDate = datetime.strptime(layout["endDate"], "%Y-%m-%d")
+            else:
+                endDate = datetime.now()
             try:
-                print(self.run.getDate())
-                date = datetime.strptime(self.run.getDate(), "%Y-%m-%d")
-                print(date)
+                date = self.getDate()
                 self.cells = {}
                 if (date >= startDate and date <= endDate):
                     self.cells = layout
@@ -34,7 +34,6 @@ class report_reader:
             Logger.addNewError("I/O error", datetime.now(), 
                                     f"File {filePath} has no mathing layout configuration in the settings!", 
                                     file = test_log_location)
-        print(self.cells)
         self.lastEmployeeRow = self.getLastEmployeeRow()
         self.checkForErrors()
 
@@ -68,7 +67,7 @@ class report_reader:
             The date of the run as a string.
         """
         sheet = self.run.active
-        return sheet[self.cells["date"]]
+        return sheet[self.cells["date"]].value
 
 
     def checkForErrors(self):
@@ -85,7 +84,7 @@ class report_reader:
                     raise Exception("Employee name cannot be empty!")
                 if sheet[self.cells["date"]].value in [None, '']:
                     raise Exception("Date cannot be empty!")
-        if sheet[self.cells["indidentNumber"]].value in [None, '']:
+        if sheet[self.cells["incidentNumber"]].value in [None, '']:
             raise Exception("Run number cannot be empty!")
         if sheet[self.cells["runTime"]].value in [None, '']:
             raise Exception("Run time cannot be empty!")
@@ -209,7 +208,7 @@ class report_reader:
         """
         sheet = self.run.active
         date = sheet[self.cells["date"]].value.strftime("%Y-%m-%d")
-        runNumber = sheet[self.cells["IncidentNumber"]].value
+        runNumber = sheet[self.cells["incidentNumber"]].value
         runTime = sheet[self.cells["runTime"]].value
         startTime = sheet[self.cells["reported"]].value
         endTime = sheet[self.cells["1008"]].value
