@@ -11,7 +11,7 @@ def generateTypesOfRunResponse():
     This route fetches the run type distribution figure
 
     returns..
-        The figure and status 200
+        The figure and status 200r
     """
     requestValues = request.json
     startDate = requestValues["startDate"]

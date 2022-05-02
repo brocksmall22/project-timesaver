@@ -301,4 +301,31 @@ class API {
     }
     return (results);
   }
+
+  /*
+  Requests that the backend update the config value for layout configurations.
+
+  inputs..
+    layouts: the new layout configs
+  */
+  static updateLayoutConfigs(List<Map> layouts) async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/set_cell_locations');
+    String postJson = jsonEncode({"cell_locations": layouts});
+    Map<String, String> header = {"Content-Type": "application/json"};
+    await post(_url, headers: header, body: postJson);
+  }
+
+  /*
+  Calls to the backend to get the current blank payroll path value.
+
+  returns..
+    A string containing the current blank payroll path
+  */
+  static Future<List<Map<String, dynamic>>> getCellLocations() async {
+    Uri _url = Uri.parse('http://127.0.0.1:8080/get_all_cell_locations');
+    Response response = await get(_url);
+    Map retrunValue = jsonDecode(response.body);
+    List returnVals = retrunValue["cell_locations"];
+    return returnVals.map((e) => e as Map<String, dynamic>).toList();
+  }
 }

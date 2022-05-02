@@ -352,3 +352,31 @@ def trigger_restore():
     scheduler.resume_job(id=INTERVAL_TASK_ID)
     scheduler.resume_job(id=INTERVAL_TASK_ID_1)
     return Response(status = 200) if success != "" else Response(status = 500)
+
+
+@app.route("/set_cell_locations", methods=["POST"])
+def set_cell_locations():
+    """
+    This method sets the cell locations in the config.
+
+    inputs..
+        (request): A json file containing the new values
+    returns..
+        True upon completion
+    """
+    configs = request.json
+    ConfigManager.set_cellLocations(configs["cell_locations"])
+    return Response(status = 200)
+
+
+@app.route("/get_all_cell_locations", methods=["GET"])
+def get_all_cell_locations():
+    """
+    This method gets all the cell locations in the config.
+
+    inputs..
+        (request): A json file containing the new values
+    returns..
+        A json object containing the list of configurations
+    """
+    return jsonify({"cell_locations": ConfigManager.get_allCellLocationConfigs()})
