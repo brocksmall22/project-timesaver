@@ -1,10 +1,10 @@
 from datetime import datetime
 import os
-from sqlite3.dbapi2 import Timestamp
-from .sqlFunctions import sqlFunctions
-from .logger import Logger
-from .oneDriveConnect import oneDriveConnect
-from .report_reader import report_reader
+from sqlite3 import OperationalError
+from sqlFunctions import sqlFunctions
+from logger import Logger
+from oneDriveConnect import oneDriveConnect
+from report_reader import report_reader
 import traceback
 
 
@@ -14,11 +14,10 @@ class payroll:
 
     def loadWorkBooks(fileList = [],
                       test_log_location = "",
-                      database = os.getenv('APPDATA') + "\\project-time-saver\\database.db") -> bool:
+                      database = os.getenv('APPDATA') + "\\project-time-saver\\database.db",
+                      test_config_location = "") -> bool:
         """
         Loops Through the fileList array and runs the readWorkBook on each file this is the main driver for the program
-
-        TODO: Fix error handling such that not every error passed shows as an SQL error
 
         inputs..
             fileList (optional): a list of files you wish to process; optional as in production
@@ -45,14 +44,26 @@ class payroll:
                     fileRunNumber = oneDriveConnect.extensionStripper(file)
                     if sqlRunner.newRunNeedsUpdated(fileRunNumber, Timestamp, payroll.Year) \
                                 or not sqlRunner.checkIfExists(fileRunNumber, payroll.Year):
-                        with report_reader(file) as reportReader:
+                        with report_reader(file, test_log_location, test_config_location) as reportReader:
                             payroll.processIncident(reportReader, sqlRunner, file, test_log_location, database)
             except Exception as e:
                 print(e)
-                traceback.print_exc()
-                Logger.addNewError("I/O error", datetime.now(), 
-                                    f"File {file} has error: Critical error, file cannot be read!", 
+                if str(e) in ["Employee number cannot be empty!",
+                         "Employee name cannot be empty!",
+                         "Date cannot be empty!",
+                         "Run number cannot be empty!",
+                         "Run time cannot be empty!",
+                         "Reported cannot be empty!",
+                         "10-08 cannot be empty!",
+                         "Shift cannot be empty!"]:
+                    Logger.addNewError("Report format error", datetime.now(), 
+                                    f"File {file} has error: {e}", 
                                     file = test_log_location)
+                else:
+                    Logger.addNewError("Undefined error", datetime.now(), 
+                                    f"File {file} has error: undefined critical!", 
+                                    file = test_log_location)
+                traceback.print_exc()
                 success = False
         return success
 
@@ -72,10 +83,18 @@ class payroll:
             assert runNumber == int(oneDriveConnect.extensionStripper(filename)), "The file's name and the incident number within do not match"
             if needsUpdated:
                 payroll.getEmpinfo(sqlRunner, reportReader, date, runNumber)
+        except OperationalError as e:
+            print(e)
+            print(filename)
+            traceback.print_exc()
+            Logger.addNewError("I/O error", datetime.now(), 
+                                f"File {filename} has error: database operation error!", 
+                                file = test_log_location)
         except Exception as e:
             print(e)
+            print(filename)
             traceback.print_exc()
-            Logger.addNewError("report format error", datetime.now(), f"File {filename} has error: {e}", file = test_log_location)
+            Logger.addNewError("report format error", datetime.now(), f"File {filename} has undefined error: {e}", file = test_log_location)
 
 
     def getEmpinfo(sqlRunner, reportReader, date, runNumber):

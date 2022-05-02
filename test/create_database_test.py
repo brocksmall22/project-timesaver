@@ -7,7 +7,7 @@ import sys
 from unittest.case import expectedFailure
 
 sys.path.append(os.getcwd())
-from sqlite.check_database import check_database
+from lib.check_database import check_database
 """
 This test suite ensures the DB is correctly created.
 """

@@ -1,7 +1,7 @@
 from itertools import count
 from matplotlib.figure import Figure
-from .sqlFunctions import sqlFunctions
-from .logger import Logger
+from sqlFunctions import sqlFunctions
+from logger import Logger
 from datetime import datetime
 import traceback
 import numpy as np

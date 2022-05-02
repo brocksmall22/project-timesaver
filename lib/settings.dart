@@ -126,7 +126,7 @@ class _SettingsUIState extends State<SettingsUI> {
   Widget _layoutButton() => BasicWidgets.pad(BasicWidgets.mainNavigationButton(
       context,
       "Incident Sheet Layout Configurator",
-      const layoutConfiguratorUI(),
+      const LayoutConfiguratorUI(),
       restricted: false));
 
   //This widget is a button that spawns a folder choosing window.

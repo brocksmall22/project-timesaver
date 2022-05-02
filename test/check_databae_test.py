@@ -4,7 +4,7 @@ import shutil
 
 import sys
 sys.path.append(os.getcwd())
-from sqlite.check_database import check_database
+from lib.check_database import check_database
 
 """
 Tests the creation of the database in various conditions.

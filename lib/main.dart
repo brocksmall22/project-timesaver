@@ -23,9 +23,7 @@ void main() async {
   bool awake = await API.checkIfServerIsAlive();
 
   //exe of python code here: must be in the same directory
-  !debug & !awake
-      ? Process.run("waitress-serve", ["dist\\project-timesaver.exe"])
-      : null;
+  !debug & !awake ? Process.run("dist\\project-timesaver.exe", []) : null;
 
   WidgetsFlutterBinding.ensureInitialized();
   if (Platform.isWindows) {
@@ -70,8 +68,7 @@ class MainPage extends StatelessWidget {
         child: BasicWidgets.vertical(
           [
             _payrollButton(context),
-            //_gotToFileUpload(context),
-            _nifrsButton(context),
+            //_nifrsButton(context),
             _statsButton(context),
             _settingsButton(context)
           ],
@@ -86,8 +83,8 @@ class MainPage extends StatelessWidget {
           context, "Generate Payroll", const PayrollUI());
 
   //This button will open the NIFRS reporting page once implemented
-  Widget _nifrsButton(BuildContext context) =>
-      BasicWidgets.mainNavigationButton(context, "Generate NIFRS", null);
+  // Widget _nifrsButton(BuildContext context) =>
+  //     BasicWidgets.mainNavigationButton(context, "Generate NIFRS", null);
 
   //This button will open the stats generation page once implemented
   Widget _statsButton(BuildContext context) =>

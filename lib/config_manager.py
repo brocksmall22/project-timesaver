@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import os
 
@@ -12,9 +13,9 @@ class ConfigManager:
         "blank_breakdown_path": "C:\path/to/the/master/copy/of/breakdown",
         "cell_locations": [
             {
-                "start_date": "",
-                "end_date": "",
-                "incident_number": "",
+                "startDate": "",
+                "endDate": "",
+                "incidentNumber": "",
                 "date": "",
                 "shift": "",
                 "OIC": "",
@@ -25,49 +26,20 @@ class ConfigManager:
                 "1076": "",
                 "1023": "",
                 "UC": "",
-                "1009": "",
-                "station_covered": "",
+                "1008": "",
+                "stationCovered": "",
                 "weekend": "",
-                "working_hours": "",
-                "off_hours": "",
-                "shift_covered": "",
-                "run_time": "",
-                "start_row": "",
-                "apparatus_cells": {
-                    "app_name": "app_cell",
-                    "other_app_name": "other_app_cell",
-                    .
-                    .
-                    .
-                },
-                "mutual_aid": {
-                    "man_given": {
-                        "township": "cell",
-                        "township2": "cell2"'
-                        .
-                        .
-                        .
-                    },
-                    "app_given": {},
-                    "man_recv": {},
-                    "app_recv": {}
-                },
-                "run_type": {
-                    "type1", "cell1",
-                    "type2":, "cell2",
-                    .
-                    .
-                    .
-                },
-                "townshop": {
-                    "city": {
-                        "townshipname": "cell",
-                        .
-                        .
-                        .
-                    },
-                    "county": {}
-                }
+                "workingHours": "",
+                "offHours": "",
+                "shiftCovered": "",
+                "runTime": "",
+                "firstEmployeeRow": "",
+                "runType": {},
+                "apparatus": {},
+                "township": {},
+                "givenAid": {},
+                "takenAid": {}
+                ]
             }
         ]
     }
@@ -164,40 +136,34 @@ class ConfigManager:
             json.dump(contents, conf)
 
     @staticmethod
-    def get_cellLocations(date, file=""):
+    def get_allCellLocationConfigs(file=""):
         """
-        TODO: Make sure this can handle a datetime object.
-
-        This method is responsible for fetching the layout of a given run
-        report.
+        This method gets all of the layout configs.
 
         inputs..
-            date: the date of the current run report in question
             file: an optional file path to the configuration file
         returns..
-            A dictonary of the layour or None if none exists
+            A list of layout config dictonaries
         """
         file = ConfigManager.configFile if file == "" else file
         ConfigManager.createConfigIfNotExists(file)
         with open(file, "r") as conf:
-            configs = json.load(conf)["blank_breakdown_path"]
-            for config in configs:
-                if config["start_date"] <= date and (config["end_date"] >= date
-                        or config["end_date"] == None):
-                    return config
-            return None
+            return json.load(conf)["cell_locations"]
 
-    ###Updates the blank breakdwon path value
     @staticmethod
-    def set_cellLocations(path, file=""):
+    def set_cellLocations(configurations: list, file=""):
         """
-        TODO: Write this documentation
-        TODO: Implement the logic of setting a configuration
+        This function take in a set of configurations and saves them to the config
+        filr.
+
+        inputs..
+            configurations: a list of dictonaties
+            file: an optional override for the config file path
         """
         file = ConfigManager.configFile if file == "" else file
         ConfigManager.createConfigIfNotExists(file)
         with open(file, "r") as conf:
             contents = json.load(conf)
-            contents["blank_breakdown_path"] = path
+            contents["cell_locations"] = configurations
         with open(file, "w+") as conf:
             json.dump(contents, conf)
