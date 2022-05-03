@@ -440,10 +440,11 @@ class visualize:
                 shiftCoverages = sqlRunner.getShiftCoverages(startDate, endDate)
                 values = {}
                 for run in shiftCoverages:
-                    if run[0].upper() not in values.keys():
-                        values[run[0].upper()] = 0
+                    if run[0].upper().replace(" ", "") not in values.keys():
+                        values[run[0].upper().replace(" ", "")] = 0
                     if run[1] == 1:
-                        values[run[0].upper()] += 1
+                        values[run[0].upper().replace(" ", "")] += 1
+                values = {k: v for k, v in sorted(values.items())}
                 returnBuff = io.BytesIO()
                 fig = Figure(figsize=(10, 5), dpi=300)
                 plt = fig.subplots()
