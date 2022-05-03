@@ -573,24 +573,32 @@ class generate_report:
     """
     def match_names(name, fname, lname):
         if name[0:4] == "Lt. ":
-             name = name[4:]
+            return(name[4:], fname, lname)
         elif name[0:3] == "Lt.":
-            name = name[3:]
+            return(name[3:], fname, lname)
         elif name[0:6] == "Capt. ":
-            name = name[6:]
+            return(name[6:], fname, lname)
         elif name[0:5] == "Capt.":
-            name = name[5:]
+            return(name[5:], fname, lname)
+        elif name[0:6] == "Batt. ":
+            return(name[6:], fname, lname)
+        elif name[0:5] == "Batt.":
+            return(name[5:], fname, lname)
+        elif name[0:6] == "Chief ":
+            return(name[6:], fname, lname)
+        elif name[0:5] == "Chief":
+            return(name[5:], fname, lname)
         if name[-1].isnumeric():
             if name[-2].isnumeric():
                 if name[-5] != "-":
-                    name = name[0:-4]
+                    return(name[0:-4], fname, lname)
                 else:
-                    name = name[0:-6]
+                    return(name[0:-6], fname, lname)
             else:
                 if name[-4] != "-":
-                    name = name[0:-3]
+                    return(name[0:-3], fname, lname)
                 else:
-                    name = name[0:-5]
+                    return(name[0:-5], fname, lname)
 
         if name == f"{fname[0]}. {lname}" \
                 or name == f"{fname[0]}.{lname}":
